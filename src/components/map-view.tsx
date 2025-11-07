@@ -41,13 +41,20 @@ export default function MapView({ sellers, buyerLocation, selectedSeller }: MapV
   if (!apiKey) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-muted p-8">
-        <div className="text-center bg-card p-6 rounded-lg shadow-md">
-          <p className="font-semibold text-destructive text-lg">Google Maps API Key Missing</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            To display the map, please add your Google Maps API Key as <br/>
-            <code className="bg-muted px-1 py-0.5 rounded-sm font-mono text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>
-            <br/> to your <code className="bg-muted px-1 py-0.5 rounded-sm font-mono text-xs">.env.local</code> file.
+        <div className="text-center bg-card p-6 rounded-lg shadow-md border-destructive border-2">
+          <p className="font-bold text-destructive text-xl mb-2">Google Maps API Key Missing</p>
+          <p className="text-sm text-muted-foreground">
+            To display the map, you need to add a Google Maps API Key.
           </p>
+          <div className="text-left bg-muted p-4 rounded-md my-4 text-sm">
+            <p>1. Go to the <a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google Cloud Console</a> and enable the <strong>Maps JavaScript API</strong>.</p>
+            <p className="mt-2">2. Create an API Key and copy it.</p>
+            <p className="mt-2">3. Add it to your project in the <code className="bg-background px-1 py-0.5 rounded-sm font-mono text-xs">.env.local</code> file:</p>
+            <pre className="bg-background p-2 rounded-md mt-1 font-mono text-xs overflow-x-auto">
+              <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_API_KEY_HERE</code>
+            </pre>
+          </div>
+           <p className="text-xs text-muted-foreground">After adding the key, please restart the application.</p>
         </div>
       </div>
     );
