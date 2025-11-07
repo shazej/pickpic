@@ -44,11 +44,13 @@ export default function Home() {
           />
         </div>
         <div className="hidden h-full w-full items-center justify-center bg-muted md:flex">
-            <MapView 
-              sellers={sellers}
-              buyerLocation={buyerLocation}
-              selectedSeller={selectedSeller}
-            />
+            {typeof window !== 'undefined' && (
+              <MapView 
+                sellers={sellers}
+                buyerLocation={buyerLocation}
+                selectedSeller={selectedSeller}
+              />
+            )}
         </div>
       </main>
     </div>
