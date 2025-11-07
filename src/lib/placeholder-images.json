@@ -5,6 +5,36 @@
       "description": "A placeholder graphic for product search",
       "imageUrl": "https://images.unsplash.com/photo-1751580642565-9284c29f6e00?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcm9kdWN0JTIwc2VhcmNofGVufDB8fHx8MTc2MjUyODM4OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "product search"
+    },
+    {
+      "id": "seller-1-photo",
+      "description": "Placeholder for Tech Haven store",
+      "imageUrl": "https://images.unsplash.com/photo-1590599145008-e4ec48682067?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx0ZWNoJTIwc3RvcmV8ZW58MHx8fHwxNzYyNDQ3Mzc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tech store"
+    },
+    {
+      "id": "seller-2-photo",
+      "description": "Placeholder for Gadget Galaxy store",
+      "imageUrl": "https://images.unsplash.com/photo-1759820940590-b07942584431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxnYWRnZXQlMjBzdG9yZXxlbnwwfHx8fDE3NjI1Mjg1NTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gadget store"
+    },
+    {
+      "id": "seller-3-photo",
+      "description": "Placeholder for Electro World store",
+      "imageUrl": "https://images.unsplash.com/photo-1645026479149-54f0ae80fb31?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlbGVjdHJvbmljcyUyMHNob3B8ZW58MHx8fHwxNzYyNDIxMTM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "electronics shop"
+    },
+    {
+      "id": "seller-4-photo",
+      "description": "Placeholder for Home Goods Central store",
+      "imageUrl": "https://images.unsplash.com/photo-1496180727794-817822f65950?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxob21lJTIwZ29vZHN8ZW58MHx8fHwxNzYyNTI4NTUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "home goods"
+    },
+    {
+      "id": "seller-5-photo",
+      "description": "Placeholder for Kitchen Creations store",
+      "imageUrl": "https://images.unsplash.com/photo-1509023667260-6677209e6fdf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxraXRjaGVud2FyZSUyMHNob3B8ZW58MHx8fHwxNzYyNTI4NTUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "kitchenware shop"
     }
   ]
 }

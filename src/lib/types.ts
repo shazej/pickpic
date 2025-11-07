@@ -12,6 +12,9 @@ export type Seller = {
   };
   address: string;
   products: Product[];
+  phone: string;
+  photoUrl: string;
+  photoHint: string;
 };
 
 export type Coordinates = {

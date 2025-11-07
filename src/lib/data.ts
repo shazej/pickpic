@@ -1,4 +1,5 @@
 import type { Seller } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export const sellers: Seller[] = [
   {
@@ -6,6 +7,9 @@ export const sellers: Seller[] = [
     name: 'Tech Haven',
     location: { lat: 34.0522, lng: -118.2437 }, // Downtown LA
     address: '123 Main St, Los Angeles, CA',
+    phone: '(213) 555-0101',
+    photoUrl: PlaceHolderImages[1]?.imageUrl || 'https://picsum.photos/seed/tech1/400/300',
+    photoHint: PlaceHolderImages[1]?.imageHint || 'tech store',
     products: [
       { name: 'Wireless Headphones', price: 199.99 },
       { name: 'Smartwatch', price: 249.99 },
@@ -17,6 +21,9 @@ export const sellers: Seller[] = [
     name: 'Gadget Galaxy',
     location: { lat: 34.0622, lng: -118.2537 }, // Near Dodger Stadium
     address: '456 Tech Rd, Los Angeles, CA',
+    phone: '(213) 555-0102',
+    photoUrl: PlaceHolderImages[2]?.imageUrl || 'https://picsum.photos/seed/tech2/400/300',
+    photoHint: PlaceHolderImages[2]?.imageHint || 'gadget store',
     products: [
       { name: 'Wireless Headphones', price: 189.99 },
       { name: 'Gaming Mouse', price: 79.99 },
@@ -28,6 +35,9 @@ export const sellers: Seller[] = [
     name: 'Electro World',
     location: { lat: 34.0422, lng: -118.2637 }, // South Park
     address: '789 Circuit Ave, Los Angeles, CA',
+    phone: '(213) 555-0103',
+    photoUrl: PlaceHolderImages[3]?.imageUrl || 'https://picsum.photos/seed/tech3/400/300',
+    photoHint: PlaceHolderImages[3]?.imageHint || 'electronics shop',
     products: [
       { name: 'Smartwatch', price: 259.99 },
       { name: 'VR Headset', price: 399.99 },
@@ -39,6 +49,9 @@ export const sellers: Seller[] = [
     name: 'Home Goods Central',
     location: { lat: 40.7128, lng: -74.0060 }, // NYC
     address: '101 Homey Blvd, New York, NY',
+    phone: '(212) 555-0104',
+    photoUrl: PlaceHolderImages[4]?.imageUrl || 'https://picsum.photos/seed/home1/400/300',
+    photoHint: PlaceHolderImages[4]?.imageHint || 'home goods',
     products: [
       { name: 'Coffee Maker', price: 89.00 },
       { name: 'Blender', price: 120.00 },
@@ -49,6 +62,9 @@ export const sellers: Seller[] = [
     name: 'Kitchen Creations',
     location: { lat: 40.7228, lng: -73.9960 }, // Near Washington Square Park, NYC
     address: '212 Culinary Way, New York, NY',
+    phone: '(212) 555-0105',
+    photoUrl: PlaceHolderImages[5]?.imageUrl || 'https://picsum.photos/seed/kitchen1/400/300',
+    photoHint: PlaceHolderImages[5]?.imageHint || 'kitchenware shop',
     products: [
       { name: 'Coffee Maker', price: 95.50 },
       { name: 'Stand Mixer', price: 299.00 },

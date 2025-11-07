@@ -1,10 +1,11 @@
 "use client";
 
-import type { Seller, Coordinates } from "@/lib/types";
+import Image from "next/image";
+import type { Seller } from "@/lib/types";
 import { getDistance } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, Phone } from "lucide-react";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
@@ -39,8 +40,16 @@ export default function SellerList({ sellers, productName, onSellerSelect }: Sel
     return product ? `$${product.price.toFixed(2)}` : "N/A";
   };
   
+  const sortedSellers = sellers
+    .map(seller => ({
+        seller,
+        distance: buyerLocation ? getDistance(buyerLocation.lat, buyerLocation.lng, seller.location.lat, seller.location.lng) : Infinity
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 10);
+
   return (
-    <div className="space-y-3 pt-2">
+    <div className="space-y-4 pt-2">
       {geolocationError && (
         <Alert variant="destructive" className="mb-4">
           <MapPin className="h-4 w-4" />
@@ -50,48 +59,60 @@ export default function SellerList({ sellers, productName, onSellerSelect }: Sel
           </AlertDescription>
         </Alert>
       )}
-      {sellers
-        .map(seller => ({
-            seller,
-            distance: buyerLocation ? getDistance(buyerLocation.lat, buyerLocation.lng, seller.location.lat, seller.location.lng) : Infinity
-        }))
-        .sort((a, b) => a.distance - b.distance)
+      {sortedSellers
         .map(({ seller, distance }) => (
           <Card 
             key={seller.id} 
-            className="hover:shadow-md transition-shadow cursor-pointer border-transparent hover:border-primary"
+            className="hover:shadow-lg transition-shadow cursor-pointer border-transparent hover:border-primary overflow-hidden"
             onMouseEnter={() => onSellerSelect(seller)}
             onMouseLeave={() => onSellerSelect(null)}
           >
-            <CardHeader className="p-4">
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <CardTitle className="text-lg">{seller.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-1.5 pt-1 text-xs">
-                    <MapPin className="w-3 h-3 flex-shrink-0" /> 
-                    <span>{seller.address}</span>
-                  </CardDescription>
-                </div>
-                <Badge variant="secondary" className="text-base font-bold whitespace-nowrap">
-                    {getProductPrice(seller, productName)}
-                </Badge>
+            <div className="grid grid-cols-[100px_1fr]">
+              <div className="relative h-full bg-muted">
+                 <Image
+                    src={seller.photoUrl}
+                    alt={seller.name}
+                    fill
+                    className="object-cover"
+                    data-ai-hint={seller.photoHint}
+                  />
               </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex justify-between items-center text-sm">
-                <div className="text-muted-foreground font-medium">
-                  {distance !== Infinity ? `${distance.toFixed(1)} km away` : 'Distance unknown'}
-                </div>
-                <Button 
-                    className="bg-accent text-accent-foreground hover:bg-accent/90" 
-                    size="sm"
-                    onClick={() => handleNavigate(seller)} 
-                    disabled={!buyerLocation}>
-                  <Navigation className="mr-2 h-4 w-4" />
-                  Navigate
-                </Button>
+              <div>
+                <CardHeader className="p-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <CardTitle className="text-lg">{seller.name}</CardTitle>
+                      <CardDescription className="flex items-center gap-1.5 pt-1 text-xs">
+                        <MapPin className="w-3 h-3 flex-shrink-0" /> 
+                        <span>{seller.address}</span>
+                      </CardDescription>
+                      <CardDescription className="flex items-center gap-1.5 pt-1 text-xs">
+                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        <a href={`tel:${seller.phone}`} className="hover:underline">{seller.phone}</a>
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary" className="text-base font-bold whitespace-nowrap">
+                        {getProductPrice(seller, productName)}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="text-muted-foreground font-medium">
+                      {distance !== Infinity ? `${distance.toFixed(1)} km away` : 'Distance unknown'}
+                    </div>
+                    <Button 
+                        className="bg-accent text-accent-foreground hover:bg-accent/90" 
+                        size="sm"
+                        onClick={() => handleNavigate(seller)} 
+                        disabled={!buyerLocation}>
+                      <Navigation className="mr-2 h-4 w-4" />
+                      Navigate
+                    </Button>
+                  </div>
+                </CardContent>
               </div>
-            </CardContent>
+            </div>
           </Card>
         ))}
     </div>
