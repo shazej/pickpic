@@ -7,8 +7,7 @@ import { identifyProduct, type IdentifyProductOutput } from "@/ai/flows/product-
 import { fileToDataUri } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { findSellersByProduct } from "@/lib/data";
+import { findSellersByProduct, sellers as allSellersData } from "@/lib/data";
 import type { Seller } from "@/lib/types";
 import SellerList from "@/components/seller-list";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -47,15 +46,12 @@ export default function ProductFinder({ onSellersFound, onSellerSelect }: Produc
         setAiResult(result);
         
         if (result.productName) {
-          const sellers = findSellersByProduct(result.productName);
+          let sellers = findSellersByProduct(result.productName);
+          if (sellers.length === 0) {
+             sellers = allSellersData; // Show all sellers if none are found
+          }
           setFoundSellers(sellers);
           onSellersFound(sellers);
-          if (sellers.length === 0) {
-             toast({
-                title: "No Sellers Found",
-                description: `We couldn't find any local sellers for "${result.productName}".`,
-             });
-          }
         } else {
           onSellersFound([]);
           toast({
