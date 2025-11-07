@@ -10,7 +10,6 @@ import SellerList from "@/components/seller-list";
 import type { Seller } from "@/lib/types";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { findSellersByProduct, sellers as allSellersData } from "@/lib/data";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -23,7 +22,6 @@ function SellersPageContent() {
   const searchParams = useSearchParams();
   const productName = searchParams.get("productName");
   const confidence = searchParams.get("confidence");
-  const imageUrl = searchParams.get("imageUrl");
 
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
@@ -64,15 +62,6 @@ function SellersPageContent() {
             <div className="space-y-4 flex-grow min-h-0 flex flex-col">
                 <div className="flex-shrink-0">
                     <div className="flex gap-4 items-start">
-                        {imageUrl && (
-                            <Image 
-                                src={decodeURIComponent(imageUrl)} 
-                                alt={productName}
-                                width={80}
-                                height={80}
-                                className="rounded-md object-cover aspect-square"
-                            />
-                        )}
                         <div>
                             <h1 className="text-2xl font-semibold">Sellers for: <span className="text-primary font-bold">{productName}</span></h1>
                             {confidence && <p className="text-sm text-muted-foreground">Confidence: {confidence}%</p>}

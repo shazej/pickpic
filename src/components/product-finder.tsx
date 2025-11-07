@@ -36,7 +36,6 @@ export default function ProductFinder() {
            const params = new URLSearchParams({
             productName: result.productName,
             confidence: (result.confidence * 100).toFixed(0),
-            imageUrl: encodeURIComponent(dataUri),
           });
           router.push(`/sellers?${params.toString()}`);
         } else {
