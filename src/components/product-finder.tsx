@@ -2,58 +2,44 @@
 
 import { useState, useRef, type ChangeEvent } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Camera, Loader2, Search, Upload } from "lucide-react";
 import { identifyProduct, type IdentifyProductOutput } from "@/ai/flows/product-identification";
 import { fileToDataUri } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { findSellersByProduct, sellers as allSellersData } from "@/lib/data";
-import type { Seller } from "@/lib/types";
-import SellerList from "@/components/seller-list";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useToast } from "@/hooks/use-toast";
 
-
-type ProductFinderProps = {
-  onSellersFound: (sellers: Seller[]) => void;
-  onSellerSelect: (seller: Seller | null) => void;
-}
-
-export default function ProductFinder({ onSellersFound, onSellerSelect }: ProductFinderProps) {
+export default function ProductFinder() {
   const [imagePreview, setImagePreview] = useState<string | null>(PlaceHolderImages[0]?.imageUrl || null);
   const [isLoading, setIsLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<IdentifyProductOutput | null>(null);
-  const [foundSellers, setFoundSellers] = useState<Seller[]>([]);
-
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setIsLoading(true);
-      setAiResult(null);
-      onSellersFound([]);
-      setFoundSellers([]);
 
       try {
         const dataUri = await fileToDataUri(file);
         setImagePreview(dataUri);
 
         const result = await identifyProduct({ photoDataUri: dataUri });
-        setAiResult(result);
         
         if (result.productName) {
-          let sellers = findSellersByProduct(result.productName);
-          if (sellers.length === 0) {
-             sellers = allSellersData; // Show all sellers if none are found
-          }
-          setFoundSellers(sellers);
-          onSellersFound(sellers);
+           const params = new URLSearchParams({
+            productName: result.productName,
+            confidence: (result.confidence * 100).toFixed(0),
+            imageUrl: encodeURIComponent(dataUri),
+          });
+          router.push(`/sellers?${params.toString()}`);
         } else {
-          onSellersFound([]);
           toast({
             variant: "destructive",
             title: "Identification Failed",
@@ -79,8 +65,8 @@ export default function ProductFinder({ onSellersFound, onSellerSelect }: Produc
   return (
     <div className="p-4 md:p-6 space-y-4 h-full flex flex-col">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold font-headline text-center md:text-left">Find a Product</h1>
-        <p className="text-muted-foreground text-center md:text-left">Upload a photo or use your camera to find it in a nearby store.</p>
+        <h1 className="text-2xl font-bold font-headline text-center">Find a Product</h1>
+        <p className="text-muted-foreground text-center">Upload a photo or use your camera to find it in a nearby store.</p>
       </div>
 
       <Card>
@@ -133,22 +119,6 @@ export default function ProductFinder({ onSellersFound, onSellerSelect }: Produc
           <Camera className="mr-2" /> Camera
         </Button>
       </div>
-
-      {aiResult && (
-        <div className="space-y-4 flex-grow min-h-0 flex flex-col">
-          <div className="flex-shrink-0">
-            <h2 className="text-xl font-semibold">Sellers for: <span className="text-primary font-bold">{aiResult.productName}</span></h2>
-            <p className="text-sm text-muted-foreground">Confidence: {(aiResult.confidence * 100).toFixed(0)}%</p>
-          </div>
-          <div className="overflow-y-auto pr-1 flex-grow">
-            <SellerList 
-              sellers={foundSellers} 
-              productName={aiResult.productName} 
-              onSellerSelect={onSellerSelect}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
