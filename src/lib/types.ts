@@ -1,6 +1,8 @@
 export type Product = {
   name: string;
   price: number;
+  photoUrl?: string;
+  photoHint?: string;
 };
 
 export type Seller = {
