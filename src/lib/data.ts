@@ -70,6 +70,71 @@ export const sellers: Seller[] = [
       { name: 'Stand Mixer', price: 299.00 },
     ],
   },
+   {
+    id: 'seller-6',
+    name: 'Digital Dreams',
+    location: { lat: 34.0722, lng: -118.2837 },
+    address: '321 Innovation Dr, Los Angeles, CA',
+    phone: '(213) 555-0106',
+    photoUrl: PlaceHolderImages[6]?.imageUrl || 'https://picsum.photos/seed/tech4/400/300',
+    photoHint: PlaceHolderImages[6]?.imageHint || 'electronics store',
+    products: [
+      { name: 'Wireless Headphones', price: 209.99 },
+      { name: 'Tablet', price: 499.99 },
+    ],
+  },
+  {
+    id: 'seller-7',
+    name: 'Connect Electronics',
+    location: { lat: 34.0322, lng: -118.2237 },
+    address: '654 Connection St, Los Angeles, CA',
+    phone: '(213) 555-0107',
+    photoUrl: PlaceHolderImages[7]?.imageUrl || 'https://picsum.photos/seed/tech5/400/300',
+    photoHint: PlaceHolderImages[7]?.imageHint || 'gadget shop',
+    products: [
+      { name: 'Smartwatch', price: 239.99 },
+      { name: 'E-Reader', price: 129.99 },
+    ],
+  },
+  {
+    id: 'seller-8',
+    name: 'Future Gadgets',
+    location: { lat: 40.7328, lng: -74.0160 },
+    address: '45 Future Ave, New York, NY',
+    phone: '(212) 555-0108',
+    photoUrl: PlaceHolderImages[8]?.imageUrl || 'https://picsum.photos/seed/tech6/400/300',
+    photoHint: PlaceHolderImages[8]?.imageHint || 'futuristic gadgets',
+    products: [
+      { name: 'Wireless Headphones', price: 229.99 },
+      { name: 'Drone', price: 799.99 },
+    ],
+  },
+  {
+    id: 'seller-9',
+    name: 'Urban Homeware',
+    location: { lat: 40.7028, lng: -73.9860 },
+    address: '789 Domestic Dr, New York, NY',
+    phone: '(212) 555-0109',
+    photoUrl: PlaceHolderImages[9]?.imageUrl || 'https://picsum.photos/seed/home2/400/300',
+    photoHint: PlaceHolderImages[9]?.imageHint || 'modern homeware',
+    products: [
+      { name: 'Coffee Maker', price: 79.99 },
+      { name: 'Air Fryer', price: 149.99 },
+    ],
+  },
+  {
+    id: 'seller-10',
+    name: 'The Appliance Stop',
+    location: { lat: 40.7428, lng: -73.9760 },
+    address: '101 Appliance Rd, New York, NY',
+    phone: '(212) 555-0110',
+    photoUrl: PlaceHolderImages[10]?.imageUrl || 'https://picsum.photos/seed/home3/400/300',
+    photoHint: PlaceHolderImages[10]?.imageHint || 'appliance store',
+    products: [
+      { name: 'Blender', price: 110.00 },
+      { name: 'Toaster Oven', price: 65.00 },
+    ],
+  },
 ];
 
 export function findSellersByProduct(productName: string): Seller[] {

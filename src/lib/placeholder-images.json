@@ -35,6 +35,36 @@
       "description": "Placeholder for Kitchen Creations store",
       "imageUrl": "https://images.unsplash.com/photo-1509023667260-6677209e6fdf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxraXRjaGVud2FyZSUyMHNob3B8ZW58MHx8fHwxNzYyNTI4NTUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "kitchenware shop"
+    },
+    {
+      "id": "seller-6-photo",
+      "description": "Placeholder for Digital Dreams store",
+      "imageUrl": "https://images.unsplash.com/photo-1571857089849-f6390447191a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxlbGVjdHJvbmljcyUyMHN0b3JlfGVufDB8fHx8MTc2MjUyOTEyNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "electronics store"
+    },
+    {
+      "id": "seller-7-photo",
+      "description": "Placeholder for Connect Electronics store",
+      "imageUrl": "https://images.unsplash.com/photo-1758520387469-30e8ed486f92?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnYWRnZXQlMjBzaG9wfGVufDB8fHx8MTc2MjUyOTEyNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gadget shop"
+    },
+    {
+      "id": "seller-8-photo",
+      "description": "Placeholder for Future Gadgets store",
+      "imageUrl": "https://images.unsplash.com/photo-1640955045488-9a4bdad646d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmdXR1cmlzdGljJTIwZ2FkZ2V0c3xlbnwwfHx8fDE3NjI1MjkxMjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic gadgets"
+    },
+    {
+      "id": "seller-9-photo",
+      "description": "Placeholder for Urban Homeware store",
+      "imageUrl": "https://images.unsplash.com/photo-1663770114127-4f61cb62b56d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjBob21ld2FyZXxlbnwwfHx8fDE3NjI1MjkxMjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern homeware"
+    },
+    {
+      "id": "seller-10-photo",
+      "description": "Placeholder for The Appliance Stop store",
+      "imageUrl": "https://images.unsplash.com/photo-1762250990002-a0d48eef5aed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhcHBsaWFuY2UlMjBzdG9yZXxlbnwwfHx8fDE3NjI1MjkxMjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "appliance store"
     }
   ]
 }

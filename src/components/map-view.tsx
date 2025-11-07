@@ -21,8 +21,8 @@ const UserMarker = () => (
 export default function MapView({ sellers, buyerLocation, selectedSeller }: MapViewProps) {
   const [apiKey, setApiKey] = useState<string | undefined>(undefined);
   
-  // Reading env variables needs to be in a useEffect for client components
   useEffect(() => {
+    // Reading env variables needs to be in a useEffect for client components
     setApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   }, []);
 
@@ -37,7 +37,7 @@ export default function MapView({ sellers, buyerLocation, selectedSeller }: MapV
         </div>
       );
   }
-
+  
   if (!apiKey) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-muted p-8">
@@ -49,7 +49,8 @@ export default function MapView({ sellers, buyerLocation, selectedSeller }: MapV
           <div className="text-left bg-muted p-4 rounded-md my-4 text-sm">
             <p>1. Go to the <a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google Cloud Console</a> and enable the <strong>Maps JavaScript API</strong>.</p>
             <p className="mt-2">2. Create an API Key and copy it.</p>
-            <p className="mt-2">3. Add it to your project in the <code className="bg-background px-1 py-0.5 rounded-sm font-mono text-xs">.env.local</code> file:</p>
+            <p className="mt-2">3. Create a file named <code className="bg-background px-1 py-0.5 rounded-sm font-mono text-xs">.env.local</code> in your project's root folder.</p>
+            <p className="mt-2">4. Add your key to the file:</p>
             <pre className="bg-background p-2 rounded-md mt-1 font-mono text-xs overflow-x-auto">
               <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_API_KEY_HERE</code>
             </pre>
