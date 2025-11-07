@@ -2,13 +2,22 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, User, Camera, Search } from 'lucide-react';
+import { MapPin, User, Camera, Search, Package2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { products as allProducts } from '@/lib/data';
 import { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ProductCard } from '@/components/product-card';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import ProductFinder from '@/components/product-finder';
+
 
 export default function Home() {
     const latestProducts = allProducts.slice(0, 4);
@@ -20,6 +29,10 @@ export default function Home() {
         <div className="flex items-center gap-2 font-semibold">
           <MapPin className="h-5 w-5 text-primary" />
           <span className="text-sm">New York, USA</span>
+        </div>
+        <div className="flex items-center gap-2 font-semibold">
+          <Package2 className="h-6 w-6 text-primary" />
+          <span className="text-xl font-headline">See & Seek</span>
         </div>
         <div className="flex items-center gap-4">
             <Link href="/sellers?productName=Wireless%20Headphones">
@@ -42,13 +55,8 @@ export default function Home() {
           <Input
             type="search"
             placeholder="Search for products..."
-            className="w-full pr-10"
+            className="w-full"
           />
-          <Link href="/" passHref>
-             <Button type="submit" size="icon" variant="ghost" className="absolute inset-y-0 right-0 h-full">
-                <Camera className="h-5 w-5 text-muted-foreground" />
-             </Button>
-          </Link>
         </div>
         
         {bannerImage && (
@@ -72,6 +80,24 @@ export default function Home() {
             </div>
         </div>
       </main>
+
+      <Sheet>
+        <SheetTrigger asChild>
+            <Button size="icon" className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-40">
+                <Camera className="h-8 w-8" />
+                <span className="sr-only">Find by image</span>
+            </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-[90%] flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="text-center text-2xl font-headline">Find a Product</SheetTitle>
+          </SheetHeader>
+          <div className="flex-grow min-h-0">
+             <ProductFinder />
+          </div>
+        </SheetContent>
+      </Sheet>
+
     </div>
   );
 }

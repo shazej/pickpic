@@ -8,11 +8,10 @@ import { identifyProduct, type IdentifyProductOutput } from "@/ai/flows/product-
 import { fileToDataUri } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProductFinder() {
-  const [imagePreview, setImagePreview] = useState<string | null>(PlaceHolderImages[0]?.imageUrl || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,22 +61,19 @@ export default function ProductFinder() {
   const triggerCamera = () => cameraInputRef.current?.click();
 
   return (
-    <div className="p-4 md:p-6 space-y-4 h-full flex flex-col">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold font-headline text-center">Find a Product</h1>
-        <p className="text-muted-foreground text-center">Upload a photo or use your camera to find it in a nearby store.</p>
-      </div>
-
-      <Card>
-        <CardContent className="p-2">
-          <div className="aspect-video rounded-md overflow-hidden relative bg-muted/50 flex items-center justify-center">
+    <div className="p-4 space-y-4 h-full flex flex-col">
+       <p className="text-muted-foreground text-center text-sm -mt-3">Upload a photo or use your camera to find it in a nearby store.</p>
+      
+      <Card className="flex-grow">
+        <CardContent className="p-2 h-full">
+          <div className="h-full rounded-md overflow-hidden relative bg-muted/50 flex items-center justify-center">
             {imagePreview ? (
               <Image
                 src={imagePreview}
                 alt="Product preview"
                 fill
                 className="object-contain"
-                data-ai-hint={PlaceHolderImages[0]?.imageHint || 'product'}
+                data-ai-hint={'product image'}
               />
             ) : (
                 <div className="text-muted-foreground flex flex-col items-center text-center p-4">
