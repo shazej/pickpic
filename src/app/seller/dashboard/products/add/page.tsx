@@ -12,7 +12,6 @@ import {
   Users,
   BarChart,
   LogOut,
-  PlusCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -156,19 +155,21 @@ export default function AddProductPage() {
         <SidebarInset>
           <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
             <SidebarTrigger className="sm:hidden" />
-            <Button size="icon" variant="outline" className="sm:hidden" asChild>
-                <Link href="/seller/dashboard/products">
-                    <ArrowLeft className="h-5 w-5" />
-                    <span className="sr-only">Back</span>
-                </Link>
-            </Button>
-            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-              Add New Product
-            </h1>
-            <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Link href="/seller/dashboard/products">
-                <Button variant="outline">Cancel</Button>
-              </Link>
+             <div className="flex items-center gap-4">
+                <Button size="icon" variant="outline" className="hidden sm:inline-flex" asChild>
+                    <Link href="/seller/dashboard/products">
+                        <ArrowLeft className="h-5 w-5" />
+                        <span className="sr-only">Back</span>
+                    </Link>
+                </Button>
+                <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
+                Add New Product
+                </h1>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <Button variant="outline" asChild>
+                <Link href="/seller/dashboard/products">Cancel</Link>
+              </Button>
               <Button onClick={handleSubmit} disabled={isLoading}>
                 Save Product
               </Button>
@@ -177,10 +178,10 @@ export default function AddProductPage() {
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             <form
               onSubmit={handleSubmit}
-              className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4"
+              className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 lg:grid-cols-3"
             >
-              <div className="grid gap-4 lg:grid-cols-8">
-                <Card className="lg:col-span-5">
+              <div className="grid gap-4 lg:col-span-2">
+                <Card>
                   <CardHeader>
                     <CardTitle>Product Details</CardTitle>
                     <CardDescription>
@@ -222,7 +223,9 @@ export default function AddProductPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="lg:col-span-3">
+              </div>
+              <div className="grid gap-4 lg:col-span-1">
+                <Card>
                   <CardHeader>
                     <CardTitle>Product Image</CardTitle>
                   </CardHeader>
@@ -268,14 +271,6 @@ export default function AddProductPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-              <div className="flex items-center justify-center gap-2 md:hidden">
-                <Link href="/seller/dashboard/products" legacyBehavior>
-                  <Button variant="outline">Cancel</Button>
-                </Link>
-                <Button onClick={handleSubmit} disabled={isLoading}>
-                  Save Product
-                </Button>
               </div>
             </form>
           </main>
