@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
@@ -48,25 +49,32 @@ export default function ProductChat() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImage({ url: e.target?.result as string, file });
+        const imageUrl = e.target?.result as string;
+        const uploadedImage = { url: imageUrl, file: file };
+        setImage(uploadedImage);
+        // Automatically submit when an image is uploaded
+        handleSubmit(undefined, uploadedImage);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent, uploadedImage?: { url: string, file: File }) => {
     e?.preventDefault();
-    if (!input && !image) return;
+    
+    const currentInput = input;
+    const currentImage = uploadedImage || image;
+
+    if (!currentInput && !currentImage) return;
 
     setIsLoading(true);
     
     const userContent: { text?: string; media?: { url: string } }[] = [];
-    if (input) {
-      userContent.push({ text: input });
+    if (currentInput) {
+      userContent.push({ text: currentInput });
     }
-    if (image) {
-      const dataUri = await fileToDataUri(image.file);
-      userContent.push({ media: { url: dataUri } });
+    if (currentImage) {
+      userContent.push({ media: { url: currentImage.url } });
     }
 
     const newUserMessage: Message = { role: 'user', content: userContent };
@@ -76,7 +84,26 @@ export default function ProductChat() {
     setImage(null);
 
     try {
-      const result = await createProductChat({ history: newMessages });
+      const historyForApi: { role: 'user' | 'model'; content: { text?: string; media?: { url: string; } }[] }[] = [];
+      const tempNewMessages = [...newMessages];
+
+      // Add file data for the last user message if it contains an image
+      const lastMessage = tempNewMessages[tempNewMessages.length - 1];
+      if (lastMessage.role === 'user' && currentImage?.file && lastMessage.content.some(c => c.media)) {
+          const dataUri = await fileToDataUri(currentImage.file);
+          const contentForApi = lastMessage.content.map(part => 
+              part.media ? { media: { url: dataUri } } : part
+          );
+          historyForApi.push({ role: 'user', content: contentForApi });
+      } else {
+          historyForApi.push(...tempNewMessages.map(msg => ({
+              role: msg.role,
+              content: msg.content.map(part => part.product ? { text: part.text } : part) // filter out product data
+          })));
+      }
+
+
+      const result = await createProductChat({ history: historyForApi });
 
       if (result) {
         const modelMessage: Message = { role: 'model', content: [{ text: result.response }] };
@@ -228,3 +255,5 @@ export default function ProductChat() {
     </div>
   );
 }
+
+    
