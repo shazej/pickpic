@@ -50,13 +50,13 @@ export default function SellerDashboard() {
             </SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton href="#" isActive>
+                <SidebarMenuButton href="/seller/dashboard" isActive>
                   <Home className="h-5 w-5" />
                   <span>Dashboard</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton href="#">
+                <SidebarMenuButton href="/seller/dashboard/products">
                   <Package className="h-5 w-5" />
                   <span>Products</span>
                 </SidebarMenuButton>
