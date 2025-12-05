@@ -5,7 +5,7 @@ import { LocationProvider } from '@/hooks/use-location';
 import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
-  title: 'See & Seek',
+  title: 'Ecomm Now',
   description: 'Upload an image to find products sold by nearby sellers.',
 };
 
@@ -35,3 +35,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    

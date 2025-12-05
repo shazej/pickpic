@@ -52,7 +52,7 @@ function SellersPageContent() {
         </Button>
         <div className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">See & Seek</span>
+          <span className="text-xl font-headline">Ecomm Now</span>
         </div>
       </header>
 
@@ -98,3 +98,5 @@ export default function SellersPage() {
         </Suspense>
     )
 }
+
+    

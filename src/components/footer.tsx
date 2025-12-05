@@ -68,7 +68,7 @@ export default function Footer() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Email Support</p>
-                                    <a href="mailto:support@4sale.tech" className="font-semibold text-foreground hover:text-primary">support@4sale.tech</a>
+                                    <a href="mailto:support@ecomm.com" className="font-semibold text-foreground hover:text-primary">support@ecomm.com</a>
                                 </div>
                             </div>
                              <div className="flex items-center gap-3">
@@ -77,7 +77,7 @@ export default function Footer() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Phone Support</p>
-                                    <a href="tel:+9651844474" className="font-semibold text-foreground hover:text-primary">+965 1844474</a>
+                                    <a href="tel:9899454545" className="font-semibold text-foreground hover:text-primary">9899454545</a>
                                 </div>
                             </div>
                         </div>
@@ -88,9 +88,9 @@ export default function Footer() {
             <div className="container mx-auto px-6 py-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div>
-                        <h3 className="text-2xl font-bold text-primary mb-4">4SALE</h3>
-                        <p className="text-sm mb-4 text-muted-foreground">Buy everything from cars, electronics, property and more in Kuwait on 4Sale.</p>
-                        <p className="text-sm mb-4 text-muted-foreground">Download 4Sale on iOS and Android and make Buying, Selling & Renting easy everywhere you go!</p>
+                        <h3 className="text-2xl font-bold text-primary mb-4">Ecomm Now</h3>
+                        <p className="text-sm mb-4 text-muted-foreground">Buy and sell everything from cars, electronics, property and more on Ecomm Now.</p>
+                        <p className="text-sm mb-4 text-muted-foreground">Download Ecomm Now on iOS and Android and make Buying & Selling easy everywhere you go!</p>
                         <p className="font-semibold mb-2">Download our app</p>
                         <div className="flex gap-2">
                             <Link href="#">
@@ -134,7 +134,7 @@ export default function Footer() {
 
             <div className="border-t">
                 <div className="container mx-auto px-6 py-4 flex flex-wrap justify-between items-center text-sm">
-                    <p className="text-muted-foreground mb-4 md:mb-0">&copy; All Rights Reserved by 4Sale 2025</p>
+                    <p className="text-muted-foreground mb-4 md:mb-0">&copy; All Rights Reserved by Ecomm Now 2025</p>
                     <div className="flex gap-2">
                         {socialLinks.map(social => (
                             <Link key={social.name} href={social.href} className="text-muted-foreground hover:text-primary bg-muted/50 p-2 rounded-full">
@@ -148,3 +148,5 @@ export default function Footer() {
         </footer>
     );
 }
+
+    

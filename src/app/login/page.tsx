@@ -24,7 +24,7 @@ export default function LoginPage() {
         </Button>
         <div className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">See & Seek</span>
+          <span className="text-xl font-headline">Ecomm Now</span>
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center p-4">
@@ -57,3 +57,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

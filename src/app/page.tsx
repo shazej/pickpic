@@ -112,7 +112,7 @@ export default function Home() {
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
             <Link href="/" className="text-2xl font-bold text-primary">
-              4SALE
+              Ecomm Now
             </Link>
           <div className="flex-1 px-8 max-w-xl">
             <div className="relative">
@@ -186,8 +186,8 @@ export default function Home() {
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
                      <div className="text-center text-white p-8">
-                        <h2 className="text-5xl font-bold mb-2">ما تقول بيعها</h2>
-                        <h3 className="text-6xl font-bold text-yellow-400">قول فورسيلها</h3>
+                        <h2 className="text-5xl font-bold mb-2">Your Store, Your Way</h2>
+                        <h3 className="text-6xl font-bold text-yellow-400">Ecomm Now</h3>
                      </div>
                   </div>
                 </div>
@@ -301,3 +301,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

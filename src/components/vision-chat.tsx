@@ -159,7 +159,7 @@ export default function VisionChat() {
   const InitialState = () => (
     <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-muted/20">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-headline">See & Seek</h1>
+        <h1 className="text-3xl font-bold font-headline">Ecomm Now</h1>
         <p className="text-muted-foreground mt-2 max-w-md mx-auto">Upload a photo of a product to see if we have it in our catalog, or just ask a question.</p>
       </div>
       
@@ -260,5 +260,7 @@ export default function VisionChat() {
     </div>
   );
 }
+
+    
 
     
