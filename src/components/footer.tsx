@@ -28,7 +28,8 @@ const footerLinks = {
         { name: 'My Payments', href: '#' },
         { name: 'Followers', href: '#' },
         { name: 'Seller Dashboard', href: '/seller/dashboard' },
-        { name: 'Become a Seller', href: '/seller/signup' },
+        { name: 'Seller Login', href: '/seller/login' },
+        { name: 'Seller Signup', href: '/seller/signup' },
     ],
     information: [
         { name: 'About Us', href: '#' },
