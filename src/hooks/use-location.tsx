@@ -1,7 +1,9 @@
+
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Coordinates } from '@/lib/types';
+import { useToast } from './use-toast';
 
 interface LocationContextType {
   location: Coordinates | null;
@@ -12,6 +14,7 @@ interface LocationContextType {
   isPrompted: boolean;
   requestLocation: () => void;
   setAsPrompted: () => void;
+  searchLocationByAddress: (address: string) => Promise<boolean>;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -23,6 +26,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [city, setCity] = useState<string | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [isPrompted, setIsPrompted] = useState(false);
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -37,19 +41,31 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setIsPrompted(true);
   }
 
+  const updateLocationDetails = (coords: Coordinates, addressData: any) => {
+    setLocation(coords);
+    
+    const addressComponents = addressData.address_components;
+    const cityComp = addressComponents.find((c: any) => c.types.includes('locality') || c.types.includes('postal_town'));
+    const countryComp = addressComponents.find((c: any) => c.types.includes('country'));
+    
+    setCity(cityComp ? cityComp.long_name : (addressData.formatted_address || ''));
+    setCountry(countryComp ? countryComp.short_name : '');
+  };
+
   const fetchCityAndCountry = async (coords: Coordinates) => {
     try {
         const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
         const data = await response.json();
         if (data.results && data.results.length > 0) {
-            const addressComponents = data.results[0].address_components;
-            const cityComp = addressComponents.find((c: any) => c.types.includes('locality') || c.types.includes('postal_town'));
-            const countryComp = addressComponents.find((c: any) => c.types.includes('country'));
-            if(cityComp) setCity(cityComp.long_name);
-            if(countryComp) setCountry(countryComp.short_name);
+            updateLocationDetails(coords, data.results[0]);
         }
     } catch (e) {
         console.error("Failed to fetch city and country", e);
+        toast({
+            variant: "destructive",
+            title: "Geocoding Error",
+            description: "Could not fetch location details.",
+        });
     }
   };
 
@@ -59,6 +75,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by your browser.');
       setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Geolocation Not Supported",
+        description: "Your browser does not support geolocation.",
+      });
       return;
     }
 
@@ -67,7 +88,6 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
       };
-      setLocation(newLocation);
       fetchCityAndCountry(newLocation);
       setLoading(false);
     };
@@ -75,6 +95,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     const onError = (error: GeolocationPositionError) => {
       setError(`Geolocation error: ${error.message}`);
       setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Geolocation Error",
+        description: error.message,
+      });
     };
 
     navigator.geolocation.getCurrentPosition(onSuccess, onError, {
@@ -84,8 +109,44 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const searchLocationByAddress = async (address: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+      const data = await response.json();
+      if (data.status === 'OK' && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        const newLocation = { lat, lng };
+        updateLocationDetails(newLocation, data.results[0]);
+        setLoading(false);
+        return true;
+      } else {
+        setError(data.error_message || 'Could not find the location. Please try a different search term.');
+        setLoading(false);
+        toast({
+            variant: "destructive",
+            title: "Location Not Found",
+            description: "Please check your entry and try again.",
+        });
+        return false;
+      }
+    } catch (e) {
+      console.error("Failed to search location", e);
+      setError('An error occurred while searching for the location.');
+      setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Search Error",
+        description: "An unexpected error occurred. Please try again later.",
+      });
+      return false;
+    }
+  };
+
+
   return (
-    <LocationContext.Provider value={{ location, error, loading, city, country, requestLocation, isPrompted, setAsPrompted }}>
+    <LocationContext.Provider value={{ location, error, loading, city, country, requestLocation, isPrompted, setAsPrompted, searchLocationByAddress }}>
       {children}
     </LocationContext.Provider>
   );
