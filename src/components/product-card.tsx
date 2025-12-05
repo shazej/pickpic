@@ -11,12 +11,10 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const params = new URLSearchParams({
-    productName: product.name
-  });
+  const encodedProductName = encodeURIComponent(product.name);
   
   return (
-    <Link href={`/sellers?${params.toString()}`} className="group">
+    <Link href={`/product/${encodedProductName}`} className="group">
       <Card className="overflow-hidden h-full flex flex-col">
         <CardContent className="p-0 flex-grow flex flex-col">
           <div className="aspect-square relative w-full">
