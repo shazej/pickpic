@@ -16,7 +16,7 @@ export default function VisionSearchPage() {
         </Button>
         <div className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">See & Seek</span>
+          <span className="text-xl font-headline">Visual Search</span>
         </div>
       </header>
       <main className="flex-1 overflow-hidden">

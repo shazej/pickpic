@@ -43,6 +43,7 @@ const prompt = ai.definePrompt(
 - Read the user's question.
 - Provide a clear, concise, and helpful answer.
 - If the user's question is unrelated to the image, politely steer the conversation back to the visual context.
+- If the user provides an image without a question, provide a brief, interesting description of what you see in the image.
 
 Analyze the chat history and the image to provide your response.
 `,
