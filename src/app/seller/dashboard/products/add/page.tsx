@@ -19,7 +19,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import ProductChat from '@/components/product-chat';
+import AddProductForm from '@/components/add-product-form';
 
 export default function AddProductPage() {
   return (
@@ -84,8 +84,14 @@ export default function AddProductPage() {
           </SidebarFooter>
         </Sidebar>
         <div className="flex flex-1 flex-col h-screen">
-          <main className="flex-1 flex flex-col p-0 sm:p-0 overflow-hidden">
-            <ProductChat />
+          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-20">
+             <SidebarTrigger className="md:hidden" />
+             <div className="w-full flex-1">
+                <h1 className="text-lg font-semibold md:text-2xl">Add New Product</h1>
+              </div>
+          </header>
+          <main className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">
+            <AddProductForm />
           </main>
         </div>
       </div>
