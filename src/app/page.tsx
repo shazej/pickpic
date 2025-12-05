@@ -9,20 +9,12 @@ import { products as allProducts } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ProductCard } from '@/components/product-card';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import ProductFinder from '@/components/product-finder';
 import LocationPrompt from '@/components/location-prompt';
 import { useLocation } from '@/hooks/use-location';
 
@@ -104,22 +96,13 @@ export default function Home() {
         </div>
       </main>
 
-      <Sheet>
-        <SheetTrigger asChild>
-            <Button size="icon" className="fixed bottom-28 right-6 h-16 w-16 rounded-full shadow-lg z-40 md:bottom-6">
-                <Camera className="h-8 w-8" />
-                <span className="sr-only">Find by image</span>
-            </Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-[90%] flex flex-col">
-          <SheetHeader>
-            <SheetTitle className="text-center text-2xl font-headline">Find a Product</SheetTitle>
-          </SheetHeader>
-          <div className="flex-grow min-h-0">
-             <ProductFinder />
-          </div>
-        </SheetContent>
-      </Sheet>
+       <Link href="/vision-search">
+        <Button size="icon" className="fixed bottom-28 right-6 h-16 w-16 rounded-full shadow-lg z-40 md:bottom-6">
+            <Camera className="h-8 w-8" />
+            <span className="sr-only">Find by image</span>
+        </Button>
+      </Link>
+
 
       <footer className="border-t bg-card py-6 px-4 md:px-6 mt-6">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
