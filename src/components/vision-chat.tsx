@@ -108,7 +108,7 @@ export default function VisionChat() {
             const dataUri = await fileToDataUri(currentImage.file);
             const productDetails = await extractProductDetails({ photoDataUri: dataUri });
 
-            const foundProduct = products.find(p => p.name.toLowerCase() === productDetails.productName.toLowerCase());
+            const foundProduct = products.find(p => p.name.toLowerCase().includes(productDetails.productName.toLowerCase()));
 
             if (foundProduct) {
                 modelResponse = {
@@ -221,7 +221,7 @@ export default function VisionChat() {
             <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
               <Paperclip className="h-5 w-5" />
             </Button>
-            <Button type="submit" size="icon" disabled={isLoading || !input}>
+            <Button type="submit" size="icon" disabled={isLoading || (!input && !image)}>
               <Send className="h-5 w-5" />
             </Button>
           </div>
