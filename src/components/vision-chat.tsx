@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, ChangeEvent, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { fileToDataUri } from '@/lib/utils';
 import { visionChat } from '@/ai/flows/vision-chat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { extractProductDetails } from '@/ai/flows/extract-product-details';
-import { products } from '@/lib/data';
+import { products as allProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
 import { ProductCard } from './product-card';
 
@@ -28,6 +29,7 @@ type Message = {
 
 export default function VisionChat() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -40,7 +42,7 @@ export default function VisionChat() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, suggestedProducts]);
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -48,6 +50,7 @@ export default function VisionChat() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
+        setSuggestedProducts([]); // Clear previous suggestions
         handleSubmit(undefined, { url: imageUrl, file });
       };
       reader.readAsDataURL(file);
@@ -78,12 +81,10 @@ export default function VisionChat() {
     try {
         const historyForApi: { role: 'user' | 'model'; content: { text?: string; media?: { url: string; } }[] }[] = [];
 
-        // Reconstruct history for the API, converting blobs to data URIs
         for (const msg of newMessages) {
             const contentForApi = [];
             if (msg.role === 'user' && currentImage?.file && msg.content.some(c => c.media)) {
                 const dataUri = await fileToDataUri(currentImage.file);
-                // Find the media part and replace its URL
                 for (const part of msg.content) {
                     if (part.media) {
                         contentForApi.push({ media: { url: dataUri } });
@@ -92,9 +93,8 @@ export default function VisionChat() {
                     }
                 }
             } else {
-                // For model messages or user messages without new images
                 for (const part of msg.content) {
-                    if (part.text) {
+                    if (part.text && part.text.trim()) { // Ensure not to send empty text parts
                         contentForApi.push({ text: part.text });
                     }
                 }
@@ -106,12 +106,11 @@ export default function VisionChat() {
         
         let modelResponse: Message;
 
-        // Special logic for first image upload to find product
-        if(currentImage && (!messages.some(m => m.content.some(c => c.media)))) {
+        if(currentImage && (!messages.some(m => m.content.some(c => c.media))) || (currentImage && input)) {
             const dataUri = await fileToDataUri(currentImage.file);
             const productDetails = await extractProductDetails({ photoDataUri: dataUri });
 
-            const foundProduct = products.find(p => p.name.toLowerCase().includes(productDetails.productName.toLowerCase()));
+            const foundProduct = allProducts.find(p => p.name.toLowerCase().includes(productDetails.productName.toLowerCase()));
 
             if (foundProduct) {
                 modelResponse = {
@@ -121,6 +120,12 @@ export default function VisionChat() {
                     { product: foundProduct }
                     ]
                 };
+
+                // Get 3 random suggested products
+                const otherProducts = allProducts.filter(p => p.name !== foundProduct.name);
+                const shuffled = otherProducts.sort(() => 0.5 - Math.random());
+                setSuggestedProducts(shuffled.slice(0, 3));
+
             } else {
                 modelResponse = {
                     role: 'model',
@@ -128,11 +133,12 @@ export default function VisionChat() {
                     { text: `I identified a "${productDetails.productName}" in your image, but I couldn't find an exact match in our product catalog. You can ask me other questions about it though!` }
                     ]
                 };
+                setSuggestedProducts([]);
             }
         } else {
-             // General vision chat for follow-ups or text-only queries
             const result = await visionChat({ history: historyForApi });
             modelResponse = { role: 'model', content: [{ text: result.response }] };
+            setSuggestedProducts([]);
         }
         
         setMessages([...newMessages, modelResponse]);
@@ -144,7 +150,6 @@ export default function VisionChat() {
         title: 'Error',
         description: 'Something went wrong. Please try again.',
       });
-      // Roll back the user message if the API call fails
       setMessages(messages);
     } finally {
       setIsLoading(false);
@@ -179,7 +184,7 @@ export default function VisionChat() {
                   <AvatarFallback><Sparkles className="w-4 h-4 text-primary" /></AvatarFallback>
                 </Avatar>
               )}
-              <div className={`flex flex-col gap-2 max-w-lg ${msg.role === 'user' ? 'items-end' : ''}`}>
+              <div className={`flex flex-col gap-2 max-w-lg ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 {msg.content.map((part, i) => (
                   <div key={i} className={`rounded-lg ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                     {part.text && <p className="text-sm whitespace-pre-wrap px-4 py-2">{part.text}</p>}
@@ -210,6 +215,27 @@ export default function VisionChat() {
             </div>
           </div>
         )}
+
+        {suggestedProducts.length > 0 && (
+          <div className="pt-6">
+             <div className="flex items-start gap-4">
+                <Avatar className="w-8 h-8 border">
+                    <AvatarFallback><Sparkles className="w-4 h-4 text-primary" /></AvatarFallback>
+                </Avatar>
+                <div className='flex flex-col gap-2 max-w-lg'>
+                    <div className="bg-muted rounded-lg p-4">
+                        <h3 className="font-semibold text-sm mb-2 text-foreground">You might also like...</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {suggestedProducts.map(product => (
+                            <ProductCard key={product.name} product={product} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
+
       </div>
       <div className="border-t p-4 bg-background">
         <form onSubmit={handleSubmit} className="relative">
@@ -234,3 +260,5 @@ export default function VisionChat() {
     </div>
   );
 }
+
+    
