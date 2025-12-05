@@ -50,38 +50,48 @@ export default function SellerDashboard() {
             </SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton href="/seller/dashboard" isActive>
-                  <Home className="h-5 w-5" />
-                  <span>Dashboard</span>
-                </SidebarMenuButton>
+                <Link href="/seller/dashboard" passHref legacyBehavior>
+                    <SidebarMenuButton as="a" isActive>
+                    <Home className="h-5 w-5" />
+                    <span>Dashboard</span>
+                    </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton href="/seller/dashboard/products">
-                  <Package className="h-5 w-5" />
-                  <span>Products</span>
-                </SidebarMenuButton>
+                 <Link href="/seller/dashboard/products" passHref legacyBehavior>
+                    <SidebarMenuButton as="a">
+                    <Package className="h-5 w-5" />
+                    <span>Products</span>
+                    </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <SidebarMenuButton href="#">
-                  <Users className="h-5 w-5" />
-                  <span>Customers</span>
-                </SidebarMenuButton>
+                <Link href="#" passHref legacyBehavior>
+                    <SidebarMenuButton as="a">
+                    <Users className="h-5 w-5" />
+                    <span>Customers</span>
+                    </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <SidebarMenuButton href="#">
-                  <BarChart className="h-5 w-5" />
-                  <span>Analytics</span>
-                </SidebarMenuButton>
+                 <Link href="#" passHref legacyBehavior>
+                    <SidebarMenuButton as="a">
+                    <BarChart className="h-5 w-5" />
+                    <span>Analytics</span>
+                    </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>
-                 <SidebarMenuButton href="/">
-                    <LogOut className="h-5 w-5" />
-                    <span>Logout</span>
-                </SidebarMenuButton>
+                 <Link href="/" passHref legacyBehavior>
+                    <SidebarMenuButton as="a">
+                        <LogOut className="h-5 w-5" />
+                        <span>Logout</span>
+                    </SidebarMenuButton>
+                 </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
