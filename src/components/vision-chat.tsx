@@ -3,18 +3,22 @@
 import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Paperclip, Send, Loader2, Search, Package, Sparkles } from 'lucide-react';
+import { Paperclip, Send, Loader2, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUri } from '@/lib/utils';
 import { visionChat } from '@/ai/flows/vision-chat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { identifyProduct } from '@/ai/flows/product-identification';
+import { extractProductDetails } from '@/ai/flows/extract-product-details';
+import { products } from '@/lib/data';
+import type { Product } from '@/lib/types';
+import { ProductCard } from './product-card';
 
 type MessageContent = {
   text?: string;
   media?: { url: string };
+  product?: Product;
 };
 
 type Message = {
@@ -44,9 +48,10 @@ export default function VisionChat() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImage({ url: e.target?.result as string, file });
+        const imageUrl = e.target?.result as string;
+        setImage({ url: imageUrl, file });
         // Automatically submit after image selection
-        handleSubmit(undefined, { url: e.target?.result as string, file });
+        handleSubmit(undefined, { url: imageUrl, file });
       };
       reader.readAsDataURL(file);
     }
@@ -75,28 +80,37 @@ export default function VisionChat() {
 
     try {
       if(currentImage && messages.length === 0) {
-        // First message with an image, let's identify it first
         const dataUri = await fileToDataUri(currentImage.file);
-        const result = await identifyProduct({ photoDataUri: dataUri });
+        const result = await extractProductDetails({ photoDataUri: dataUri });
 
-        if (result.productName) {
-           const params = new URLSearchParams({
-            productName: result.productName,
-            confidence: (result.confidence * 100).toFixed(0),
-          });
-          router.push(`/sellers?${params.toString()}`);
-          return; // Redirect and stop further processing
+        const foundProduct = products.find(p => p.name.toLowerCase() === result.productName.toLowerCase());
+
+        let modelResponse: Message;
+
+        if (foundProduct) {
+          modelResponse = {
+            role: 'model',
+            content: [
+              { text: `I found a "${result.productName}" for you! Here are the details:` },
+              { product: foundProduct }
+            ]
+          };
+        } else {
+           modelResponse = {
+            role: 'model',
+            content: [
+              { text: `I identified a "${result.productName}" in your image, but I couldn't find an exact match in our product catalog right now.` }
+            ]
+          };
         }
-      }
+        setMessages([...newMessages, modelResponse]);
 
-      // If not identified as a product or it's a follow-up, use general vision chat
-      const historyWithDataUri = await Promise.all(
-        newMessages.map(async (msg) => {
-          if (msg.role === 'user') {
+      } else {
+        // Fallback to general vision chat for follow-up questions
+        const historyWithDataUri = await Promise.all(
+          newMessages.map(async (msg) => {
             const userImage = msg.content.find(c => c.media)?.media;
             if(userImage && userImage.url.startsWith('blob:')) {
-                // This is a complex case. For this component, we assume the user uploaded image is always the first.
-                // A more robust implementation would store the File object with the message.
                 const firstUserImageFile = (uploadedImage || image)?.file;
                 if(firstUserImageFile) {
                     const dataUri = await fileToDataUri(firstUserImageFile);
@@ -106,17 +120,16 @@ export default function VisionChat() {
                     };
                 }
             }
-          }
-          return msg;
-        })
-      );
+            return msg;
+          })
+        );
 
-
-      const result = await visionChat({ history: historyWithDataUri as any });
-      
-      if (result) {
-        const modelMessage: Message = { role: 'model', content: [{ text: result.response }] };
-        setMessages([...newMessages, modelMessage]);
+        const result = await visionChat({ history: historyWithDataUri.filter(m => !m.content.some(c => c.product)) as any });
+        
+        if (result) {
+          const modelMessage: Message = { role: 'model', content: [{ text: result.response }] };
+          setMessages([...newMessages, modelMessage]);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -125,7 +138,6 @@ export default function VisionChat() {
         title: 'Error',
         description: 'Something went wrong. Please try again.',
       });
-      // Restore previous state on error
       setMessages(messages);
     } finally {
       setIsLoading(false);
@@ -136,12 +148,12 @@ export default function VisionChat() {
     <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-muted/20">
       <div className="mb-8">
         <h1 className="text-3xl font-bold font-headline">See & Seek</h1>
-        <p className="text-muted-foreground mt-2 max-w-md mx-auto">Upload a photo to find where a product is sold, or ask any question about an image.</p>
+        <p className="text-muted-foreground mt-2 max-w-md mx-auto">Upload a photo of a product to see if we have it in our catalog.</p>
       </div>
       
        <div className="flex flex-col items-center justify-center p-4 rounded-lg">
           <Search className="h-16 w-16 text-muted-foreground/30 mb-4" />
-          <p className="font-medium text-lg">Your conversation starts here</p>
+          <p className="font-medium text-lg">Your product search starts here</p>
           <p className="text-sm text-muted-foreground">Upload an image or type a message below.</p>
       </div>
     </div>
@@ -162,9 +174,14 @@ export default function VisionChat() {
               )}
               <div className={`flex flex-col gap-2 max-w-lg ${msg.role === 'user' ? 'items-end' : ''}`}>
                 {msg.content.map((part, i) => (
-                  <div key={i} className={`rounded-lg px-4 py-2 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    {part.text && <p className="text-sm whitespace-pre-wrap">{part.text}</p>}
-                    {part.media && <Image src={part.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md mt-2" />}
+                  <div key={i} className={`rounded-lg ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                    {part.text && <p className="text-sm whitespace-pre-wrap px-4 py-2">{part.text}</p>}
+                    {part.media && <Image src={part.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md m-2" />}
+                    {part.product && (
+                      <div className="w-64 p-2">
+                        <ProductCard product={part.product} />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
