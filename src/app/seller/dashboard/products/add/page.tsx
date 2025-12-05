@@ -167,9 +167,9 @@ export default function AddProductPage() {
                 </h1>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Button variant="outline" asChild>
-                <Link href="/seller/dashboard/products">Cancel</Link>
-              </Button>
+              <Link href="/seller/dashboard/products">
+                <Button variant="outline">Cancel</Button>
+              </Link>
               <Button onClick={handleSubmit} disabled={isLoading}>
                 Save Product
               </Button>
