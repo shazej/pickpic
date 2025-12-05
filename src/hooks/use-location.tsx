@@ -27,9 +27,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [country, setCountry] = useState<string | null>(null);
   const [isPrompted, setIsPrompted] = useState(false);
   const { toast } = useToast();
-
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
   useEffect(() => {
+     setApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null);
      const prompted = sessionStorage.getItem('locationPrompted');
      if(prompted) {
         setIsPrompted(true);
@@ -53,9 +54,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchCityAndCountry = async (coords: Coordinates) => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      console.error("Google Maps API Key is missing.");
       toast({ variant: "destructive", title: "Configuration Error", description: "Google Maps API Key is missing." });
       return;
     }
@@ -116,9 +115,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   };
 
   const searchLocationByAddress = async (address: string): Promise<boolean> => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      console.error("Google Maps API Key is missing.");
       toast({ variant: "destructive", title: "Configuration Error", description: "Google Maps API Key is missing." });
       return false;
     }
