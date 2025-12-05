@@ -84,13 +84,13 @@ export default function AddProductPage() {
           </SidebarFooter>
         </Sidebar>
         <div className="flex flex-1 flex-col h-screen">
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-20">
-             <SidebarTrigger className="md:hidden" />
-             <div className="w-full flex-1">
-                <h1 className="text-lg font-semibold md:text-2xl">Add New Product</h1>
-              </div>
-          </header>
           <main className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">
+             <div className="flex items-center gap-4 mb-4">
+                <SidebarTrigger className="md:hidden" />
+                <div className="w-full flex-1">
+                    <h1 className="text-lg font-semibold md:text-2xl">Add New Product</h1>
+                </div>
+            </div>
             <AddProductForm />
           </main>
         </div>

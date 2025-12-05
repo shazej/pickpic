@@ -96,21 +96,21 @@ export default function SellerProductsPage() {
           </SidebarFooter>
         </Sidebar>
         <div className="flex flex-1 flex-col">
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-20">
-             <SidebarTrigger className="md:hidden" />
-             <div className="w-full flex-1">
-                <h1 className="text-lg font-semibold md:text-2xl">Products</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <Link href="/seller/dashboard/products/add">
-                    <Button>
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Add Product
-                    </Button>
-                </Link>
-              </div>
-          </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="md:hidden" />
+              <div className="w-full flex-1">
+                  <h1 className="text-lg font-semibold md:text-2xl">Products</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link href="/seller/dashboard/products/add">
+                      <Button>
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                          Add Product
+                      </Button>
+                  </Link>
+                </div>
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle>Your Products</CardTitle>

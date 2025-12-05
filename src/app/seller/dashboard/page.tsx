@@ -96,13 +96,11 @@ export default function SellerDashboard() {
           </SidebarFooter>
         </Sidebar>
         <div className="flex flex-1 flex-col">
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-20">
-             <SidebarTrigger className="md:hidden" />
-             <div className="w-full flex-1">
-                <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
-              </div>
-          </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            <div className='flex items-center gap-4'>
+                <SidebarTrigger className="md:hidden" />
+                <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
+            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
