@@ -107,7 +107,7 @@ export default function Home() {
     const bannerImages = PlaceHolderImages.filter(img => img.id.startsWith('banner-'));
 
   return (
-    <div className="min-h-screen w-full bg-background font-body text-foreground">
+    <div className="w-full bg-background font-body text-foreground">
       <LocationPrompt />
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -165,7 +165,7 @@ export default function Home() {
         </nav>
       </header>
 
-      <main className="container mx-auto p-4 md:p-6 space-y-8">
+      <div className="container mx-auto p-4 md:p-6 space-y-8">
         <Carousel
           opts={{
             align: "start",
@@ -290,7 +290,7 @@ export default function Home() {
             </Carousel>
         </div>
 
-      </main>
+      </div>
 
        <Link href="/vision-search">
         <Button size="icon" className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90">
@@ -301,5 +301,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

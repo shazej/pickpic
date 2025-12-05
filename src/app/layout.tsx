@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LocationProvider } from '@/hooks/use-location';
+import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'See & Seek',
@@ -22,7 +23,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
         <LocationProvider>
-          {children}
+          <div className="flex flex-col min-h-screen">
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </div>
         </LocationProvider>
         <Toaster />
       </body>
