@@ -13,6 +13,18 @@
       "imageHint": "sale banner"
     },
     {
+      "id": "banner-2",
+      "description": "A banner advertising new arrivals",
+      "imageUrl": "https://images.unsplash.com/photo-1481437156560-3205f6a85705?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxuZXclMjBhc3JpdmFsc3xlbnwwfHx8fDE3NzE2NTQ4NDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "new arrivals"
+    },
+    {
+      "id": "banner-3",
+      "description": "A banner highlighting local sellers",
+      "imageUrl": "https://images.unsplash.com/photo-1528605248644-eff480b02bf1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYXJrZXQlMjBzdGFsbHxlbnwwfHx8fDE3NzE2NTQ4NDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "local market"
+    },
+    {
       "id": "product-headphones",
       "description": "Wireless headphones on a colorful background",
       "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3aXJlbGVzcyUyMGhlYWRwaG9uZXN8ZW58MHx8fHwxNzYyNjE1MzYxfDA&ixlib=rb-4.1.0&q=80&w=1080",

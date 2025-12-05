@@ -15,13 +15,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import ProductFinder from '@/components/product-finder';
 import LocationPrompt from '@/components/location-prompt';
 import { useLocation } from '@/hooks/use-location';
 
 export default function Home() {
     const latestProducts = allProducts.slice(0, 4);
-    const bannerImage = PlaceHolderImages.find(img => img.id === 'banner-1');
+    const bannerImages = PlaceHolderImages.filter(img => img.id.startsWith('banner-'));
     const { city, country } = useLocation();
 
   return (
@@ -61,17 +68,31 @@ export default function Home() {
           />
         </div>
         
-        {bannerImage && (
-            <div className="aspect-video md:aspect-[3/1] rounded-lg overflow-hidden relative w-full">
-                <Image
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full"
+        >
+          <CarouselContent>
+            {bannerImages.map((bannerImage) => (
+              <CarouselItem key={bannerImage.id}>
+                <div className="aspect-video md:aspect-[3/1] rounded-lg overflow-hidden relative w-full">
+                  <Image
                     src={bannerImage.imageUrl}
                     alt={bannerImage.description}
                     fill
                     className="object-cover"
                     data-ai-hint={bannerImage.imageHint}
-                />
-            </div>
-        )}
+                  />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
+        </Carousel>
 
         <div>
             <h2 className="text-2xl font-bold font-headline mb-4">Latest Products</h2>
