@@ -22,7 +22,7 @@ import { useLocation } from '@/hooks/use-location';
 export default function Home() {
     const latestProducts = allProducts.slice(0, 4);
     const bannerImage = PlaceHolderImages.find(img => img.id === 'banner-1');
-    const { location, city, country } = useLocation();
+    const { city, country } = useLocation();
 
   return (
     <div className="min-h-screen w-full bg-background font-body text-foreground">
@@ -85,7 +85,7 @@ export default function Home() {
 
       <Sheet>
         <SheetTrigger asChild>
-            <Button size="icon" className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-40">
+            <Button size="icon" className="fixed bottom-28 right-6 h-16 w-16 rounded-full shadow-lg z-40 md:bottom-6">
                 <Camera className="h-8 w-8" />
                 <span className="sr-only">Find by image</span>
             </Button>
@@ -99,6 +99,23 @@ export default function Home() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <footer className="border-t py-4 px-4 md:px-6 mt-6 bg-background/95">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className='text-center md:text-left'>
+                <h3 className="font-semibold text-lg">Buyer Panel</h3>
+                <p className="text-sm text-muted-foreground">Manage your purchases and profile.</p>
+            </div>
+            <div className="flex items-center gap-4">
+                <Link href="/seller/login">
+                    <Button variant="outline">Login as a Seller</Button>
+                </Link>
+                <Link href="/seller/signup">
+                    <Button>Sign up as a Seller</Button>
+                </Link>
+            </div>
+        </div>
+      </footer>
 
     </div>
   );
