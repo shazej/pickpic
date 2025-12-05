@@ -89,8 +89,10 @@ export default function SellerProductsPage() {
         <SidebarInset>
           <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
              <SidebarTrigger className="md:hidden" />
-             <div className="w-full flex-1 flex items-center justify-between">
+             <div className="w-full flex-1">
                 <h1 className="text-lg font-semibold md:text-2xl">Products</h1>
+              </div>
+              <div className="flex items-center gap-2">
                 <Link href="/seller/dashboard/products/add">
                     <Button>
                         <PlusCircle className="h-4 w-4 mr-2" />
