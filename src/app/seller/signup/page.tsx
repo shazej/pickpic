@@ -27,6 +27,7 @@ export default function SellerSignupPage() {
           footerText="Already have a seller account?"
           footerLink="/seller/login"
           footerLinkText="Log In"
+          isLogin={false}
         />
       </main>
     </div>
