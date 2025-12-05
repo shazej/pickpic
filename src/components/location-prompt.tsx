@@ -84,7 +84,11 @@ export default function LocationPrompt() {
                 value={manualLocation}
                 onChange={(e) => setManualLocation(e.target.value)}
                 disabled={loading}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
               />
               <Button onClick={handleSearch} disabled={loading || !manualLocation} variant="secondary">
                 <Search className="h-4 w-4" />

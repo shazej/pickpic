@@ -53,8 +53,14 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchCityAndCountry = async (coords: Coordinates) => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.error("Google Maps API Key is missing.");
+      toast({ variant: "destructive", title: "Configuration Error", description: "Google Maps API Key is missing." });
+      return;
+    }
     try {
-        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
         const data = await response.json();
         if (data.results && data.results.length > 0) {
             updateLocationDetails(coords, data.results[0]);
@@ -110,10 +116,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   };
 
   const searchLocationByAddress = async (address: string): Promise<boolean> => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.error("Google Maps API Key is missing.");
+      toast({ variant: "destructive", title: "Configuration Error", description: "Google Maps API Key is missing." });
+      return false;
+    }
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`);
       const data = await response.json();
       if (data.status === 'OK' && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
