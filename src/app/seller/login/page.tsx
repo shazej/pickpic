@@ -1,25 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Package2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { SellerAuthCard } from '@/components/seller-auth-card';
+import { Package2 } from 'lucide-react';
 
 export default function SellerLoginPage() {
   return (
-    <div className="min-h-screen w-full bg-background flex flex-col">
-       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
-        <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
-                <ArrowLeft />
-            </Link>
-        </Button>
-        <div className="flex items-center gap-2 font-semibold">
-          <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">Ecomm Now</span>
+    <div className="min-h-screen w-full bg-muted/40 flex flex-col items-center justify-center p-4">
+       <div className="absolute top-8 left-8 flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Package2 className="h-6 w-6 text-primary" />
+            <span className="text-xl font-headline">Ecomm Now</span>
+          </Link>
         </div>
-      </header>
-      <main className="flex flex-1 items-center justify-center p-4">
         <SellerAuthCard
           title="Seller Login"
           description="Enter your credentials to access your seller dashboard."
@@ -29,9 +22,6 @@ export default function SellerLoginPage() {
           footerLinkText="Sign Up"
           isLogin={true}
         />
-      </main>
     </div>
   );
 }
-
-    
