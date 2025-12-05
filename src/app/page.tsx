@@ -100,8 +100,8 @@ export default function Home() {
         </SheetContent>
       </Sheet>
 
-      <footer className="border-t py-4 px-4 md:px-6 mt-6 bg-background/95">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="border-t bg-card py-6 px-4 md:px-6 mt-6">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div className='text-center md:text-left'>
                 <h3 className="font-semibold text-lg">Buyer Panel</h3>
                 <p className="text-sm text-muted-foreground">Manage your purchases and profile.</p>
