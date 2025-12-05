@@ -39,11 +39,11 @@ export default function RootLayout({
         <LocationProvider>
           <div className="flex flex-col min-h-screen">
             <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                  <Link href="/" className="text-2xl font-bold text-primary">
+              <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-8">
+                  <Link href="/" className="text-2xl font-bold text-primary shrink-0">
                     Ecomm Now
                   </Link>
-                <div className="flex-1 px-8 max-w-xl">
+                <div className="flex-1 w-full">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -53,7 +53,7 @@ export default function RootLayout({
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 shrink-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="flex items-center gap-2">
@@ -66,15 +66,15 @@ export default function RootLayout({
                         <DropdownMenuItem>العربية</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Link href="/login" className="text-sm font-medium hover:text-primary">
+                    <Link href="/seller/login" className="text-sm font-medium hover:text-primary">
                         Log In
                     </Link>
-                    <Link href="#" className="text-sm font-medium hover:text-primary">
+                    <Link href="/seller/signup" className="text-sm font-medium hover:text-primary">
                         Sign Up
                     </Link>
                    <Link href="/seller/dashboard/products/add">
                       <Button>
-                          <Plus className="h-4 w-4 mr-2" />
+                          <Plus className="h-4 w-4 mr-1" />
                           Post Ad
                       </Button>
                     </Link>
