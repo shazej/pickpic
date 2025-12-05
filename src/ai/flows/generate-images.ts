@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An AI agent for generating images based on an input image.
+ * @fileOverview An AI agent for generating images based on an input image and a text prompt.
  *
  * - generateImages - A function that handles the image generation process.
  * - GenerateImagesInput - The input type for the generateImages function.
