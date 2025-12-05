@@ -13,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarTrigger,
-  SidebarInset,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +38,7 @@ export default function SellerProductsPage() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-muted/40">
+      <div className="flex min-h-screen bg-muted/40">
         <Sidebar>
           <SidebarContent>
             <SidebarHeader>
@@ -96,7 +95,7 @@ export default function SellerProductsPage() {
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset>
+        <div className="flex flex-1 flex-col">
           <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-20">
              <SidebarTrigger className="md:hidden" />
              <div className="w-full flex-1">
@@ -169,7 +168,7 @@ export default function SellerProductsPage() {
               </CardContent>
             </Card>
           </main>
-        </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
