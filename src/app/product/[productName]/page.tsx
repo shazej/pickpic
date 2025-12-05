@@ -4,7 +4,7 @@
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products, findSellersByProduct, sellers as allSellers } from '@/lib/data';
+import { products, sellers as allSellers } from '@/lib/data';
 import { Product, Seller } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import {
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function ProductPage() {
   const params = useParams();
