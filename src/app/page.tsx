@@ -3,8 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Plus, Globe, ChevronRight, Crown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { ChevronRight, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
@@ -15,15 +14,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import LocationPrompt from '@/components/location-prompt';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { products } from '@/lib/data';
 
 const categories = [
   { name: 'Automotive', href: '/category/automotive', image: 'https://picsum.photos/seed/car/200/150', hint: 'blue car' },
@@ -99,72 +91,13 @@ const automotiveProducts = [
     }
 ]
 
-const navLinks = [
-  "Automotive", "Property", "Electronics", "Contracting", "Services", "Camping", "Sports", "Animals", "Family", "Gifts", "Furniture", "Jobs", "Education", "Others", "Commercial"
-]
-
 export default function Home() {
     const bannerImages = PlaceHolderImages.filter(img => img.id.startsWith('banner-'));
 
   return (
     <div className="w-full bg-background font-body text-foreground">
       <LocationPrompt />
-      <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <Link href="/" className="text-2xl font-bold text-primary">
-              Ecomm Now
-            </Link>
-          <div className="flex-1 px-8 max-w-xl">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search for anything"
-                className="w-full pl-10 bg-muted border-none"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    <span>العربية</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>English</DropdownMenuItem>
-                  <DropdownMenuItem>العربية</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Link href="/login" className="text-sm font-medium hover:text-primary">
-                  Log In
-              </Link>
-              <Link href="#" className="text-sm font-medium hover:text-primary">
-                  Sign Up
-              </Link>
-             <Link href="/seller/dashboard/products/add">
-                <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Post Ad
-                </Button>
-              </Link>
-          </div>
-        </div>
-        <nav className="border-t">
-          <div className="container mx-auto flex items-center justify-center px-4 h-12 overflow-x-auto">
-            <div className="flex items-center gap-6 text-sm font-medium">
-              {navLinks.map((link) => (
-                <Link key={link} href={`/category/${link.toLowerCase()}`} className="text-foreground hover:text-primary whitespace-nowrap">
-                  {link}
-                  {link === 'Commercial' && <span className="ml-1.5 text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5">New</span>}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </nav>
-      </header>
-
+      
       <div className="container mx-auto p-4 md:p-6 space-y-8">
         <Carousel
           opts={{
