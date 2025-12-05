@@ -21,10 +21,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight, MapPin, Sparkles, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useEffect, useState } from 'react';
 
 export default function ProductPage() {
   const params = useParams();
   const productName = decodeURIComponent(params.productName as string);
+
+  const [advertisementId, setAdvertisementId] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Generate random number only on the client to avoid hydration errors
+    setAdvertisementId(Math.floor(Math.random() * 10000000));
+  }, []);
 
   const product: Product | undefined = products.find(
     (p) => p.name.toLowerCase() === productName.toLowerCase()
@@ -68,7 +76,7 @@ export default function ProductPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Advertised: {Math.floor(Math.random() * 10000000)}</BreadcrumbPage>
+            <BreadcrumbPage>Advertised: {advertisementId}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
