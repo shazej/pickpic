@@ -28,10 +28,15 @@ export default function ProductPage() {
   const productName = decodeURIComponent(params.productName as string);
 
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
+  const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
+  const [viewCount, setViewCount] = useState<number | null>(null);
+
 
   useEffect(() => {
     // Generate random number only on the client to avoid hydration errors
     setAdvertisementId(Math.floor(Math.random() * 10000000));
+    setAdvertisementCount(Math.floor(Math.random() * 50));
+    setViewCount(Math.floor(Math.random() * 100));
   }, []);
 
   const product: Product | undefined = products.find(
@@ -95,7 +100,7 @@ export default function ProductPage() {
                   <h3 className="font-bold text-lg">{seller.name}</h3>
                   <div className="flex justify-between text-sm text-muted-foreground mt-1">
                       <span>Member since August 2025</span>
-                      <span>{Math.floor(Math.random() * 50)} Advertisement</span>
+                      {advertisementCount !== null && <span>{advertisementCount} Advertisement</span>}
                   </div>
                 </div>
               </div>
@@ -170,7 +175,7 @@ export default function ProductPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Eye className="h-4 w-4" />
-                      <span>{Math.floor(Math.random() * 100)} Views</span>
+                      {viewCount !== null && <span>{viewCount} Views</span>}
                     </div>
                   </div>
                 </div>
