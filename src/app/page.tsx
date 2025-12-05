@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Plus, Globe } from 'lucide-react';
+import { Search, Plus, Globe, ChevronRight, Crown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -20,6 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { products } from '@/lib/data';
 
 const categories = [
   { name: 'Automotive', href: '#', image: 'https://picsum.photos/seed/car/200/150', hint: 'blue car' },
@@ -35,6 +39,65 @@ const categories = [
   { name: 'Furniture', href: '#', image: 'https://picsum.photos/seed/furniture/200/150', hint: 'modern furniture' },
   { name: 'Jobs', href: '#', image: 'https://picsum.photos/seed/office/200/150', hint: 'office work' },
 ];
+
+const trendingCategories = [
+    { name: 'Used Cars', image: 'https://picsum.photos/seed/usedcar/100/100', hint: 'used car' },
+    { name: 'Caravans', image: 'https://picsum.photos/seed/caravan/100/100', hint: 'caravan trailer' },
+    { name: 'Job Openings', image: 'https://picsum.photos/seed/job/100/100', hint: 'office chair' },
+    { name: 'All Science', image: 'https://picsum.photos/seed/science/100/100', hint: 'microscope' },
+]
+
+const automotiveProducts = [
+    {
+        name: 'Junk Cars in Kuwait City',
+        description: 'نشتري نشتري جميع انواع السيارات',
+        year: 2014,
+        color: 'Blue',
+        price: '80K KWD',
+        posted: '21 Hour',
+        image: 'https://picsum.photos/seed/junkcars/600/400',
+        hint: 'junk cars'
+    },
+    {
+        name: 'Car Services',
+        description: 'تبديل بطاريات سلف دينمو فحص',
+        price: '10 KWD',
+        image: 'https://picsum.photos/seed/carservice/600/400',
+        hint: 'car service'
+    },
+    {
+        name: '6 in Zahra, Block 8',
+        description: 'مازدا 6 شرط الفحص بحالة جيدة',
+        year: 2023,
+        mileage: '71 Km',
+        color: 'Silver',
+        price: '3,450 KWD',
+        posted: '1 Day',
+        image: 'https://picsum.photos/seed/mazda6/600/400',
+        hint: 'mazda car'
+    },
+    {
+        name: 'H2 in Hawalli',
+        description: '2008 HUMMER H2 SUT وانيت',
+        year: 2008,
+        mileage: '130K Km',
+        color: 'Black',
+        price: '9,250 KWD',
+        posted: '1 Day',
+        image: 'https://picsum.photos/seed/hummer/600/400',
+        hint: 'hummer car'
+    },
+    {
+        name: 'Patrol',
+        description: 'بي 217 الف',
+        year: 2015,
+        mileage: '217 K',
+        price: '5,100 KWD',
+        posted: '1 Day',
+        image: 'https://picsum.photos/seed/patrol/600/400',
+        hint: 'nissan patrol'
+    }
+]
 
 const navLinks = [
   "Automotive", "Property", "Electronics", "Contracting", "Services", "Camping", "Sports", "Animals", "Family", "Gifts", "Furniture", "Jobs", "Education", "Others", "Commercial"
@@ -155,6 +218,78 @@ export default function Home() {
                 ))}
             </div>
         </div>
+
+        <div className="rounded-xl bg-blue-500/10 p-6">
+            <h2 className="text-2xl font-bold mb-6 text-blue-800">Trending Categories</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                {trendingCategories.map((category) => (
+                    <Link key={category.name} href="#" className="group flex flex-col items-center gap-3 text-center">
+                        <div className="bg-white rounded-full p-2 aspect-square w-32 h-32 flex items-center justify-center transition-transform group-hover:scale-105 shadow-md">
+                             <Image
+                                src={category.image}
+                                alt={category.name}
+                                width={120}
+                                height={120}
+                                className="object-cover rounded-full"
+                                data-ai-hint={category.hint}
+                            />
+                        </div>
+                        <span className="text-base font-semibold text-blue-900">{category.name}</span>
+                    </Link>
+                ))}
+            </div>
+        </div>
+        
+        <div>
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">All in <span className="text-primary">Automotive</span></h2>
+                 <Link href="#" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
+                    <span>View All</span>
+                    <ChevronRight className="w-4 h-4" />
+                 </Link>
+            </div>
+            <Carousel opts={{ align: "start" }} className="w-full">
+                <CarouselContent className="-ml-4">
+                    {automotiveProducts.map((product, index) => (
+                        <CarouselItem key={index} className="pl-4 md:basis-1/3 lg:basis-1/4">
+                            <Card className="overflow-hidden h-full group">
+                                <CardContent className="p-0">
+                                <div className="aspect-[4/3] relative w-full overflow-hidden">
+                                     <Image
+                                        src={product.image}
+                                        alt={product.name}
+                                        fill
+                                        className="object-cover transition-transform group-hover:scale-105"
+                                        data-ai-hint={product.hint}
+                                    />
+                                    <Badge className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 font-bold gap-1 pl-1.5">
+                                        <Crown className="w-3.5 h-3.5" />
+                                        Featured
+                                    </Badge>
+                                </div>
+                                <div className="p-3 space-y-2">
+                                    <h3 className="font-semibold text-base leading-tight truncate text-right text-blue-900 group-hover:text-primary">{product.description}</h3>
+                                    <p className="text-sm text-muted-foreground">{product.name}</p>
+                                    <div className="text-xs text-muted-foreground space-x-2">
+                                        {product.year && <span>{product.year}</span>}
+                                        {product.mileage && <span>{product.mileage}</span>}
+                                        {product.color && <span>{product.color}</span>}
+                                    </div>
+                                    <div className="flex items-end justify-between">
+                                        <p className="text-xs text-muted-foreground">{product.posted}</p>
+                                        <p className="font-bold text-lg text-primary">{product.price}</p>
+                                    </div>
+                                </div>
+                                </CardContent>
+                            </Card>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                 <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2 z-10" />
+                 <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2 z-10" />
+            </Carousel>
+        </div>
+
       </main>
 
        <Link href="/vision-search">
@@ -166,3 +301,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
