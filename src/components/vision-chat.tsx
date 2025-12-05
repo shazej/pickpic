@@ -49,8 +49,7 @@ export default function VisionChat() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
-        setImage({ url: imageUrl, file });
-        // Automatically submit after image selection
+        // Don't set the image state here, just pass it to submit
         handleSubmit(undefined, { url: imageUrl, file });
       };
       reader.readAsDataURL(file);
@@ -59,7 +58,9 @@ export default function VisionChat() {
 
   const handleSubmit = async (e?: React.FormEvent, uploadedImage?: { url: string, file: File }) => {
     e?.preventDefault();
-    const currentImage = uploadedImage || image;
+    
+    // Use the newly uploaded image, or the one from state if any, or none.
+    const currentImage = uploadedImage;
     if (!input && !currentImage) return;
 
     setIsLoading(true);
@@ -69,6 +70,7 @@ export default function VisionChat() {
       userContent.push({ text: input });
     }
     if (currentImage) {
+        // We use the blob URL for immediate display
         userContent.push({ media: { url: currentImage.url } });
     }
 
@@ -76,61 +78,62 @@ export default function VisionChat() {
     const newMessages = [...messages, newUserMessage];
     setMessages(newMessages);
     setInput('');
-    setImage(null);
+    // No need to clear image state as we are not using it anymore for preview
 
     try {
-      if(currentImage && messages.length === 0) {
-        const dataUri = await fileToDataUri(currentImage.file);
-        const result = await extractProductDetails({ photoDataUri: dataUri });
+        const historyForApi: { role: 'user' | 'model'; content: { text?: string; media?: { url: string; } }[] }[] = [];
 
-        const foundProduct = products.find(p => p.name.toLowerCase() === result.productName.toLowerCase());
-
-        let modelResponse: Message;
-
-        if (foundProduct) {
-          modelResponse = {
-            role: 'model',
-            content: [
-              { text: `I found a "${result.productName}" for you! Here are the details:` },
-              { product: foundProduct }
-            ]
-          };
-        } else {
-           modelResponse = {
-            role: 'model',
-            content: [
-              { text: `I identified a "${result.productName}" in your image, but I couldn't find an exact match in our product catalog right now.` }
-            ]
-          };
-        }
-        setMessages([...newMessages, modelResponse]);
-
-      } else {
-        // Fallback to general vision chat for follow-up questions
-        const historyWithDataUri = await Promise.all(
-          newMessages.map(async (msg) => {
-            const userImage = msg.content.find(c => c.media)?.media;
-            if(userImage && userImage.url.startsWith('blob:')) {
-                const firstUserImageFile = (uploadedImage || image)?.file;
-                if(firstUserImageFile) {
-                    const dataUri = await fileToDataUri(firstUserImageFile);
-                    return {
-                        ...msg,
-                        content: msg.content.map(c => c.media ? { media: { url: dataUri } } : c)
-                    };
+        for (const msg of newMessages) {
+            const contentForApi = [];
+            for (const part of msg.content) {
+                if (part.text) {
+                    contentForApi.push({ text: part.text });
+                }
+                if (part.media && msg.role === 'user') {
+                     if (currentImage?.file) {
+                        const dataUri = await fileToDataUri(currentImage.file);
+                        contentForApi.push({ media: { url: dataUri } });
+                    }
                 }
             }
-            return msg;
-          })
-        );
-
-        const result = await visionChat({ history: historyWithDataUri.filter(m => !m.content.some(c => c.product)) as any });
-        
-        if (result) {
-          const modelMessage: Message = { role: 'model', content: [{ text: result.response }] };
-          setMessages([...newMessages, modelMessage]);
+            if (contentForApi.length > 0) {
+                 historyForApi.push({ role: msg.role, content: contentForApi });
+            }
         }
-      }
+        
+        let modelResponse: Message;
+
+        // Special logic for first image upload to find product
+        if(currentImage && messages.length === 0) {
+            const dataUri = await fileToDataUri(currentImage.file);
+            const productDetails = await extractProductDetails({ photoDataUri: dataUri });
+
+            const foundProduct = products.find(p => p.name.toLowerCase() === productDetails.productName.toLowerCase());
+
+            if (foundProduct) {
+                modelResponse = {
+                    role: 'model',
+                    content: [
+                    { text: `I found a "${productDetails.productName}" for you! Here are the details:` },
+                    { product: foundProduct }
+                    ]
+                };
+            } else {
+                modelResponse = {
+                    role: 'model',
+                    content: [
+                    { text: `I identified a "${productDetails.productName}" in your image, but I couldn't find an exact match in our product catalog. You can ask me other questions about it though!` }
+                    ]
+                };
+            }
+        } else {
+             // General vision chat for follow-ups or text-only queries
+            const result = await visionChat({ history: historyForApi });
+            modelResponse = { role: 'model', content: [{ text: result.response }] };
+        }
+        
+        setMessages([...newMessages, modelResponse]);
+
     } catch (error) {
       console.error(error);
       toast({
@@ -138,6 +141,7 @@ export default function VisionChat() {
         title: 'Error',
         description: 'Something went wrong. Please try again.',
       });
+      // Roll back the user message if the API call fails
       setMessages(messages);
     } finally {
       setIsLoading(false);
@@ -148,12 +152,12 @@ export default function VisionChat() {
     <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-muted/20">
       <div className="mb-8">
         <h1 className="text-3xl font-bold font-headline">See & Seek</h1>
-        <p className="text-muted-foreground mt-2 max-w-md mx-auto">Upload a photo of a product to see if we have it in our catalog.</p>
+        <p className="text-muted-foreground mt-2 max-w-md mx-auto">Upload a photo of a product to see if we have it in our catalog, or just ask a question.</p>
       </div>
       
        <div className="flex flex-col items-center justify-center p-4 rounded-lg">
           <Search className="h-16 w-16 text-muted-foreground/30 mb-4" />
-          <p className="font-medium text-lg">Your product search starts here</p>
+          <p className="font-medium text-lg">Your visual search starts here</p>
           <p className="text-sm text-muted-foreground">Upload an image or type a message below.</p>
       </div>
     </div>
@@ -206,26 +210,10 @@ export default function VisionChat() {
       </div>
       <div className="border-t p-4 bg-background">
         <form onSubmit={handleSubmit} className="relative">
-          {image && (
-            <div className="absolute bottom-16 left-4 bg-muted p-2 rounded-lg border">
-              <div className="relative">
-                <Image src={image.url} alt="Preview" width={64} height={64} className="rounded object-cover" />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground"
-                  onClick={() => setImage(null)}
-                >
-                  &times;
-                </Button>
-              </div>
-            </div>
-          )}
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about the image or describe a product..."
+            placeholder="Ask about an image or describe a product..."
             className="pr-24"
             disabled={isLoading}
           />
@@ -233,7 +221,7 @@ export default function VisionChat() {
             <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
               <Paperclip className="h-5 w-5" />
             </Button>
-            <Button type="submit" size="icon" disabled={isLoading || (!input && !image)}>
+            <Button type="submit" size="icon" disabled={isLoading || !input}>
               <Send className="h-5 w-5" />
             </Button>
           </div>

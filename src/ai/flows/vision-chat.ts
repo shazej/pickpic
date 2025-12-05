@@ -4,7 +4,7 @@
  *
  * - visionChat - A function that handles the conversational image analysis.
  * - VisionChatInput - The input type for the visionChat function.
- * - VisionChatOutput - The return type for the visionChat function.
+ * - VisionChatOutput - The return type for the visionChatOutput function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -42,8 +42,8 @@ const prompt = ai.definePrompt(
 - Analyze the image provided by the user.
 - Read the user's question.
 - Provide a clear, concise, and helpful answer.
-- If the user's question is unrelated to the image, politely steer the conversation back to the visual context.
-- If the user provides an image without a question, provide a brief, interesting description of what you see in the image.
+- If the user's question is unrelated to the image, you can gently steer the conversation back to the visual context, but still answer their question.
+- If the user provides an image without a specific question, provide a brief, interesting description of what you see in the image.
 
 Analyze the chat history and the image to provide your response.
 `,
