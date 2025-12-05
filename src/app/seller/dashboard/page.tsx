@@ -50,32 +50,32 @@ export default function SellerDashboard() {
             </SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/seller/dashboard" passHref legacyBehavior>
-                    <SidebarMenuButton as="a" isActive>
+                <Link href="/seller/dashboard">
+                    <SidebarMenuButton isActive>
                     <Home className="h-5 w-5" />
                     <span>Dashboard</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                 <Link href="/seller/dashboard/products" passHref legacyBehavior>
-                    <SidebarMenuButton as="a">
+                 <Link href="/seller/dashboard/products">
+                    <SidebarMenuButton>
                     <Package className="h-5 w-5" />
                     <span>Products</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <Link href="#" passHref legacyBehavior>
-                    <SidebarMenuButton as="a">
+                <Link href="#">
+                    <SidebarMenuButton>
                     <Users className="h-5 w-5" />
                     <span>Customers</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                 <Link href="#" passHref legacyBehavior>
-                    <SidebarMenuButton as="a">
+                 <Link href="#">
+                    <SidebarMenuButton>
                     <BarChart className="h-5 w-5" />
                     <span>Analytics</span>
                     </SidebarMenuButton>
@@ -86,8 +86,8 @@ export default function SellerDashboard() {
           <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>
-                 <Link href="/" passHref legacyBehavior>
-                    <SidebarMenuButton as="a">
+                 <Link href="/">
+                    <SidebarMenuButton>
                         <LogOut className="h-5 w-5" />
                         <span>Logout</span>
                     </SidebarMenuButton>
