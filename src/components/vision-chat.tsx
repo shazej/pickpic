@@ -250,7 +250,7 @@ export default function VisionChat() {
             <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
               <Paperclip className="h-5 w-5" />
             </Button>
-            <Button type="submit" size="icon" disabled={isLoading || (!input)}>
+            <Button type="submit" size="icon" disabled={isLoading || (!input && !messages.some(m => m.content.some(c => c.media)))}>
               <Send className="h-5 w-5" />
             </Button>
           </div>
