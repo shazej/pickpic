@@ -29,7 +29,6 @@ type Message = {
 export default function VisionChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [image, setImage] = useState<{ url: string; file: File } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +48,6 @@ export default function VisionChat() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
-        // Don't set the image state here, just pass it to submit
         handleSubmit(undefined, { url: imageUrl, file });
       };
       reader.readAsDataURL(file);
@@ -59,7 +57,6 @@ export default function VisionChat() {
   const handleSubmit = async (e?: React.FormEvent, uploadedImage?: { url: string, file: File }) => {
     e?.preventDefault();
     
-    // Use the newly uploaded image, or the one from state if any, or none.
     const currentImage = uploadedImage;
     if (!input && !currentImage) return;
 
@@ -70,7 +67,6 @@ export default function VisionChat() {
       userContent.push({ text: input });
     }
     if (currentImage) {
-        // We use the blob URL for immediate display
         userContent.push({ media: { url: currentImage.url } });
     }
 
@@ -78,21 +74,28 @@ export default function VisionChat() {
     const newMessages = [...messages, newUserMessage];
     setMessages(newMessages);
     setInput('');
-    // No need to clear image state as we are not using it anymore for preview
 
     try {
         const historyForApi: { role: 'user' | 'model'; content: { text?: string; media?: { url: string; } }[] }[] = [];
 
+        // Reconstruct history for the API, converting blobs to data URIs
         for (const msg of newMessages) {
             const contentForApi = [];
-            for (const part of msg.content) {
-                if (part.text) {
-                    contentForApi.push({ text: part.text });
-                }
-                if (part.media && msg.role === 'user') {
-                     if (currentImage?.file) {
-                        const dataUri = await fileToDataUri(currentImage.file);
+            if (msg.role === 'user' && currentImage?.file && msg.content.some(c => c.media)) {
+                const dataUri = await fileToDataUri(currentImage.file);
+                // Find the media part and replace its URL
+                for (const part of msg.content) {
+                    if (part.media) {
                         contentForApi.push({ media: { url: dataUri } });
+                    } else if (part.text) {
+                        contentForApi.push({ text: part.text });
+                    }
+                }
+            } else {
+                // For model messages or user messages without new images
+                for (const part of msg.content) {
+                    if (part.text) {
+                        contentForApi.push({ text: part.text });
                     }
                 }
             }
@@ -104,7 +107,7 @@ export default function VisionChat() {
         let modelResponse: Message;
 
         // Special logic for first image upload to find product
-        if(currentImage && messages.length === 0) {
+        if(currentImage && (!messages.some(m => m.content.some(c => c.media)))) {
             const dataUri = await fileToDataUri(currentImage.file);
             const productDetails = await extractProductDetails({ photoDataUri: dataUri });
 
@@ -221,7 +224,7 @@ export default function VisionChat() {
             <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
               <Paperclip className="h-5 w-5" />
             </Button>
-            <Button type="submit" size="icon" disabled={isLoading || (!input && !image)}>
+            <Button type="submit" size="icon" disabled={isLoading || (!input)}>
               <Send className="h-5 w-5" />
             </Button>
           </div>
