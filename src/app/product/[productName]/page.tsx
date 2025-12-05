@@ -18,8 +18,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight, MapPin, Sparkles, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProductPage() {
   const params = useParams();
@@ -35,7 +36,7 @@ export default function ProductPage() {
 
   // For this example, let's just pick the first seller that has this product
   // In a real app, you might have a specific ad ID to fetch the exact seller
-  const seller: Seller | undefined = allSellers.find(s => s.products.some(p => p.name === product.name));
+  const seller: Seller | undefined = allSellers.find(s => s.products.some(p => p.name.toLowerCase() === product.name.toLowerCase()));
   
   if (!seller) {
     // Or handle this case more gracefully
@@ -94,6 +95,16 @@ export default function ProductPage() {
             </CardContent>
           </Card>
           
+          <Card className="bg-muted/40 border-dashed">
+            <CardContent className="p-6 h-48 flex flex-col items-center justify-center text-center text-muted-foreground">
+                <div className="h-12 w-12 bg-muted rounded-full flex items-center justify-center mb-2">
+                    <Sparkles className="h-6 w-6 text-foreground/50"/>
+                </div>
+                <p className="text-sm font-medium">Advertising Space</p>
+                <p className="text-xs">AD HERE</p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Security Guidelines</CardTitle>
@@ -110,7 +121,7 @@ export default function ProductPage() {
         </div>
 
         {/* Right Column */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <div className="aspect-video relative w-full group">
@@ -156,9 +167,15 @@ export default function ProductPage() {
                   </div>
                 </div>
                 <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-                <p className="text-3xl font-bold text-primary mb-6">
-                  {product.price.toFixed(0)} KWD
-                </p>
+                <div className="flex justify-between items-center mb-6">
+                    <p className="text-3xl font-bold text-primary">
+                        {product.price.toFixed(0)} KWD
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>Kuwait</span>
+                    </div>
+                </div>
                 <div className="space-y-4">
                     <Button size="lg" className="w-full">
                         Call
@@ -168,6 +185,48 @@ export default function ProductPage() {
                     </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+            
+          <Card>
+            <CardHeader>
+              <CardTitle>Advertising Specifications</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button variant="outline" className="bg-muted">
+                {product.details?.category || 'General'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 h-4 w-4"><path d="M16 12h2a2 2 0 0 1 0 4h-2V12Z"></path><path d="M6 12H4a2 2 0 0 0 0 4h2v-4Z"></path><path d="M12 18V6"></path><path d="m14 6-2-2-2 2"></path><path d="m10 18 2 2 2-2"></path></svg>
+              </Button>
+              <Button variant="outline" className="bg-muted">
+                {product.details?.condition || 'New'}
+                <Sparkles className="ml-2 h-4 w-4" />
+              </Button>
+              <Button variant="outline" className="bg-muted">
+                Other
+                <Star className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+                <CardTitle>Description</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-foreground space-y-4 whitespace-pre-line">
+              <p>{product.description}</p>
+              {product.details && (
+                <div>
+                  <ul className="space-y-1 text-muted-foreground">
+                    {product.details.size && <li><strong>Size:</strong> {product.details.size}</li>}
+                    {product.details.color && <li><strong>Color:</strong> {product.details.color}</li>}
+                    {product.details.material && <li><strong>Material:</strong> {product.details.material}</li>}
+                    {product.details.features && <li><strong>Features:</strong> {product.details.features}</li>}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+            <CardContent>
+                <Button variant="link" className="p-0 h-auto">Show more</Button>
             </CardContent>
           </Card>
         </div>

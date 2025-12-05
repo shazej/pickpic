@@ -5,6 +5,15 @@ export type Product = {
   category: string;
   photoUrl?: string;
   photoHint?: string;
+  description?: string;
+  details?: {
+    condition?: string;
+    category?: string;
+    size?: string;
+    color?: string;
+    material?: string;
+    features?: string;
+  }
 };
 
 export type Seller = {
