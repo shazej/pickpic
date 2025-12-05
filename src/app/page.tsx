@@ -26,18 +26,18 @@ import { Badge } from '@/components/ui/badge';
 import { products } from '@/lib/data';
 
 const categories = [
-  { name: 'Automotive', href: '#', image: 'https://picsum.photos/seed/car/200/150', hint: 'blue car' },
-  { name: 'Property', href: '#', image: 'https://picsum.photos/seed/house/200/150', hint: 'modern house' },
-  { name: 'Electronics', href: '#', image: 'https://picsum.photos/seed/laptop/200/150', hint: 'laptop electronics' },
-  { name: 'Contracting', href: '#', image: 'https://picsum.photos/seed/tools/200/150', hint: 'construction tools' },
-  { name: 'Services', href: '#', image: 'https://picsum.photos/seed/service/200/150', hint: 'delivery cart' },
-  { name: 'Camping', href: '#', image: 'https://picsum.photos/seed/tent/200/150', hint: 'camping tent' },
-  { name: 'Sports', href: '#', image: 'https://picsum.photos/seed/sports/200/150', hint: 'sports equipment' },
-  { name: 'Animals', href: '#', image: 'https://picsum.photos/seed/pets/200/150', hint: 'cute pets' },
-  { name: 'Family', href: '#', image: 'https://picsum.photos/seed/family/200/150', hint: 'happy family' },
-  { name: 'Gifts', href: '#', image: 'https://picsum.photos/seed/gift/200/150', hint: 'gift box' },
-  { name: 'Furniture', href: '#', image: 'https://picsum.photos/seed/furniture/200/150', hint: 'modern furniture' },
-  { name: 'Jobs', href: '#', image: 'https://picsum.photos/seed/office/200/150', hint: 'office work' },
+  { name: 'Automotive', href: '/category/automotive', image: 'https://picsum.photos/seed/car/200/150', hint: 'blue car' },
+  { name: 'Property', href: '/category/property', image: 'https://picsum.photos/seed/house/200/150', hint: 'modern house' },
+  { name: 'Electronics', href: '/category/electronics', image: 'https://picsum.photos/seed/laptop/200/150', hint: 'laptop electronics' },
+  { name: 'Contracting', href: '/category/contracting', image: 'https://picsum.photos/seed/tools/200/150', hint: 'construction tools' },
+  { name: 'Services', href: '/category/services', image: 'https://picsum.photos/seed/service/200/150', hint: 'delivery cart' },
+  { name: 'Camping', href: '/category/camping', image: 'https://picsum.photos/seed/tent/200/150', hint: 'camping tent' },
+  { name: 'Sports', href: '/category/sports', image: 'https://picsum.photos/seed/sports/200/150', hint: 'sports equipment' },
+  { name: 'Animals', href: '/category/animals', image: 'https://picsum.photos/seed/pets/200/150', hint: 'cute pets' },
+  { name: 'Family', href: '/category/family', image: 'https://picsum.photos/seed/family/200/150', hint: 'happy family' },
+  { name: 'Gifts', href: '/category/gifts', image: 'https://picsum.photos/seed/gift/200/150', hint: 'gift box' },
+  { name: 'Furniture', href: '/category/furniture', image: 'https://picsum.photos/seed/furniture/200/150', hint: 'modern furniture' },
+  { name: 'Jobs', href: '/category/jobs', image: 'https://picsum.photos/seed/office/200/150', hint: 'office work' },
 ];
 
 const trendingCategories = [
@@ -155,7 +155,7 @@ export default function Home() {
           <div className="container mx-auto flex items-center justify-center px-4 h-12 overflow-x-auto">
             <div className="flex items-center gap-6 text-sm font-medium">
               {navLinks.map((link) => (
-                <Link key={link} href="#" className="text-foreground hover:text-primary whitespace-nowrap">
+                <Link key={link} href={`/category/${link.toLowerCase()}`} className="text-foreground hover:text-primary whitespace-nowrap">
                   {link}
                   {link === 'Commercial' && <span className="ml-1.5 text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5">New</span>}
                 </Link>
@@ -243,7 +243,7 @@ export default function Home() {
         <div>
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold">All in <span className="text-primary">Automotive</span></h2>
-                 <Link href="#" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
+                 <Link href="/category/automotive" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
                     <span>View All</span>
                     <ChevronRight className="w-4 h-4" />
                  </Link>
@@ -301,5 +301,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

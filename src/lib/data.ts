@@ -1,15 +1,26 @@
+
 import type { Seller, Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export const products: Product[] = [
-  { name: 'Wireless Headphones', price: 199.99, photoUrl: PlaceHolderImages.find(p => p.id === 'product-headphones')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-headphones')?.imageHint || 'wireless headphones' },
-  { name: 'Smartwatch', price: 249.99, photoUrl: PlaceHolderImages.find(p => p.id === 'product-smartwatch')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-smartwatch')?.imageHint || 'smartwatch' },
-  { name: 'Coffee Maker', price: 89.00, photoUrl: PlaceHolderImages.find(p => p.id === 'product-coffeemaker')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-coffeemaker')?.imageHint || 'coffee maker' },
-  { name: 'Blender', price: 120.00, photoUrl: PlaceHolderImages.find(p => p.id === 'product-blender')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-blender')?.imageHint || 'blender' },
-  { name: 'Portable Speaker', price: 89.99, photoUrl: "https://picsum.photos/seed/speaker/400/300", photoHint: "portable speaker" },
-  { name: 'Gaming Mouse', price: 79.99, photoUrl: "https://picsum.photos/seed/mouse/400/300", photoHint: "gaming mouse" },
-  { name: 'Mechanical Keyboard', price: 129.99, photoUrl: "https://picsum.photos/seed/keyboard/400/300", photoHint: "mechanical keyboard" },
-  { name: 'VR Headset', price: 399.99, photoUrl: "https://picsum.photos/seed/vr/400/300", photoHint: "vr headset" },
+  { name: 'Wireless Headphones', price: 199.99, category: 'Electronics', photoUrl: PlaceHolderImages.find(p => p.id === 'product-headphones')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-headphones')?.imageHint || 'wireless headphones' },
+  { name: 'Smartwatch', price: 249.99, category: 'Electronics', photoUrl: PlaceHolderImages.find(p => p.id === 'product-smartwatch')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-smartwatch')?.imageHint || 'smartwatch' },
+  { name: 'Coffee Maker', price: 89.00, category: 'Furniture', photoUrl: PlaceHolderImages.find(p => p.id === 'product-coffeemaker')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-coffeemaker')?.imageHint || 'coffee maker' },
+  { name: 'Blender', price: 120.00, category: 'Furniture', photoUrl: PlaceHolderImages.find(p => p.id === 'product-blender')?.imageUrl, photoHint: PlaceHolderImages.find(p => p.id === 'product-blender')?.imageHint || 'blender' },
+  { name: 'Portable Speaker', price: 89.99, category: 'Electronics', photoUrl: "https://picsum.photos/seed/speaker/400/300", photoHint: "portable speaker" },
+  { name: 'Gaming Mouse', price: 79.99, category: 'Electronics', photoUrl: "https://picsum.photos/seed/mouse/400/300", photoHint: "gaming mouse" },
+  { name: 'Mechanical Keyboard', price: 129.99, category: 'Electronics', photoUrl: "https://picsum.photos/seed/keyboard/400/300", photoHint: "mechanical keyboard" },
+  { name: 'VR Headset', price: 399.99, category: 'Electronics', photoUrl: "https://picsum.photos/seed/vr/400/300", photoHint: "vr headset" },
+  { name: 'Sedan Car', price: 25000, category: 'Automotive', photoUrl: "https://picsum.photos/seed/sedan/400/300", photoHint: "blue sedan" },
+  { name: 'Modern Apartment', price: 500000, category: 'Property', photoUrl: "https://picsum.photos/seed/apartment/400/300", photoHint: "modern apartment" },
+  { name: 'Lawn Mowing Service', price: 50, category: 'Services', photoUrl: "https://picsum.photos/seed/lawn/400/300", photoHint: "lawn mower" },
+  { name: 'Camping Tent', price: 150, category: 'Camping', photoUrl: "https://picsum.photos/seed/camptent/400/300", photoHint: "camping tent" },
+  { name: 'Basketball', price: 25, category: 'Sports', photoUrl: "https://picsum.photos/seed/basketball/400/300", photoHint: "basketball" },
+  { name: 'Golden Retriever Puppy', price: 1200, category: 'Animals', photoUrl: "https://picsum.photos/seed/puppy/400/300", photoHint: "golden retriever" },
+  { name: 'Baby Stroller', price: 250, category: 'Family', photoUrl: "https://picsum.photos/seed/stroller/400/300", photoHint: "baby stroller" },
+  { name: 'Birthday Gift Basket', price: 75, category: 'Gifts', photoUrl: "https://picsum.photos/seed/giftbasket/400/300", photoHint: "gift basket" },
+  { name: 'Wooden Dining Table', price: 800, category: 'Furniture', photoUrl: "https://picsum.photos/seed/diningtable/400/300", photoHint: "dining table" },
+  { name: 'Software Developer Role', price: 90000, category: 'Jobs', photoUrl: "https://picsum.photos/seed/devjob/400/300", photoHint: "code on screen" },
 ];
 
 
@@ -23,9 +34,9 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-1-photo')?.imageUrl || 'https://picsum.photos/seed/tech1/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-1-photo')?.imageHint || 'tech store',
     products: [
-      { name: 'Wireless Headphones', price: 199.99 },
-      { name: 'Smartwatch', price: 249.99 },
-      { name: 'Portable Speaker', price: 89.99 },
+      { name: 'Wireless Headphones', price: 199.99, category: 'Electronics' },
+      { name: 'Smartwatch', price: 249.99, category: 'Electronics' },
+      { name: 'Portable Speaker', price: 89.99, category: 'Electronics' },
     ],
   },
   {
@@ -37,9 +48,9 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-2-photo')?.imageUrl || 'https://picsum.photos/seed/tech2/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-2-photo')?.imageHint || 'gadget store',
     products: [
-      { name: 'Wireless Headphones', price: 189.99 },
-      { name: 'Gaming Mouse', price: 79.99 },
-      { name: 'Mechanical Keyboard', price: 129.99 },
+      { name: 'Wireless Headphones', price: 189.99, category: 'Electronics' },
+      { name: 'Gaming Mouse', price: 79.99, category: 'Electronics' },
+      { name: 'Mechanical Keyboard', price: 129.99, category: 'Electronics' },
     ],
   },
   {
@@ -51,9 +62,9 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-3-photo')?.imageUrl || 'https://picsum.photos/seed/tech3/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-3-photo')?.imageHint || 'electronics shop',
     products: [
-      { name: 'Smartwatch', price: 259.99 },
-      { name: 'VR Headset', price: 399.99 },
-      { name: 'Wireless Headphones', price: 219.99 },
+      { name: 'Smartwatch', price: 259.99, category: 'Electronics' },
+      { name: 'VR Headset', price: 399.99, category: 'Electronics' },
+      { name: 'Wireless Headphones', price: 219.99, category: 'Electronics' },
     ],
   },
   {
@@ -65,8 +76,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-4-photo')?.imageUrl || 'https://picsum.photos/seed/home1/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-4-photo')?.imageHint || 'home goods',
     products: [
-      { name: 'Coffee Maker', price: 89.00 },
-      { name: 'Blender', price: 120.00 },
+      { name: 'Coffee Maker', price: 89.00, category: 'Furniture' },
+      { name: 'Blender', price: 120.00, category: 'Furniture' },
     ],
   },
   {
@@ -78,8 +89,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-5-photo')?.imageUrl || 'https://picsum.photos/seed/kitchen1/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-5-photo')?.imageHint || 'kitchenware shop',
     products: [
-      { name: 'Coffee Maker', price: 95.50 },
-      { name: 'Stand Mixer', price: 299.00 },
+      { name: 'Coffee Maker', price: 95.50, category: 'Furniture' },
+      { name: 'Stand Mixer', price: 299.00, category: 'Furniture' },
     ],
   },
    {
@@ -91,8 +102,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-6-photo')?.imageUrl || 'https://picsum.photos/seed/tech4/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-6-photo')?.imageHint || 'electronics store',
     products: [
-      { name: 'Wireless Headphones', price: 209.99 },
-      { name: 'Tablet', price: 499.99 },
+      { name: 'Wireless Headphones', price: 209.99, category: 'Electronics' },
+      { name: 'Tablet', price: 499.99, category: 'Electronics' },
     ],
   },
   {
@@ -104,8 +115,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-7-photo')?.imageUrl || 'https://picsum.photos/seed/tech5/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-7-photo')?.imageHint || 'gadget shop',
     products: [
-      { name: 'Smartwatch', price: 239.99 },
-      { name: 'E-Reader', price: 129.99 },
+      { name: 'Smartwatch', price: 239.99, category: 'Electronics' },
+      { name: 'E-Reader', price: 129.99, category: 'Electronics' },
     ],
   },
   {
@@ -117,8 +128,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-8-photo')?.imageUrl || 'https://picsum.photos/seed/tech6/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-8-photo')?.imageHint || 'futuristic gadgets',
     products: [
-      { name: 'Wireless Headphones', price: 229.99 },
-      { name: 'Drone', price: 799.99 },
+      { name: 'Wireless Headphones', price: 229.99, category: 'Electronics' },
+      { name: 'Drone', price: 799.99, category: 'Electronics' },
     ],
   },
   {
@@ -130,8 +141,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-9-photo')?.imageUrl || 'https://picsum.photos/seed/home2/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-9-photo')?.imageHint || 'modern homeware',
     products: [
-      { name: 'Coffee Maker', price: 79.99 },
-      { name: 'Air Fryer', price: 149.99 },
+      { name: 'Coffee Maker', price: 79.99, category: 'Furniture' },
+      { name: 'Air Fryer', price: 149.99, category: 'Furniture' },
     ],
   },
   {
@@ -143,8 +154,8 @@ export const sellers: Seller[] = [
     photoUrl: PlaceHolderImages.find(p => p.id === 'seller-10-photo')?.imageUrl || 'https://picsum.photos/seed/home3/400/300',
     photoHint: PlaceHolderImages.find(p => p.id === 'seller-10-photo')?.imageHint || 'appliance store',
     products: [
-      { name: 'Blender', price: 110.00 },
-      { name: 'Toaster Oven', price: 65.00 },
+      { name: 'Blender', price: 110.00, category: 'Furniture' },
+      { name: 'Toaster Oven', price: 65.00, category: 'Furniture' },
     ],
   },
 ];
