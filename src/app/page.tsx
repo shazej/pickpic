@@ -2,64 +2,107 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, User, Camera, Search, Package2 } from 'lucide-react';
+import { Search, Plus, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { products as allProducts } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ProductCard } from '@/components/product-card';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
+} from "@/components/ui/carousel";
 import LocationPrompt from '@/components/location-prompt';
-import { useLocation } from '@/hooks/use-location';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+const categories = [
+  { name: 'Automotive', href: '#', image: 'https://picsum.photos/seed/car/200/150', hint: 'blue car' },
+  { name: 'Property', href: '#', image: 'https://picsum.photos/seed/house/200/150', hint: 'modern house' },
+  { name: 'Electronics', href: '#', image: 'https://picsum.photos/seed/laptop/200/150', hint: 'laptop electronics' },
+  { name: 'Contracting', href: '#', image: 'https://picsum.photos/seed/tools/200/150', hint: 'construction tools' },
+  { name: 'Services', href: '#', image: 'https://picsum.photos/seed/service/200/150', hint: 'delivery cart' },
+  { name: 'Camping', href: '#', image: 'https://picsum.photos/seed/tent/200/150', hint: 'camping tent' },
+  { name: 'Sports', href: '#', image: 'https://picsum.photos/seed/sports/200/150', hint: 'sports equipment' },
+  { name: 'Animals', href: '#', image: 'https://picsum.photos/seed/pets/200/150', hint: 'cute pets' },
+  { name: 'Family', href: '#', image: 'https://picsum.photos/seed/family/200/150', hint: 'happy family' },
+  { name: 'Gifts', href: '#', image: 'https://picsum.photos/seed/gift/200/150', hint: 'gift box' },
+  { name: 'Furniture', href: '#', image: 'https://picsum.photos/seed/furniture/200/150', hint: 'modern furniture' },
+  { name: 'Jobs', href: '#', image: 'https://picsum.photos/seed/office/200/150', hint: 'office work' },
+];
+
+const navLinks = [
+  "Automotive", "Property", "Electronics", "Contracting", "Services", "Camping", "Sports", "Animals", "Family", "Gifts", "Furniture", "Jobs", "Education", "Others", "Commercial"
+]
 
 export default function Home() {
-    const latestProducts = allProducts.slice(0, 4);
     const bannerImages = PlaceHolderImages.filter(img => img.id.startsWith('banner-'));
-    const { city, country } = useLocation();
 
   return (
     <div className="min-h-screen w-full bg-background font-body text-foreground">
       <LocationPrompt />
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
-        <div className="flex items-center gap-2 font-semibold">
-          <MapPin className="h-5 w-5 text-primary" />
-          <span className="text-sm">{city && country ? `${city}, ${country}`: 'New York, USA'}</span>
-        </div>
-        <div className="flex items-center gap-2 font-semibold">
-          <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">See & Seek</span>
-        </div>
-        <div className="flex items-center gap-4">
-            <Link href="/sellers?productName=Wireless%20Headphones">
-                <Button variant="ghost" size="icon">
-                    <Search className="h-5 w-5" />
-                    <span className="sr-only">Search</span>
-                </Button>
+      <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <Link href="/" className="text-2xl font-bold text-primary">
+              4SALE
             </Link>
-            <Link href="/login">
-                <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Login</span>
+          <div className="flex-1 px-8 max-w-xl">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search for anything"
+                className="w-full pl-10 bg-muted border-none"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    <span>العربية</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>English</DropdownMenuItem>
+                  <DropdownMenuItem>العربية</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Link href="/login" className="text-sm font-medium hover:text-primary">
+                  Log In
+              </Link>
+              <Link href="#" className="text-sm font-medium hover:text-primary">
+                  Sign Up
+              </Link>
+             <Link href="/seller/dashboard/products/add">
+                <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Post Ad
                 </Button>
-            </Link>
+              </Link>
+          </div>
         </div>
+        <nav className="border-t">
+          <div className="container mx-auto flex items-center justify-center px-4 h-12 overflow-x-auto">
+            <div className="flex items-center gap-6 text-sm font-medium">
+              {navLinks.map((link) => (
+                <Link key={link} href="#" className="text-foreground hover:text-primary whitespace-nowrap">
+                  {link}
+                  {link === 'Commercial' && <span className="ml-1.5 text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5">New</span>}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </nav>
       </header>
 
-      <main className="p-4 md:p-6 space-y-6">
-        <div className="relative">
-          <Input
-            type="search"
-            placeholder="Search for products..."
-            className="w-full"
-          />
-        </div>
-        
+      <main className="container mx-auto p-4 md:p-6 space-y-8">
         <Carousel
           opts={{
             align: "start",
@@ -70,7 +113,7 @@ export default function Home() {
           <CarouselContent>
             {bannerImages.map((bannerImage) => (
               <CarouselItem key={bannerImage.id}>
-                <div className="aspect-video md:aspect-[3/1] rounded-lg overflow-hidden relative w-full">
+                <div className="aspect-[16/6] rounded-lg overflow-hidden relative w-full bg-blue-600">
                   <Image
                     src={bannerImage.imageUrl}
                     alt={bannerImage.description}
@@ -78,6 +121,12 @@ export default function Home() {
                     className="object-cover"
                     data-ai-hint={bannerImage.imageHint}
                   />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                     <div className="text-center text-white p-8">
+                        <h2 className="text-5xl font-bold mb-2">ما تقول بيعها</h2>
+                        <h3 className="text-6xl font-bold text-yellow-400">قول فورسيلها</h3>
+                     </div>
+                  </div>
                 </div>
               </CarouselItem>
             ))}
@@ -87,40 +136,33 @@ export default function Home() {
         </Carousel>
 
         <div>
-            <h2 className="text-2xl font-bold font-headline mb-4">Latest Products</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {latestProducts.map((product) => (
-                    <ProductCard key={product.name} product={product} />
+            <h2 className="text-2xl font-bold mb-4">Discover Our <span className="text-primary">Categories</span></h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                {categories.map((category) => (
+                    <Link key={category.name} href={category.href} className="group flex flex-col items-center gap-2 text-center">
+                        <div className="bg-muted rounded-lg p-4 aspect-square w-full flex items-center justify-center transition-colors group-hover:bg-primary/10">
+                             <Image
+                                src={category.image}
+                                alt={category.name}
+                                width={80}
+                                height={80}
+                                className="object-contain"
+                                data-ai-hint={category.hint}
+                            />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground group-hover:text-primary">{category.name}</span>
+                    </Link>
                 ))}
             </div>
         </div>
       </main>
 
        <Link href="/vision-search">
-        <Button size="icon" className="fixed bottom-28 right-6 h-16 w-16 rounded-full shadow-lg z-40 md:bottom-6">
-            <Camera className="h-8 w-8" />
+        <Button size="icon" className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-camera"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
             <span className="sr-only">Find by image</span>
         </Button>
       </Link>
-
-
-      <footer className="border-t bg-card py-6 px-4 md:px-6 mt-6">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className='text-center md:text-left'>
-                <h3 className="font-semibold text-lg">Buyer Panel</h3>
-                <p className="text-sm text-muted-foreground">Manage your purchases and profile.</p>
-            </div>
-            <div className="flex items-center gap-4">
-                <Link href="/seller/login">
-                    <Button variant="outline">Login as a Seller</Button>
-                </Link>
-                <Link href="/seller/signup">
-                    <Button>Sign up as a Seller</Button>
-                </Link>
-            </div>
-        </div>
-      </footer>
-
     </div>
   );
 }
