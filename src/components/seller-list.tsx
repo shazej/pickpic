@@ -6,9 +6,9 @@ import { getDistance } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, Phone, SearchX } from "lucide-react";
-import { useGeolocation } from "@/hooks/use-geolocation";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
+import { useLocation } from "@/hooks/use-location";
 
 type SellerListProps = {
   sellers: Seller[];
@@ -17,7 +17,7 @@ type SellerListProps = {
 };
 
 export default function SellerList({ sellers, productName, onSellerSelect }: SellerListProps) {
-  const { location: buyerLocation, error: geolocationError } = useGeolocation();
+  const { location: buyerLocation, error: geolocationError } = useLocation();
 
   if (sellers.length === 0) {
     return (
@@ -52,7 +52,7 @@ export default function SellerList({ sellers, productName, onSellerSelect }: Sel
 
   return (
     <div className="space-y-4 pt-2">
-      {geolocationError && (
+      {geolocationError && !buyerLocation && (
         <Alert variant="destructive" className="mb-4">
           <MapPin className="h-4 w-4" />
           <AlertTitle>Location Error</AlertTitle>

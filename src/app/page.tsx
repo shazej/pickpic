@@ -6,7 +6,6 @@ import { MapPin, User, Camera, Search, Package2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { products as allProducts } from '@/lib/data';
-import { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ProductCard } from '@/components/product-card';
 import {
@@ -17,18 +16,21 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import ProductFinder from '@/components/product-finder';
-
+import LocationPrompt from '@/components/location-prompt';
+import { useLocation } from '@/hooks/use-location';
 
 export default function Home() {
     const latestProducts = allProducts.slice(0, 4);
     const bannerImage = PlaceHolderImages.find(img => img.id === 'banner-1');
+    const { location, city, country } = useLocation();
 
   return (
     <div className="min-h-screen w-full bg-background font-body text-foreground">
+      <LocationPrompt />
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
         <div className="flex items-center gap-2 font-semibold">
           <MapPin className="h-5 w-5 text-primary" />
-          <span className="text-sm">New York, USA</span>
+          <span className="text-sm">{city && country ? `${city}, ${country}`: 'New York, USA'}</span>
         </div>
         <div className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-primary" />

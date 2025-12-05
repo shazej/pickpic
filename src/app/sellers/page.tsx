@@ -8,10 +8,10 @@ import { Package2, ArrowLeft } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import SellerList from "@/components/seller-list";
 import type { Seller } from "@/lib/types";
-import { useGeolocation } from "@/hooks/use-geolocation";
 import { findSellersByProduct, sellers as allSellersData } from "@/lib/data";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "@/hooks/use-location";
 
 const MapView = dynamic(() => import("@/components/map-view"), {
   ssr: false,
@@ -26,7 +26,7 @@ function SellersPageContent() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   
-  const { location: buyerLocation } = useGeolocation();
+  const { location: buyerLocation } = useLocation();
 
   useEffect(() => {
     if (productName) {
