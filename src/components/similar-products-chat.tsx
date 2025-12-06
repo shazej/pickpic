@@ -18,17 +18,20 @@ import { visionChat, VisionChatInput } from '@/ai/flows/vision-chat';
 import { Card, CardContent } from './ui/card';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
+import type { Product } from '@/lib/types';
 
 type Message = {
   role: 'user' | 'model';
-  content: { text?: string; media?: { url: string } }[];
+  content: { text?: string; media?: { url: string }; products?: Product[] }[];
 };
+
+type ConversationState = 'initial' | 'awaiting_confirmation' | 'chatting';
 
 export default function SimilarProductsChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [hasUploadedImage, setHasUploadedImage] = useState(false);
+  const [conversationState, setConversationState] = useState<ConversationState>('initial');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -36,39 +39,42 @@ export default function SimilarProductsChat() {
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('div');
-        if(viewport) {
-            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
-        }
+      const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+      }
     }
   }, [messages, isLoading]);
+
+  const addMessage = (message: Message) => {
+    setMessages(prev => [...prev, message]);
+  };
 
   const handleSendMessage = async (text: string, imageUrl?: string) => {
     if (!text && !imageUrl) return;
 
-    const userMessageContent: { text?: string; media?: { url: string } }[] = [];
+    const userMessageContent: Message['content'] = [];
     if (text) userMessageContent.push({ text });
     if (imageUrl) userMessageContent.push({ media: { url: imageUrl } });
 
-    const newMessages: Message[] = [...messages, { role: 'user', content: userMessageContent }];
-    setMessages(newMessages);
+    const newHistory: Message[] = [...messages, { role: 'user', content: userMessageContent }];
+    addMessage({ role: 'user', content: userMessageContent });
+
     setInput('');
     setIsLoading(true);
 
     try {
-      const history: VisionChatInput['history'] = newMessages.map(msg => ({
-        role: msg.role,
-        content: msg.content.map(c => ({
-          text: c.text,
-          media: c.media ? { url: c.media.url } : undefined,
-        })),
-      }));
+      const result = await visionChat({ history: newHistory as VisionChatInput['history'] });
+      
+      const modelContent: Message['content'] = [];
+      if (result.response) modelContent.push({ text: result.response });
+      if (result.products) modelContent.push({ products: result.products as Product[] });
 
-      const result = await visionChat({ history });
-
-      if (result && result.response) {
-        setMessages(prev => [...prev, { role: 'model', content: [{ text: result.response }] }]);
+      if (modelContent.length > 0) {
+        addMessage({ role: 'model', content: modelContent });
       }
+      setConversationState('chatting');
+
     } catch (error) {
       console.error(error);
       toast({
@@ -76,7 +82,7 @@ export default function SimilarProductsChat() {
         title: 'Error',
         description: 'Something went wrong while communicating with the AI.',
       });
-      setMessages(prev => [...prev, { role: 'model', content: [{ text: "I'm sorry, I encountered an error. Please try again." }] }]);
+      addMessage({ role: 'model', content: [{ text: "I'm sorry, I encountered an error. Please try again." }] });
     } finally {
       setIsLoading(false);
     }
@@ -88,9 +94,12 @@ export default function SimilarProductsChat() {
       try {
         setIsLoading(true);
         const dataUri = await fileToDataUri(file);
-        setHasUploadedImage(true);
-        // Start the chat with the image
-        await handleSendMessage("Describe this image and suggest some random products from the website.", dataUri);
+        addMessage({ role: 'user', content: [{ media: { url: dataUri } }] });
+        addMessage({
+          role: 'model',
+          content: [{ text: 'Do we need to find a similar product?' }],
+        });
+        setConversationState('awaiting_confirmation');
       } catch (error) {
         console.error(error);
         toast({
@@ -98,8 +107,19 @@ export default function SimilarProductsChat() {
           title: 'Error',
           description: 'Could not process the image. Please try another one.',
         });
+      } finally {
         setIsLoading(false);
       }
+    }
+  };
+
+  const handleConfirmation = (confirmed: boolean) => {
+    if (confirmed) {
+      handleSendMessage('yes');
+    } else {
+      addMessage({ role: 'user', content: [{ text: 'No' }] });
+      addMessage({ role: 'model', content: [{ text: 'Alright. Feel free to ask me anything else or upload another image!' }] });
+      setConversationState('chatting');
     }
   };
 
@@ -128,29 +148,51 @@ export default function SimilarProductsChat() {
     <div className="flex flex-col h-full w-full bg-card border rounded-lg">
       <ScrollArea className="flex-grow" ref={scrollAreaRef}>
          <div className="p-4 h-full">
-            {!hasUploadedImage && !isLoading && <InitialState />}
+            {conversationState === 'initial' && !isLoading && <InitialState />}
             
             <div className="space-y-6">
               {messages.map((msg, index) => (
-                <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                  {msg.role === 'model' && (
-                    <div className="bg-muted text-muted-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                      <Bot size={20} />
-                    </div>
-                  )}
-                  <div className={`p-3 rounded-lg max-w-lg ${msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
-                    {msg.content.map((c, i) => (
-                      <div key={i}>
-                        {c.text && <p className="whitespace-pre-wrap">{c.text}</p>}
-                        {c.media?.url && <Image src={c.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md mt-2" />}
+                <div key={index} className={`flex flex-col gap-3 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                   <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end flex-row-reverse' : ''}`}>
+                      <div className="bg-muted text-muted-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        {msg.role === 'model' ? <Bot size={20} /> : <User size={20} />}
                       </div>
-                    ))}
+                      <div className={`p-3 rounded-lg max-w-lg ${msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
+                        {msg.content.map((c, i) => (
+                          <div key={i}>
+                            {c.text && <p className="whitespace-pre-wrap">{c.text}</p>}
+                            {c.media?.url && <Image src={c.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md mt-2" />}
+                          </div>
+                        ))}
+                      </div>
                   </div>
-                   {msg.role === 'user' && (
-                    <div className="bg-muted text-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                      <User size={20} />
+                  {msg.content.some(c => c.products) && (
+                    <div className="w-full max-w-2xl pl-12">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                         {msg.content.flatMap(c => c.products || []).map((product: Product) => (
+                          <Link key={product.name} href={`/product/${encodeURIComponent(product.name)}`} passHref>
+                              <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+                                <CardContent className="p-0">
+                                  <div className="aspect-square relative w-full">
+                                    <Image
+                                      src={product.photoUrl || "https://picsum.photos/seed/product/300/300"}
+                                      alt={product.name}
+                                      fill
+                                      className="object-cover"
+                                      data-ai-hint={product.photoHint}
+                                    />
+                                  </div>
+                                  <div className="p-2">
+                                    <h3 className="font-semibold text-xs leading-tight truncate">{product.name}</h3>
+                                    <p className="text-xs text-primary font-bold mt-1">${product.price.toFixed(2)}</p>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                          </Link>
+                         ))}
+                      </div>
                     </div>
-                  )}
+                   )}
                 </div>
               ))}
 
@@ -170,7 +212,12 @@ export default function SimilarProductsChat() {
       </ScrollArea>
 
       <div className="mt-auto px-4 pb-4 border-t pt-4 bg-card rounded-b-lg">
-        {hasUploadedImage ? (
+        {conversationState === 'awaiting_confirmation' ? (
+            <div className="flex justify-center gap-4">
+                <Button onClick={() => handleConfirmation(true)}>Yes</Button>
+                <Button variant="outline" onClick={() => handleConfirmation(false)}>No</Button>
+            </div>
+        ) : conversationState === 'chatting' ? (
           <form onSubmit={handleFormSubmit} className="relative">
             <Input
               value={input}
@@ -184,7 +231,11 @@ export default function SimilarProductsChat() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  setConversationState('initial');
+                  setMessages([]);
+                  fileInputRef.current?.click();
+                }}
                 disabled={isLoading}
                 title="Upload another image"
               >
@@ -198,7 +249,7 @@ export default function SimilarProductsChat() {
         ) : (
           <Button className="w-full h-12 text-base" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
             <Paperclip className="mr-2 h-4 w-4" />
-            {isLoading ? 'Analyzing...' : 'Upload Image'}
+            {isLoading ? 'Analyzing...' : 'Upload Image to Start'}
           </Button>
         )}
         <input
