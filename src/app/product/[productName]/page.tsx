@@ -25,35 +25,34 @@ import { useEffect, useState } from 'react';
 
 export default function ProductPage() {
   const params = useParams();
-  const productName = params.productName as string;
+  const productNameFromUrl = params.productName as string;
 
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
-  const [decodedProductName, setDecodedProductName] = useState<string>('');
-
+  
+  // Decode the product name right away
+  const decodedProductName = productNameFromUrl ? decodeURIComponent(productNameFromUrl) : '';
 
   useEffect(() => {
-    // Generate random number only on the client to avoid hydration errors
+    // Generate random numbers only on the client to avoid hydration errors
     setAdvertisementId(Math.floor(Math.random() * 10000000));
     setAdvertisementCount(Math.floor(Math.random() * 50));
     setViewCount(Math.floor(Math.random() * 100));
-    if (productName) {
-        try {
-            setDecodedProductName(decodeURIComponent(productName));
-        } catch (e) {
-            console.error("Failed to decode product name:", e);
-            setDecodedProductName(productName);
-        }
-    }
-  }, [productName]);
+  }, []);
 
+  // Find the product using the decoded name
   const product: Product | undefined = decodedProductName ? products.find(
     (p) => p.name.toLowerCase() === decodedProductName.toLowerCase()
   ) : undefined;
 
   if (!product) {
-    return notFound();
+    // If the product is not found after decoding, show the notFound page.
+    // We check decodedProductName to avoid showing notFound during initial render.
+    if(decodedProductName) return notFound();
+
+    // Show a loading state or nothing while params are being resolved.
+    return <div>Loading product...</div>;
   }
 
   // For this example, let's just pick the first seller that has this product
@@ -256,5 +255,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
