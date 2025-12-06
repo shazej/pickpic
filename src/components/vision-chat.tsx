@@ -9,14 +9,14 @@ import {
   Bot,
   User,
   Image as ImageIcon,
-  X
+  X,
+  ArrowDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUri } from '@/lib/utils';
 import { visionChat } from '@/ai/flows/vision-chat';
-import { Card, CardContent } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 
 type MessageContent = {
@@ -42,11 +42,11 @@ export default function VisionChat() {
   useEffect(() => {
     // Scroll to the bottom of the chat on new messages
     if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('div');
-      if(scrollElement) {
-        scrollElement.scrollTo({
-            top: scrollElement.scrollHeight,
-            behavior: 'smooth',
+      const scrollViewport = scrollAreaRef.current.querySelector('div');
+      if (scrollViewport) {
+        scrollViewport.scrollTo({
+          top: scrollViewport.scrollHeight,
+          behavior: 'smooth',
         });
       }
     }
@@ -54,7 +54,7 @@ export default function VisionChat() {
 
   useEffect(() => {
     // Initial message from the AI
-    setMessages([{ role: 'model', content: [{ text: "Hello! Upload an image and ask me anything about it." }] }]);
+    setMessages([]);
   }, []);
 
   const handleSendMessage = async (text: string, imageUrl?: string) => {
@@ -63,8 +63,12 @@ export default function VisionChat() {
     const userMessageContent: MessageContent[] = [];
     if (text) userMessageContent.push({ text });
     if (imageUrl) userMessageContent.push({ media: { url: imageUrl } });
+    
+    // Add an initial greeting from the model if this is the first message
+    const newMessages: Message[] = messages.length === 0 
+      ? [{ role: 'model', content: [{ text: "Hello! What can I help you with today?" }]}, { role: 'user', content: userMessageContent }]
+      : [...messages, { role: 'user', content: userMessageContent }];
 
-    const newMessages: Message[] = [...messages, { role: 'user', content: userMessageContent }];
     setMessages(newMessages);
     setInput('');
     setImagePreview(null);
@@ -94,7 +98,6 @@ export default function VisionChat() {
     if (file) {
         const dataUri = await fileToDataUri(file);
         setImagePreview(dataUri);
-        // Automatically send a default message with the image
         if (!input) {
             handleSendMessage("What do you see in this image?", dataUri);
         }
@@ -107,44 +110,32 @@ export default function VisionChat() {
   };
   
   const InitialState = () => (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-muted/20 rounded-lg border-2 border-dashed m-4">
-      <ImageIcon className="h-16 w-16 text-muted-foreground/30 mb-4" />
-      <h1 className="text-2xl font-bold font-headline">Visual Question & Answer</h1>
-      <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-        Upload an image and ask our AI anything you want to know about it.
+    <div className="flex flex-col items-center justify-center h-full text-center p-8">
+      <div className="bg-primary/10 rounded-full p-4 mb-6">
+        <Bot className="h-10 w-10 text-primary" />
+      </div>
+      <h1 className="text-3xl font-bold font-headline mb-2">Visual Chat</h1>
+      <p className="text-muted-foreground max-w-md mx-auto">
+        Start a conversation by uploading an image or asking a question below.
       </p>
-      <Button
-        onClick={() => fileInputRef.current?.click()}
-        className="mt-6"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Paperclip className="mr-2 h-4 w-4" />
-        )}
-        Upload an Image
-      </Button>
     </div>
   );
 
 
-  if (messages.length <= 1 && !imagePreview) {
-    return <InitialState />;
-  }
-
   return (
-    <div className="flex flex-col h-full p-4">
+    <div className="flex flex-col h-full w-full">
+        {messages.length === 0 && !imagePreview && <InitialState />}
+        
         <ScrollArea className="flex-grow mb-4" ref={scrollAreaRef}>
-          <div className="space-y-6 pr-4">
+          <div className="space-y-6 pr-4 pt-6">
             {messages.map((msg, index) => (
-              <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+              <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                 {msg.role === 'model' && (
-                  <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                    <Bot size={20} />
+                  <div className="bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
+                    <Bot size={22} />
                   </div>
                 )}
-                <div className={`p-3 rounded-lg max-w-lg ${msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
+                <div className={`p-4 rounded-xl max-w-lg ${msg.role === 'model' ? 'bg-muted rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'}`}>
                   {msg.content.map((c, i) => (
                     <div key={i}>
                       {c.media?.url && (
@@ -157,26 +148,27 @@ export default function VisionChat() {
                   ))}
                 </div>
                  {msg.role === 'user' && (
-                  <div className="bg-muted text-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-muted text-foreground rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
                     <User size={20} />
                   </div>
                 )}
               </div>
             ))}
             {isLoading && (
-              <div className="flex items-start gap-3">
-                 <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                    <Bot size={20} />
+              <div className="flex items-start gap-4">
+                 <div className="bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
+                    <Bot size={22} />
                   </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <Loader2 className="animate-spin" />
+                <div className="p-4 bg-muted rounded-xl rounded-tl-none">
+                  <Loader2 className="animate-spin text-primary" />
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
-        <div className="mt-auto">
-          <form onSubmit={handleFormSubmit} className="relative">
+
+        <div className="mt-auto px-4 pb-4">
+          <div className="relative">
             {imagePreview && !messages.some(m => m.content.some(c => c.media?.url === imagePreview)) && (
               <div className="absolute bottom-16 left-4 p-1 bg-background border rounded-md shadow-sm">
                 <Image src={imagePreview} alt="Preview" width={60} height={60} className="rounded-sm" />
@@ -189,27 +181,30 @@ export default function VisionChat() {
                 </button>
               </div>
             )}
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about the image..."
-              className="pr-24"
-              disabled={isLoading}
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
+             <form onSubmit={handleFormSubmit} className="relative">
+                <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask a question or upload an image..."
+                className="pr-24 h-12 text-base rounded-full pl-6"
                 disabled={isLoading}
-              >
-                <Paperclip size={20} />
-              </Button>
-              <Button type="submit" size="icon" disabled={isLoading || (!input && !imagePreview)}>
-                <Send size={20} />
-              </Button>
-            </div>
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isLoading}
+                >
+                    <Paperclip size={20} />
+                </Button>
+                <Button type="submit" size="icon" className="rounded-full" disabled={isLoading || (!input && !imagePreview)}>
+                    <Send size={20} />
+                </Button>
+                </div>
+            </form>
             <input
               type="file"
               ref={fileInputRef}
@@ -217,7 +212,7 @@ export default function VisionChat() {
               accept="image/*"
               className="hidden"
             />
-          </form>
+          </div>
         </div>
     </div>
   );
