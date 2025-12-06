@@ -25,11 +25,12 @@ import { useEffect, useState } from 'react';
 
 export default function ProductPage() {
   const params = useParams();
-  const productName = decodeURIComponent(params.productName as string);
+  const productName = params.productName as string;
 
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
+  const [decodedProductName, setDecodedProductName] = useState<string>('');
 
 
   useEffect(() => {
@@ -37,11 +38,19 @@ export default function ProductPage() {
     setAdvertisementId(Math.floor(Math.random() * 10000000));
     setAdvertisementCount(Math.floor(Math.random() * 50));
     setViewCount(Math.floor(Math.random() * 100));
-  }, []);
+    if (productName) {
+        try {
+            setDecodedProductName(decodeURIComponent(productName));
+        } catch (e) {
+            console.error("Failed to decode product name:", e);
+            setDecodedProductName(productName);
+        }
+    }
+  }, [productName]);
 
-  const product: Product | undefined = products.find(
-    (p) => p.name.toLowerCase() === productName.toLowerCase()
-  );
+  const product: Product | undefined = decodedProductName ? products.find(
+    (p) => p.name.toLowerCase() === decodedProductName.toLowerCase()
+  ) : undefined;
 
   if (!product) {
     return notFound();
@@ -247,3 +256,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    
