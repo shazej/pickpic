@@ -7,20 +7,28 @@ import {
   Loader2,
   Bot,
   Image as ImageIcon,
+  Send,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fileToDataUri } from '@/lib/utils';
-import { findSimilarProducts, FindSimilarProductsOutput } from '@/ai/flows/find-similar-products';
+import { visionChat, VisionChatInput } from '@/ai/flows/vision-chat';
 import { Card, CardContent } from './ui/card';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
 
+type Message = {
+  role: 'user' | 'model';
+  content: { text?: string; media?: { url: string } }[];
+};
+
 export default function SimilarProductsChat() {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<FindSimilarProductsOutput | null>(null);
-  const [queryImage, setQueryImage] = useState<string | null>(null);
+  const [hasUploadedImage, setHasUploadedImage] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -33,32 +41,71 @@ export default function SimilarProductsChat() {
             viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
         }
     }
-  }, [result, isLoading]);
+  }, [messages, isLoading]);
 
+  const handleSendMessage = async (text: string, imageUrl?: string) => {
+    if (!text && !imageUrl) return;
+
+    const userMessageContent: { text?: string; media?: { url: string } }[] = [];
+    if (text) userMessageContent.push({ text });
+    if (imageUrl) userMessageContent.push({ media: { url: imageUrl } });
+
+    const newMessages: Message[] = [...messages, { role: 'user', content: userMessageContent }];
+    setMessages(newMessages);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const history: VisionChatInput['history'] = newMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content.map(c => ({
+          text: c.text,
+          media: c.media ? { url: c.media.url } : undefined,
+        })),
+      }));
+
+      const result = await visionChat({ history });
+
+      if (result && result.response) {
+        setMessages(prev => [...prev, { role: 'model', content: [{ text: result.response }] }]);
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Something went wrong while communicating with the AI.',
+      });
+      setMessages(prev => [...prev, { role: 'model', content: [{ text: "I'm sorry, I encountered an error. Please try again." }] }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       try {
         setIsLoading(true);
-        setResult(null);
         const dataUri = await fileToDataUri(file);
-        setQueryImage(dataUri);
-        setImagePreview(dataUri);
-
-        const response = await findSimilarProducts({ photoDataUri: dataUri });
-        setResult(response);
+        setHasUploadedImage(true);
+        // Start the chat with the image
+        await handleSendMessage("Describe this image and suggest some random products from the website.", dataUri);
       } catch (error) {
         console.error(error);
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Could not find similar products. Please try another image.',
+          description: 'Could not process the image. Please try another one.',
         });
-      } finally {
         setIsLoading(false);
       }
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendMessage(input);
   };
 
   const InitialState = () => (
@@ -66,13 +113,13 @@ export default function SimilarProductsChat() {
       <div className="bg-primary/10 rounded-full p-6 mb-6 border-8 border-primary/5">
         <ImageIcon className="h-16 w-16 text-primary" />
       </div>
-      <h1 className="text-3xl font-bold font-headline mb-2">Find Similar Products</h1>
+      <h1 className="text-3xl font-bold font-headline mb-2">Visual & Conversational Search</h1>
       <p className="text-muted-foreground max-w-md mx-auto mb-6">
-        Upload an image of a product, and our AI will find visually similar items from our catalog.
+        Upload an image of a product, and our AI will help you find what you're looking for. Ask questions to refine your search.
       </p>
       <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
         <Paperclip className="mr-2 h-4 w-4" />
-        Upload Image
+        {isLoading ? 'Processing...' : 'Upload Image'}
       </Button>
     </div>
   );
@@ -81,76 +128,79 @@ export default function SimilarProductsChat() {
     <div className="flex flex-col h-full w-full bg-card border rounded-lg">
       <ScrollArea className="flex-grow" ref={scrollAreaRef}>
          <div className="p-4 h-full">
-            {!imagePreview && !isLoading && <InitialState />}
+            {!hasUploadedImage && !isLoading && <InitialState />}
             
-            {(imagePreview || isLoading) && (
-                <div className="space-y-6">
-                    {/* User's uploaded image (the "question") */}
-                    {queryImage && (
-                        <div className="flex items-start gap-4 justify-end">
-                            <div className="p-2 bg-primary text-primary-foreground rounded-xl rounded-tr-none max-w-lg">
-                                <Image src={queryImage} alt="Your upload" width={200} height={200} className="rounded-md" />
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* AI's response area */}
-                    {isLoading && (
-                    <div className="flex items-start gap-4">
-                        <div className="bg-muted text-muted-foreground rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
-                        <Bot size={22} />
-                        </div>
-                        <div className="p-4 bg-muted rounded-xl rounded-tl-none flex items-center">
-                        <Loader2 className="animate-spin text-primary" />
-                        <p className="ml-2 text-muted-foreground">Finding similar products...</p>
-                        </div>
+            <div className="space-y-6">
+              {messages.map((msg, index) => (
+                <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                  {msg.role === 'model' && (
+                    <div className="bg-muted text-muted-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <Bot size={20} />
                     </div>
-                    )}
-
-                    {result && (
-                    <div className="flex items-start gap-4">
-                        <div className="bg-muted text-muted-foreground rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0 self-start mt-2">
-                            <Bot size={22} />
-                        </div>
-                        <div className="p-4 bg-muted rounded-xl rounded-tl-none max-w-2xl">
-                            <p className="font-semibold mb-4">Here are some products similar to the image you uploaded:</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {result.products.length > 0 ? result.products.map((product, index) => (
-                                <Link href={`/product/${encodeURIComponent(product.name)}`} key={index} className="group">
-                                <Card className="overflow-hidden h-full">
-                                    <CardContent className="p-0">
-                                        <div className="aspect-square relative w-full bg-background">
-                                            <Image 
-                                                src={product.photoUrl || 'https://picsum.photos/seed/placeholder/300/300'}
-                                                alt={product.name}
-                                                fill
-                                                className="object-cover transition-transform group-hover:scale-105"
-                                            />
-                                        </div>
-                                        <div className="p-3">
-                                            <h3 className="font-semibold text-sm truncate group-hover:text-primary">{product.name}</h3>
-                                            <p className="text-lg font-bold text-primary">${product.price.toFixed(2)}</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                                </Link>
-                            )) : (
-                                <p className="text-muted-foreground col-span-full">No similar products were found in our catalog.</p>
-                            )}
-                            </div>
-                        </div>
+                  )}
+                  <div className={`p-3 rounded-lg max-w-lg ${msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
+                    {msg.content.map((c, i) => (
+                      <div key={i}>
+                        {c.text && <p className="whitespace-pre-wrap">{c.text}</p>}
+                        {c.media?.url && <Image src={c.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md mt-2" />}
+                      </div>
+                    ))}
+                  </div>
+                   {msg.role === 'user' && (
+                    <div className="bg-muted text-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <User size={20} />
                     </div>
-                    )}
+                  )}
                 </div>
-            )}
+              ))}
+
+              {isLoading && (
+                <div className="flex items-start gap-4">
+                  <div className="bg-muted text-muted-foreground rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0">
+                    <Bot size={22} />
+                  </div>
+                  <div className="p-4 bg-muted rounded-xl rounded-tl-none flex items-center">
+                    <Loader2 className="animate-spin text-primary" />
+                    <p className="ml-2 text-muted-foreground">Thinking...</p>
+                  </div>
+                </div>
+              )}
+            </div>
          </div>
       </ScrollArea>
 
       <div className="mt-auto px-4 pb-4 border-t pt-4 bg-card rounded-b-lg">
-        <Button className="w-full h-12 text-base" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-          <Paperclip className="mr-2 h-4 w-4" />
-          {isLoading ? 'Analyzing...' : (imagePreview ? 'Upload Another Image' : 'Upload Image')}
-        </Button>
+        {hasUploadedImage ? (
+          <form onSubmit={handleFormSubmit} className="relative">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a follow-up question..."
+              className="pr-24"
+              disabled={isLoading}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                title="Upload another image"
+              >
+                <Paperclip size={20} />
+              </Button>
+              <Button type="submit" size="icon" disabled={isLoading || !input}>
+                <Send size={20} />
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <Button className="w-full h-12 text-base" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+            <Paperclip className="mr-2 h-4 w-4" />
+            {isLoading ? 'Analyzing...' : 'Upload Image'}
+          </Button>
+        )}
         <input
           type="file"
           ref={fileInputRef}
