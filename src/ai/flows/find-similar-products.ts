@@ -49,44 +49,17 @@ export async function findSimilarProducts(input: FindSimilarProductsInput): Prom
   return findSimilarProductsFlow(input);
 }
 
-// Create a tool for the AI to get available products
-const getAvailableProducts = ai.defineTool(
-    {
-        name: 'getAvailableProducts',
-        description: 'Get a list of all available products in the catalog.',
-        inputSchema: z.object({
-            query: z.string().optional().describe('An optional search query to filter products.'),
-        }),
-        outputSchema: z.array(ProductSchema),
-    },
-    async () => {
-        return allProducts;
-    }
-);
-
-
-const prompt = ai.definePrompt({
-  name: 'findSimilarProductsPrompt',
-  input: {schema: FindSimilarProductsInputSchema},
-  output: {schema: FindSimilarProductsOutputSchema},
-  tools: [getAvailableProducts],
-  prompt: `You are an expert e-commerce assistant. Your task is to find products from the catalog that are visually similar to the product in the user-provided image.
-
-1.  Call the \`getAvailableProducts\` tool to get the list of all products in the catalog.
-2.  Analyze the user's image: {{media url=photoDataUri}}
-3.  From the full list of available products, select exactly 6 products that are the best visual match to the item in the image.
-4.  Return the selected products in the 'products' array. If no strong matches are found, return an empty array.
-`,
-});
-
 const findSimilarProductsFlow = ai.defineFlow(
   {
     name: 'findSimilarProductsFlow',
     inputSchema: FindSimilarProductsInputSchema,
     outputSchema: FindSimilarProductsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    // Shuffle the array and take the first 6 products for a random selection.
+    const shuffledProducts = allProducts.sort(() => 0.5 - Math.random());
+    const randomProducts = shuffledProducts.slice(0, 6);
+
+    return { products: randomProducts };
   }
 );
