@@ -41,7 +41,7 @@ const ProductSchema = z.object({
 });
 
 const FindSimilarProductsOutputSchema = z.object({
-    products: z.array(ProductSchema).describe('An array of products that are visually similar to the one in the image.')
+    products: z.array(ProductSchema).describe('An array of 6 products that are visually similar to the one in the image.')
 });
 export type FindSimilarProductsOutput = z.infer<typeof FindSimilarProductsOutputSchema>;
 
@@ -74,7 +74,7 @@ const prompt = ai.definePrompt({
 
 1.  Call the \`getAvailableProducts\` tool to get the list of all products in the catalog.
 2.  Analyze the user's image: {{media url=photoDataUri}}
-3.  From the full list of available products, select up to 6 products that are the best visual match to the item in the image.
+3.  From the full list of available products, select exactly 6 products that are the best visual match to the item in the image.
 4.  Return the selected products in the 'products' array. If no strong matches are found, return an empty array.
 `,
 });
