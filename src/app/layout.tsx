@@ -93,7 +93,7 @@ export default function RootLayout({
                 </div>
               </nav>
             </header>
-            <main className="flex-grow">
+            <main className="flex-1">
               {children}
             </main>
             <Footer />
