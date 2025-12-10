@@ -24,6 +24,7 @@ import { useEffect, useState, useMemo } from 'react';
 
 export default function ProductPage() {
   const params = useParams();
+  const [product, setProduct] = useState<Product | null | undefined>(undefined);
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
@@ -32,11 +33,14 @@ export default function ProductPage() {
     const productName = params.productName;
     return productName ? decodeURIComponent(Array.isArray(productName) ? productName[0] : productName) : '';
   }, [params.productName]);
-  
-  const product: Product | undefined = useMemo(() => {
-    return decodedProductName
-      ? products.find((p) => p.name.toLowerCase() === decodedProductName.toLowerCase())
-      : undefined;
+
+  useEffect(() => {
+    if (decodedProductName) {
+      const foundProduct = products.find(p => p.name.toLowerCase() === decodedProductName.toLowerCase());
+      setProduct(foundProduct);
+    } else {
+      setProduct(null);
+    }
   }, [decodedProductName]);
 
   useEffect(() => {
@@ -46,14 +50,20 @@ export default function ProductPage() {
     setViewCount(Math.floor(Math.random() * 100));
   }, []);
 
+  if (product === undefined) {
+    // Still loading
+    return null; 
+  }
+  
   if (!product) {
-    return notFound();
+    notFound();
   }
   
   const seller: Seller | undefined = allSellers.find(s => s.products.some(p => p.name.toLowerCase() === product.name.toLowerCase()));
   
   if (!seller) {
-    return notFound();
+    // Or handle this case differently, e.g. show product without seller
+    notFound();
   }
 
   const securityGuidelines = [
@@ -247,5 +257,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
