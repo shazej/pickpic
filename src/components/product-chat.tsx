@@ -49,12 +49,12 @@ export default function ProductChat() {
   useEffect(() => {
     // Scroll to the bottom of the chat on new messages
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+        if (viewport) {
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        }
     }
-  }, [messages]);
+  }, [messages, isLoading]);
   
   useEffect(() => {
     // Initial message from the AI
@@ -80,12 +80,25 @@ export default function ProductChat() {
       if (result) {
         setMessages(prev => [...prev, { role: 'model', content: [{ text: result.response }] }]);
         // Update product details if they are returned by the AI
-        if (result.productName || result.description || result.price) {
+        let detailsUpdated = false;
+        const updatedDetails: ProductDetails = {};
+        if (result.productName) {
+            updatedDetails.productName = result.productName;
+            detailsUpdated = true;
+        }
+        if (result.description) {
+            updatedDetails.description = result.description;
+            detailsUpdated = true;
+        }
+        if (result.price) {
+            updatedDetails.price = result.price;
+            detailsUpdated = true;
+        }
+        
+        if (detailsUpdated) {
           setProductDetails(prev => ({
             ...prev,
-            ...(result.productName && { productName: result.productName }),
-            ...(result.description && { description: result.description }),
-            ...(result.price && { price: result.price }),
+            ...updatedDetails
           }));
           toast({
             title: "Product Details Updated",
@@ -111,6 +124,10 @@ export default function ProductChat() {
     if (file) {
       const dataUri = await fileToDataUri(file);
       setImagePreview(dataUri);
+    }
+     // Reset file input to allow uploading the same file again
+    if(event.target){
+      event.target.value = "";
     }
   };
 
@@ -186,9 +203,9 @@ export default function ProductChat() {
                 <button
                   type="button"
                   onClick={() => setImagePreview(null)}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-5 w-5 text-xs"
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-5 w-5 text-xs flex items-center justify-center"
                 >
-                  X
+                  &times;
                 </button>
               </div>
             )}
