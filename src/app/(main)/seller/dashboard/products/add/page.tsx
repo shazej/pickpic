@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -83,14 +84,14 @@ export default function AddProductPage() {
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 flex flex-col p-4 sm:p-6 h-screen overflow-hidden">
+        <main className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
            <div className="flex items-center gap-4 mb-4">
               <SidebarTrigger className="md:hidden" />
               <div className="w-full flex-1">
                   <h1 className="text-lg font-semibold md:text-2xl">Create a Product with AI</h1>
               </div>
           </div>
-          <div className="max-w-3xl mx-auto w-full">
+          <div className="max-w-3xl mx-auto w-full pb-8">
             <AiProductForm />
           </div>
         </main>
