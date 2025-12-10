@@ -3,7 +3,6 @@ import type {Metadata} from 'next';
 import '../globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LocationProvider } from '@/hooks/use-location';
-import Footer from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'Ecomm Now',
@@ -28,7 +27,6 @@ export default function RootLayout({
               <main className="flex-1">
                 {children}
               </main>
-              <Footer />
             </div>
         </LocationProvider>
         <Toaster />
