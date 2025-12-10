@@ -19,7 +19,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import ProductChat from '@/components/product-chat';
+import AiProductForm from '@/components/ai-product-form';
 
 export default function AddProductPage() {
   return (
@@ -90,7 +90,9 @@ export default function AddProductPage() {
                   <h1 className="text-lg font-semibold md:text-2xl">Create a Product with AI</h1>
               </div>
           </div>
-          <ProductChat />
+          <div className="max-w-3xl mx-auto w-full">
+            <AiProductForm />
+          </div>
         </main>
       </div>
     </SidebarProvider>
