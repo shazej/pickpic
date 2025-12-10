@@ -28,6 +28,7 @@ export default function ProductPage() {
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
+  const [mainImage, setMainImage] = useState<string | undefined>(undefined);
 
   const decodedProductName = params.productName ? decodeURIComponent(Array.isArray(params.productName) ? params.productName[0] : params.productName) : '';
 
@@ -35,6 +36,9 @@ export default function ProductPage() {
     if (decodedProductName) {
       const foundProduct = products.find(p => p.name.toLowerCase() === decodedProductName.toLowerCase());
       setProduct(foundProduct || null);
+      if (foundProduct) {
+        setMainImage(foundProduct.photoUrl);
+      }
     } else {
       setProduct(null);
     }
@@ -70,6 +74,14 @@ export default function ProductPage() {
     "Not to transfer any money only after confirming the identity of the seller and documenting the sale process and receiving the product.",
     "Ensure that you get a signed receipt from the seller."
   ];
+  
+  const galleryImages = [
+    product.photoUrl,
+    "https://picsum.photos/seed/gallery1/200/200",
+    "https://picsum.photos/seed/gallery2/200/200",
+    "https://picsum.photos/seed/gallery3/200/200",
+    "https://picsum.photos/seed/gallery4/200/200",
+  ].filter(Boolean) as string[];
 
   return (
     <div className="container mx-auto p-4 md:p-6 bg-muted/20">
@@ -145,13 +157,16 @@ export default function ProductPage() {
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <div className="aspect-video relative w-full group">
-                <Image
-                    src={product.photoUrl || "https://picsum.photos/seed/product/1200/800"}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    data-ai-hint={product.photoHint}
-                />
+                {mainImage && (
+                  <Image
+                      src={mainImage}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      data-ai-hint={product.photoHint}
+                      key={mainImage} // Force re-render on image change
+                  />
+                )}
                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                  <Button variant="secondary" size="icon" className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full opacity-0 group-hover:opacity-100">
                     <ChevronLeft />
@@ -159,13 +174,26 @@ export default function ProductPage() {
                  <Button variant="secondary" size="icon" className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full opacity-0 group-hover:opacity-100">
                     <ChevronRight />
                  </Button>
-                 <Badge className="absolute bottom-2 left-2">1/1</Badge>
+                 <Badge className="absolute bottom-2 left-2">1/{galleryImages.length}</Badge>
                  <Button variant="secondary" className="absolute bottom-2 right-2">
                     <Video className="h-4 w-4 mr-2" />
                     Video
                  </Button>
               </div>
-              <div className="p-6">
+              <div className="p-2">
+                  <div className="flex gap-2 p-2">
+                    {galleryImages.map((img, index) => (
+                      <button
+                        key={index}
+                        className={`relative w-20 h-20 rounded-md overflow-hidden border-2 ${mainImage === img ? 'border-primary' : 'border-transparent'}`}
+                        onClick={() => setMainImage(img)}
+                      >
+                        <Image src={img} alt={`Product thumbnail ${index + 1}`} fill className="object-cover" />
+                      </button>
+                    ))}
+                  </div>
+              </div>
+              <div className="p-6 pt-0">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon">
