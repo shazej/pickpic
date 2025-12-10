@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, ChangeEvent, useEffect } from 'react';
@@ -9,6 +10,7 @@ import {
   Image as ImageIcon,
   Send,
   User,
+  Camera
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +21,14 @@ import { Card, CardContent } from './ui/card';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
 import type { Product } from '@/lib/types';
+import { Alert, AlertTitle, AlertDescription } from './ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 type Message = {
   role: 'user' | 'model';
@@ -32,8 +42,12 @@ export default function SimilarProductsChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationState, setConversationState] = useState<ConversationState>('initial');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -45,6 +59,38 @@ export default function SimilarProductsChat() {
       }
     }
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (isCameraOpen) {
+      const getCameraPermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          setHasCameraPermission(true);
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings.',
+          });
+          setIsCameraOpen(false);
+        }
+      };
+      getCameraPermission();
+    } else {
+        // Stop camera stream when dialog is closed
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+    }
+  }, [isCameraOpen, toast]);
 
   const addMessage = (message: Message) => {
     setMessages(prev => [...prev, message]);
@@ -88,16 +134,13 @@ export default function SimilarProductsChat() {
     }
   };
 
-  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      try {
+  const handleImageUpload = async (dataUri: string) => {
+    try {
         setIsLoading(true);
-        const dataUri = await fileToDataUri(file);
         addMessage({ role: 'user', content: [{ media: { url: dataUri } }] });
         addMessage({
           role: 'model',
-          content: [{ text: 'Do we need to find a similar product?' }],
+          content: [{ text: 'Do you want to find similar products based on this image?' }],
         });
         setConversationState('awaiting_confirmation');
       } catch (error) {
@@ -110,8 +153,32 @@ export default function SimilarProductsChat() {
       } finally {
         setIsLoading(false);
       }
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const dataUri = await fileToDataUri(file);
+      handleImageUpload(dataUri);
     }
   };
+  
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (context) {
+            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            const dataUri = canvas.toDataURL('image/jpeg');
+            handleImageUpload(dataUri);
+            setIsCameraOpen(false);
+        }
+    }
+  };
+
 
   const handleConfirmation = (confirmed: boolean) => {
     if (confirmed) {
@@ -137,18 +204,25 @@ export default function SimilarProductsChat() {
       <p className="text-muted-foreground max-w-md mx-auto mb-6">
         Upload an image of a product, and our AI will help you find what you're looking for. Ask questions to refine your search.
       </p>
-      <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-        <Paperclip className="mr-2 h-4 w-4" />
-        {isLoading ? 'Processing...' : 'Upload Image'}
-      </Button>
+      <div className="flex gap-4">
+        <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+            <Paperclip className="mr-2 h-4 w-4" />
+            {isLoading ? 'Processing...' : 'Upload from File'}
+        </Button>
+         <Button size="lg" variant="outline" onClick={() => setIsCameraOpen(true)} disabled={isLoading}>
+            <Camera className="mr-2 h-4 w-4" />
+            Use Camera
+        </Button>
+      </div>
     </div>
   );
 
   return (
+    <>
     <div className="flex flex-col h-full w-full bg-card border rounded-lg">
       <ScrollArea className="flex-grow" ref={scrollAreaRef}>
          <div className="p-4 h-full">
-            {conversationState === 'initial' && !isLoading && <InitialState />}
+            {messages.length === 0 && !isLoading && <InitialState />}
             
             <div className="space-y-6">
               {messages.map((msg, index) => (
@@ -217,7 +291,7 @@ export default function SimilarProductsChat() {
                 <Button onClick={() => handleConfirmation(true)}>Yes</Button>
                 <Button variant="outline" onClick={() => handleConfirmation(false)}>No</Button>
             </div>
-        ) : conversationState === 'chatting' ? (
+        ) : messages.length > 0 ? (
           <form onSubmit={handleFormSubmit} className="relative">
             <Input
               value={input}
@@ -232,34 +306,54 @@ export default function SimilarProductsChat() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  setConversationState('initial');
                   setMessages([]);
-                  fileInputRef.current?.click();
+                  setConversationState('initial');
                 }}
                 disabled={isLoading}
-                title="Upload another image"
+                title="Start over"
               >
-                <Paperclip size={20} />
+                <ImageIcon size={20} />
               </Button>
               <Button type="submit" size="icon" disabled={isLoading || !input}>
                 <Send size={20} />
               </Button>
             </div>
           </form>
-        ) : (
-          <Button className="w-full h-12 text-base" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-            <Paperclip className="mr-2 h-4 w-4" />
-            {isLoading ? 'Analyzing...' : 'Upload Image to Start'}
-          </Button>
-        )}
+        ) : null}
         <input
           type="file"
           ref={fileInputRef}
-          onChange={handleImageChange}
+          onChange={handleFileChange}
           accept="image/*"
           className="hidden"
         />
+        <canvas ref={canvasRef} className="hidden"></canvas>
       </div>
     </div>
+    <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Use Camera</DialogTitle>
+            </DialogHeader>
+            <div className="relative">
+                 <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline/>
+                 {hasCameraPermission === false && (
+                     <Alert variant="destructive">
+                         <AlertTitle>Camera Access Required</AlertTitle>
+                         <AlertDescription>
+                         Please allow camera access in your browser to use this feature.
+                         </AlertDescription>
+                     </Alert>
+                 )}
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+                <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture Photo</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
+    
