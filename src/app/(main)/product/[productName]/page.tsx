@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { products, sellers as allSellers } from '@/lib/data';
 import { Product, Seller } from '@/lib/types';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,21 +20,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight, MapPin, Sparkles, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
-// The page now accepts params directly for server-side decoding
-export default function ProductPage({ params }: { params: { productName: string } }) {
+export default function ProductPage() {
+  const params = useParams();
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
 
-  // Decode the product name immediately. This happens on the server.
-  const decodedProductName = params.productName ? decodeURIComponent(params.productName) : '';
-
-  // Find the product using the decoded name.
-  const product: Product | undefined = decodedProductName
-    ? products.find((p) => p.name.toLowerCase() === decodedProductName.toLowerCase())
-    : undefined;
+  const decodedProductName = useMemo(() => {
+    const productName = params.productName;
+    return productName ? decodeURIComponent(Array.isArray(productName) ? productName[0] : productName) : '';
+  }, [params.productName]);
+  
+  const product: Product | undefined = useMemo(() => {
+    return decodedProductName
+      ? products.find((p) => p.name.toLowerCase() === decodedProductName.toLowerCase())
+      : undefined;
+  }, [decodedProductName]);
 
   useEffect(() => {
     // Generate random numbers only on the client to avoid hydration errors
@@ -43,18 +46,13 @@ export default function ProductPage({ params }: { params: { productName: string 
     setViewCount(Math.floor(Math.random() * 100));
   }, []);
 
-
   if (!product) {
-    // If the product is not found after decoding, show the notFound page.
     return notFound();
   }
-
-  // For this example, let's just pick the first seller that has this product
-  // In a real app, you might have a specific ad ID to fetch the exact seller
+  
   const seller: Seller | undefined = allSellers.find(s => s.products.some(p => p.name.toLowerCase() === product.name.toLowerCase()));
   
   if (!seller) {
-    // Or handle this case more gracefully
     return notFound();
   }
 
