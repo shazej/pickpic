@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { products, sellers as allSellers } from '@/lib/data';
@@ -23,16 +22,19 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 
-export default function ProductPage() {
-  const params = useParams();
-  const productNameFromUrl = params.productName as string;
-
+// The page now accepts params directly for server-side decoding
+export default function ProductPage({ params }: { params: { productName: string } }) {
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
-  
-  // Decode the product name right away
-  const decodedProductName = productNameFromUrl ? decodeURIComponent(productNameFromUrl) : '';
+
+  // Decode the product name immediately. This happens on the server.
+  const decodedProductName = params.productName ? decodeURIComponent(params.productName) : '';
+
+  // Find the product using the decoded name.
+  const product: Product | undefined = decodedProductName
+    ? products.find((p) => p.name.toLowerCase() === decodedProductName.toLowerCase())
+    : undefined;
 
   useEffect(() => {
     // Generate random numbers only on the client to avoid hydration errors
@@ -41,18 +43,10 @@ export default function ProductPage() {
     setViewCount(Math.floor(Math.random() * 100));
   }, []);
 
-  // Find the product using the decoded name
-  const product: Product | undefined = decodedProductName ? products.find(
-    (p) => p.name.toLowerCase() === decodedProductName.toLowerCase()
-  ) : undefined;
 
   if (!product) {
     // If the product is not found after decoding, show the notFound page.
-    // We check decodedProductName to avoid showing notFound during initial render.
-    if(decodedProductName) return notFound();
-
-    // Show a loading state or nothing while params are being resolved.
-    return <div>Loading product...</div>;
+    return notFound();
   }
 
   // For this example, let's just pick the first seller that has this product
