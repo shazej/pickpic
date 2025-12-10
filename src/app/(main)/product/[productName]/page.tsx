@@ -19,8 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight, MapPin, Sparkles, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { SellerChatDialog } from '@/components/seller-chat-dialog';
 
 export default function ProductPage() {
   const params = useParams();
@@ -29,15 +29,12 @@ export default function ProductPage() {
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
 
-  const decodedProductName = useMemo(() => {
-    const productName = params.productName;
-    return productName ? decodeURIComponent(Array.isArray(productName) ? productName[0] : productName) : '';
-  }, [params.productName]);
+  const decodedProductName = params.productName ? decodeURIComponent(Array.isArray(params.productName) ? params.productName[0] : params.productName) : '';
 
   useEffect(() => {
     if (decodedProductName) {
       const foundProduct = products.find(p => p.name.toLowerCase() === decodedProductName.toLowerCase());
-      setProduct(foundProduct);
+      setProduct(foundProduct || null);
     } else {
       setProduct(null);
     }
@@ -203,9 +200,11 @@ export default function ProductPage() {
                     <Button size="lg" className="w-full">
                         Call
                     </Button>
-                     <Button size="lg" variant="outline" className="w-full">
-                        Chat
-                    </Button>
+                    <SellerChatDialog sellerName={seller.name}>
+                       <Button size="lg" variant="outline" className="w-full">
+                          Chat
+                      </Button>
+                    </SellerChatDialog>
                 </div>
               </div>
             </CardContent>
@@ -257,3 +256,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    
