@@ -9,7 +9,7 @@ import SimilarProductsChat from '@/components/similar-products-chat';
 export default function VisionSearchPage() {
   return (
     <div className="flex flex-col h-screen bg-background">
-      <header className="flex h-16 items-center border-b px-4 shrink-0">
+      <header className="flex h-16 items-center border-b px-4 shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
         <nav className="flex items-center gap-4 text-lg font-medium">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <Link href="/">
@@ -28,5 +28,3 @@ export default function VisionSearchPage() {
     </div>
   );
 }
-
-    
