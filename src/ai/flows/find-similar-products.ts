@@ -8,9 +8,10 @@
  * - FindSimilarProductsOutput - The return type for the findSimilarProducts function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { products as allProducts, Product } from '@/lib/data';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { products as allProducts } from '@/lib/data';
+
 
 const FindSimilarProductsInputSchema = z.object({
   photoDataUri: z
@@ -31,17 +32,17 @@ const ProductSchema = z.object({
   photoHint: z.string().optional(),
   description: z.string().optional(),
   details: z.object({
-      condition: z.string().optional(),
-      category: z.string().optional(),
-      size: z.string().optional(),
-      color: z.string().optional(),
-      material: z.string().optional(),
-      features: z.string().optional(),
-    }).optional(),
+    condition: z.string().optional(),
+    category: z.string().optional(),
+    size: z.string().optional(),
+    color: z.string().optional(),
+    material: z.string().optional(),
+    features: z.string().optional(),
+  }).optional(),
 });
 
 const FindSimilarProductsOutputSchema = z.object({
-    products: z.array(ProductSchema).describe('An array of 6 products that are visually similar to the one in the image.')
+  products: z.array(ProductSchema).describe('An array of 6 products that are visually similar to the one in the image.')
 });
 export type FindSimilarProductsOutput = z.infer<typeof FindSimilarProductsOutputSchema>;
 
@@ -55,7 +56,7 @@ const findSimilarProductsFlow = ai.defineFlow(
     inputSchema: FindSimilarProductsInputSchema,
     outputSchema: FindSimilarProductsOutputSchema,
   },
-  async (input) => {
+  async () => {
     // Shuffle the array and take the first 6 products for a random selection.
     const shuffledProducts = allProducts.sort(() => 0.5 - Math.random());
     const randomProducts = shuffledProducts.slice(0, 6);

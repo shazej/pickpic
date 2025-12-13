@@ -67,3 +67,46 @@ This change was necessary because `generateStaticParams` cannot be used in the s
 ### "Server stopped responding"
 -   **Cause**: Out of Memory (OOM) during `next build`.
 -   **Fix**: Upgrade server instance to at least 2GB RAM (e.g., `t3.small`).
+
+## 6. PM2 + Nginx + SSL Deployment (Alternative)
+
+For a traditional Node.js deployment with SSL on Ubuntu:
+
+### Files Created
+-   `ecosystem.config.js`: Configuration for PM2 process manager.
+-   `setup-pm2.sh`: Automates installation of Node, Nginx, and Certbot.
+
+### Instructions
+1.  **SSH into your server**.
+2.  **Upload the code** (git clone or SCP).
+3.  **Run the setup script**:
+    ```bash
+    sudo ./setup-pm2.sh
+    # Defaults to ecom.lumen-path.com, or specify: sudo ./setup-pm2.sh yourdomain.com
+    ```
+4.  **Build and Start**:
+    ```bash
+    npm install
+    npm run build
+    pm2 start ecosystem.config.js
+    pm2 save
+    pm2 startup
+    ```
+
+### Troubleshooting Cloudflare Error 521
+If you see **"Web server is down" (Error 521)**, run the diagnostic script on your server:
+
+1.  **Upload and Run Debug Script**:
+    ```bash
+    # Upload debug-server.sh to your server first
+    ./debug-server.sh
+    ```
+2.  **Interpret Results**:
+    -   **Nginx inactive**: Run `sudo systemctl start nginx`.
+    -   **App down (no :3000)**: Run `pm2 restart all`.
+    -   **Everything looks GREEN but still error?**:
+        -   **CRITICAL**: Go to your **AWS EC2 Security Groups** (or DigitalOcean Networking).
+        -   Add "Inbound Rule": Type=HTTP, Port=80, Source=Anywhere.
+        -   Add "Inbound Rule": Type=HTTPS, Port=443, Source=Anywhere.
+
+

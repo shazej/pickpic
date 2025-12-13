@@ -41,32 +41,41 @@ export function SellerAuthCard({
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleAuth = () => {
-    if (isLogin) {
-      setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        if (email === 'seller@gmail.com' && password === '000000') {
-          toast({
-            title: 'Login Successful',
-            description: 'Redirecting to your dashboard...',
-          });
-          router.push('/seller/dashboard');
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: 'Invalid email or password.',
-          });
-          setLoading(false);
-        }
-      }, 1000);
-    } else {
-      // Handle Sign Up Logic
-       toast({
-        title: 'Sign Up',
-        description: 'Sign up functionality is not implemented yet.',
+  const handleAuth = async () => {
+    setLoading(true);
+    try {
+      const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase');
+
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+        toast({
+          title: 'Login Successful',
+          description: 'Redirecting to your dashboard...',
+        });
+        router.push('/seller/dashboard');
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toast({
+          title: 'Account Created',
+          description: 'Welcome! Redirecting to your dashboard...',
+        });
+        router.push('/seller/dashboard');
+      }
+    } catch (error: any) {
+      console.error(error);
+      let errorMessage = 'An error occurred. Please try again.';
+      if (error.code === 'auth/invalid-credential') errorMessage = 'Invalid email or password.';
+      if (error.code === 'auth/email-already-in-use') errorMessage = 'Email is already in use.';
+      if (error.code === 'auth/weak-password') errorMessage = 'Password should be at least 6 characters.';
+
+      toast({
+        variant: 'destructive',
+        title: isLogin ? 'Login Failed' : 'Sign Up Failed',
+        description: errorMessage,
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,11 +89,11 @@ export function SellerAuthCard({
       <CardContent className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            placeholder="m@example.com" 
-            required 
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
@@ -92,9 +101,9 @@ export function SellerAuthCard({
         </div>
         <div className="grid gap-2">
           <Label htmlFor="password">Password</Label>
-          <Input 
-            id="password" 
-            type="password" 
+          <Input
+            id="password"
+            type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}

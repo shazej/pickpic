@@ -7,8 +7,8 @@
  * - GenerateImagesOutput - The return type for the generateImages function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const GenerateImagesInputSchema = z.object({
   photoDataUri: z
@@ -21,7 +21,7 @@ const GenerateImagesInputSchema = z.object({
 export type GenerateImagesInput = z.infer<typeof GenerateImagesInputSchema>;
 
 const GenerateImagesOutputSchema = z.array(z.object({
-    url: z.string().describe("The data URI of the generated image.")
+  url: z.string().describe("The data URI of the generated image.")
 }));
 export type GenerateImagesOutput = z.infer<typeof GenerateImagesOutputSchema>;
 
@@ -34,21 +34,21 @@ const generationPrompt = `Generate a new image that is visually similar to the i
 Additionally, consider the following instruction: {{{prompt}}}
 {{/if}}`;
 
-const generateSingleImage = async (input: GenerateImagesInput): Promise<{url: string}> => {
-    const {media} = await ai.generate({
-        model: 'googleai/gemini-2.5-flash-image-preview',
-        prompt: [
-            {media: {url: input.photoDataUri}},
-            {text: generationPrompt},
-        ],
-        config: {
-            responseModalities: ['IMAGE'],
-        },
-    });
-    if (!media.url) {
-        throw new Error('Image generation failed to return a URL.');
-    }
-    return { url: media.url };
+const generateSingleImage = async (input: GenerateImagesInput): Promise<{ url: string }> => {
+  const { media } = await ai.generate({
+    model: 'googleai/gemini-2.5-flash-image-preview',
+    prompt: [
+      { media: { url: input.photoDataUri } },
+      { text: generationPrompt },
+    ],
+    config: {
+      responseModalities: ['IMAGE'],
+    },
+  });
+  if (!media || !media.url) {
+    throw new Error('Image generation failed to return a URL.');
+  }
+  return { url: media.url };
 }
 
 const generateImagesFlow = ai.defineFlow(
@@ -61,7 +61,7 @@ const generateImagesFlow = ai.defineFlow(
     // Gemini Flash Image Preview generates one image at a time.
     // We will call it multiple times in parallel to get 5 images.
     const generationPromises = Array(5).fill(null).map(() => generateSingleImage(input));
-    
+
     const results = await Promise.all(generationPromises);
 
     return results;

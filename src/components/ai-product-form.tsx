@@ -34,7 +34,7 @@ export default function AiProductForm() {
         setImagePreview(dataUri);
 
         const result = await extractProductDetails({ photoDataUri: dataUri });
-        
+
         if (result) {
           setProductName(result.productName);
           setDescription(result.description);
@@ -59,10 +59,10 @@ export default function AiProductForm() {
     }
     // Reset file input to allow re-uploading the same file
     if (event.target) {
-        event.target.value = '';
+      event.target.value = '';
     }
   };
-  
+
   const clearForm = () => {
     setProductName('');
     setDescription('');
@@ -70,13 +70,13 @@ export default function AiProductForm() {
     setImagePreview(null);
     setHasGenerated(false);
   }
-  
+
   const handleCreateProduct = () => {
-     toast({
-        title: 'Product Created!',
-        description: `${productName} has been added to your inventory.`,
-      });
-      clearForm();
+    toast({
+      title: 'Product Created!',
+      description: `${productName} has been added to your inventory.`,
+    });
+    clearForm();
   }
 
   const isFormValid = productName && description && price && imagePreview;
@@ -105,9 +105,9 @@ export default function AiProductForm() {
             ) : imagePreview ? (
               <>
                 <Image src={imagePreview} alt="Product preview" fill className="object-contain rounded-lg p-2" />
-                <Button 
-                  variant="destructive" 
-                  size="icon" 
+                <Button
+                  variant="destructive"
+                  size="icon"
                   className="absolute top-2 right-2 h-7 w-7"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -136,52 +136,52 @@ export default function AiProductForm() {
         </div>
 
         {hasGenerated && (
-            <div className="flex items-center justify-center p-3 bg-primary/10 rounded-md text-sm text-primary-foreground">
-                <Sparkles className="h-5 w-5 mr-3 text-primary" />
-                <p className='text-primary'>Don't like the results? <button onClick={() => fileInputRef.current?.click()} className="font-bold underline hover:text-primary/80">Try another image</button> or edit the fields below.</p>
-            </div>
+          <div className="flex items-center justify-center p-3 bg-primary/10 rounded-md text-sm text-primary-foreground">
+            <Sparkles className="h-5 w-5 mr-3 text-primary" />
+            <p className='text-primary'>Don&apos;t like the results? <button onClick={() => fileInputRef.current?.click()} className="font-bold underline hover:text-primary/80">Try another image</button> or edit the fields below.</p>
+          </div>
         )}
 
         <div className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="product-name">Product Name</Label>
-                <Input
-                id="product-name"
-                placeholder="AI will generate this..."
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                disabled={!imagePreview || isLoading}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                id="description"
-                placeholder="AI will generate this..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={5}
-                disabled={!imagePreview || isLoading}
-                />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="price">Price (USD)</Label>
-                <Input
-                id="price"
-                type="number"
-                placeholder="e.g., 29.99"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                disabled={!imagePreview || isLoading}
-                />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="product-name">Product Name</Label>
+            <Input
+              id="product-name"
+              placeholder="AI will generate this..."
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              disabled={!imagePreview || isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="AI will generate this..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+              disabled={!imagePreview || isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Price (USD)</Label>
+            <Input
+              id="price"
+              type="number"
+              placeholder="e.g., 29.99"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              disabled={!imagePreview || isLoading}
+            />
+          </div>
         </div>
       </CardContent>
       <CardFooter>
-        <Button 
-            className="w-full" 
-            disabled={!isFormValid || isLoading}
-            onClick={handleCreateProduct}
+        <Button
+          className="w-full"
+          disabled={!isFormValid || isLoading}
+          onClick={handleCreateProduct}
         >
           {isLoading ? 'Please wait...' : 'Create Product'}
         </Button>

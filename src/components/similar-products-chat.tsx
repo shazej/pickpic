@@ -83,12 +83,12 @@ export default function SimilarProductsChat() {
       };
       getCameraPermission();
     } else {
-        // Stop camera stream when dialog is closed
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
-        }
+      // Stop camera stream when dialog is closed
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
     }
   }, [isCameraOpen, toast]);
 
@@ -111,7 +111,7 @@ export default function SimilarProductsChat() {
 
     try {
       const result = await visionChat({ history: newHistory as VisionChatInput['history'] });
-      
+
       const modelContent: Message['content'] = [];
       if (result.response) modelContent.push({ text: result.response });
       if (result.products) modelContent.push({ products: result.products as Product[] });
@@ -128,7 +128,7 @@ export default function SimilarProductsChat() {
         title: 'Error',
         description: 'Something went wrong while communicating with the AI.',
       });
-      addMessage({ role: 'model', content: [{ text: "I'm sorry, I encountered an error. Please try again." }] });
+      addMessage({ role: 'model', content: [{ text: "I&apos;m sorry, I encountered an error. Please try again." }] });
     } finally {
       setIsLoading(false);
     }
@@ -136,23 +136,23 @@ export default function SimilarProductsChat() {
 
   const handleImageUpload = async (dataUri: string) => {
     try {
-        setIsLoading(true);
-        addMessage({ role: 'user', content: [{ media: { url: dataUri } }] });
-        addMessage({
-          role: 'model',
-          content: [{ text: 'Do you want to find similar products based on this image?' }],
-        });
-        setConversationState('awaiting_confirmation');
-      } catch (error) {
-        console.error(error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not process the image. Please try another one.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(true);
+      addMessage({ role: 'user', content: [{ media: { url: dataUri } }] });
+      addMessage({
+        role: 'model',
+        content: [{ text: 'Do you want to find similar products based on this image?' }],
+      });
+      setConversationState('awaiting_confirmation');
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not process the image. Please try another one.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -162,20 +162,20 @@ export default function SimilarProductsChat() {
       handleImageUpload(dataUri);
     }
   };
-  
+
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext('2d');
-        if (context) {
-            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-            const dataUri = canvas.toDataURL('image/jpeg');
-            handleImageUpload(dataUri);
-            setIsCameraOpen(false);
-        }
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        const dataUri = canvas.toDataURL('image/jpeg');
+        handleImageUpload(dataUri);
+        setIsCameraOpen(false);
+      }
     }
   };
 
@@ -202,16 +202,16 @@ export default function SimilarProductsChat() {
       </div>
       <h1 className="text-3xl font-bold font-headline mb-2">Visual & Conversational Search</h1>
       <p className="text-muted-foreground max-w-md mx-auto mb-6">
-        Upload an image of a product, and our AI will help you find what you're looking for. Ask questions to refine your search.
+        Upload an image of a product, and our AI will help you find what you&apos;re looking for. Ask questions to refine your search.
       </p>
       <div className="flex gap-4">
         <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-            <Paperclip className="mr-2 h-4 w-4" />
-            {isLoading ? 'Processing...' : 'Upload from File'}
+          <Paperclip className="mr-2 h-4 w-4" />
+          {isLoading ? 'Processing...' : 'Upload from File'}
         </Button>
-         <Button size="lg" variant="outline" onClick={() => setIsCameraOpen(true)} disabled={isLoading}>
-            <Camera className="mr-2 h-4 w-4" />
-            Use Camera
+        <Button size="lg" variant="outline" onClick={() => setIsCameraOpen(true)} disabled={isLoading}>
+          <Camera className="mr-2 h-4 w-4" />
+          Use Camera
         </Button>
       </div>
     </div>
@@ -219,54 +219,54 @@ export default function SimilarProductsChat() {
 
   return (
     <>
-    <div className="flex flex-col h-full w-full bg-card border rounded-lg">
-      <ScrollArea className="flex-grow" ref={scrollAreaRef}>
-         <div className="p-4 h-full">
+      <div className="flex flex-col h-full w-full bg-card border rounded-lg">
+        <ScrollArea className="flex-grow" ref={scrollAreaRef}>
+          <div className="p-4 h-full">
             {messages.length === 0 && !isLoading && <InitialState />}
-            
+
             <div className="space-y-6">
               {messages.map((msg, index) => (
                 <div key={index} className={`flex flex-col gap-3 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                   <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end flex-row-reverse' : ''}`}>
-                      <div className="bg-muted text-muted-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                        {msg.role === 'model' ? <Bot size={20} /> : <User size={20} />}
-                      </div>
-                      <div className={`p-3 rounded-lg max-w-lg ${msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
-                        {msg.content.map((c, i) => (
-                          <div key={i}>
-                            {c.text && <p className="whitespace-pre-wrap">{c.text}</p>}
-                            {c.media?.url && <Image src={c.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md mt-2" />}
-                          </div>
-                        ))}
-                      </div>
+                  <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end flex-row-reverse' : ''}`}>
+                    <div className="bg-muted text-muted-foreground rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      {msg.role === 'model' ? <Bot size={20} /> : <User size={20} />}
+                    </div>
+                    <div className={`p-3 rounded-lg max-w-lg ${msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
+                      {msg.content.map((c, i) => (
+                        <div key={i}>
+                          {c.text && <p className="whitespace-pre-wrap">{c.text}</p>}
+                          {c.media?.url && <Image src={c.media.url} alt="Uploaded content" width={200} height={200} className="rounded-md mt-2" />}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   {msg.content.some(c => c.products) && (
                     <div className="w-full max-w-2xl pl-12">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                         {msg.content.flatMap(c => c.products || []).map((product: Product) => (
+                        {msg.content.flatMap(c => c.products || []).map((product: Product) => (
                           <Link key={product.name} href={`/product/${encodeURIComponent(product.name)}`} passHref>
-                              <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
-                                <CardContent className="p-0">
-                                  <div className="aspect-square relative w-full">
-                                    <Image
-                                      src={product.photoUrl || "https://picsum.photos/seed/product/300/300"}
-                                      alt={product.name}
-                                      fill
-                                      className="object-cover"
-                                      data-ai-hint={product.photoHint}
-                                    />
-                                  </div>
-                                  <div className="p-2">
-                                    <h3 className="font-semibold text-xs leading-tight truncate">{product.name}</h3>
-                                    <p className="text-xs text-primary font-bold mt-1">${product.price.toFixed(2)}</p>
-                                  </div>
-                                </CardContent>
-                              </Card>
+                            <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+                              <CardContent className="p-0">
+                                <div className="aspect-square relative w-full">
+                                  <Image
+                                    src={product.photoUrl || "https://picsum.photos/seed/product/300/300"}
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover"
+                                    data-ai-hint={product.photoHint}
+                                  />
+                                </div>
+                                <div className="p-2">
+                                  <h3 className="font-semibold text-xs leading-tight truncate">{product.name}</h3>
+                                  <p className="text-xs text-primary font-bold mt-1">${product.price.toFixed(2)}</p>
+                                </div>
+                              </CardContent>
+                            </Card>
                           </Link>
-                         ))}
+                        ))}
                       </div>
                     </div>
-                   )}
+                  )}
                 </div>
               ))}
 
@@ -282,78 +282,77 @@ export default function SimilarProductsChat() {
                 </div>
               )}
             </div>
-         </div>
-      </ScrollArea>
+          </div>
+        </ScrollArea>
 
-      <div className="mt-auto px-4 pb-4 border-t pt-4 bg-card rounded-b-lg">
-        {conversationState === 'awaiting_confirmation' ? (
+        <div className="mt-auto px-4 pb-4 border-t pt-4 bg-card rounded-b-lg">
+          {conversationState === 'awaiting_confirmation' ? (
             <div className="flex justify-center gap-4">
-                <Button onClick={() => handleConfirmation(true)}>Yes</Button>
-                <Button variant="outline" onClick={() => handleConfirmation(false)}>No</Button>
+              <Button onClick={() => handleConfirmation(true)}>Yes</Button>
+              <Button variant="outline" onClick={() => handleConfirmation(false)}>No</Button>
             </div>
-        ) : messages.length > 0 ? (
-          <form onSubmit={handleFormSubmit} className="relative">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a follow-up question..."
-              className="pr-24"
-              disabled={isLoading}
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setMessages([]);
-                  setConversationState('initial');
-                }}
+          ) : messages.length > 0 ? (
+            <form onSubmit={handleFormSubmit} className="relative">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask a follow-up question..."
+                className="pr-24"
                 disabled={isLoading}
-                title="Start over"
-              >
-                <ImageIcon size={20} />
-              </Button>
-              <Button type="submit" size="icon" disabled={isLoading || !input}>
-                <Send size={20} />
-              </Button>
-            </div>
-          </form>
-        ) : null}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*"
-          className="hidden"
-        />
-        <canvas ref={canvasRef} className="hidden"></canvas>
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setMessages([]);
+                    setConversationState('initial');
+                  }}
+                  disabled={isLoading}
+                  title="Start over"
+                >
+                  <ImageIcon size={20} />
+                </Button>
+                <Button type="submit" size="icon" disabled={isLoading || !input}>
+                  <Send size={20} />
+                </Button>
+              </div>
+            </form>
+          ) : null}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          <canvas ref={canvasRef} className="hidden"></canvas>
+        </div>
       </div>
-    </div>
-    <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
         <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Use Camera</DialogTitle>
-            </DialogHeader>
-            <div className="relative">
-                 <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline/>
-                 {hasCameraPermission === false && (
-                     <Alert variant="destructive">
-                         <AlertTitle>Camera Access Required</AlertTitle>
-                         <AlertDescription>
-                         Please allow camera access in your browser to use this feature.
-                         </AlertDescription>
-                     </Alert>
-                 )}
-            </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
-                <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture Photo</Button>
-            </DialogFooter>
+          <DialogHeader>
+            <DialogTitle>Use Camera</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+            {hasCameraPermission === false && (
+              <Alert variant="destructive">
+                <AlertTitle>Camera Access Required</AlertTitle>
+                <AlertDescription>
+                  Please allow camera access in your browser to use this feature.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+            <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture Photo</Button>
+          </DialogFooter>
         </DialogContent>
-    </Dialog>
+      </Dialog>
     </>
   );
 }
 
-    

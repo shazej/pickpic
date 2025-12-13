@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Coordinates } from '@/lib/types';
 
 export function useGeolocation() {
@@ -31,9 +31,9 @@ export function useGeolocation() {
     };
 
     navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
     });
   }
 

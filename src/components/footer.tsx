@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Phone, Facebook, Linkedin, Instagram, Youtube, MessageSquare } from 'lucide-react';
+import { Mail, Phone, Facebook, Linkedin, Instagram, MessageSquare } from 'lucide-react';
 
 const footerLinks = {
     categories: [
@@ -59,7 +59,7 @@ export default function Footer() {
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex flex-wrap justify-between items-center">
                         <div className="w-full md:w-auto text-center md:text-left mb-4 md:mb-0">
-                            <h3 className="font-bold text-lg text-primary">We're Always Here to Help</h3>
+                            <h3 className="font-bold text-lg text-primary">We&apos;re Always Here to Help</h3>
                             <p className="text-sm text-muted-foreground">Reach out to us through any of these support channels</p>
                         </div>
                         <div className="w-full md:w-auto flex flex-col sm:flex-row sm:items-center sm:gap-8 justify-center">
@@ -72,7 +72,7 @@ export default function Footer() {
                                     <a href="mailto:support@ecomm.com" className="font-semibold text-foreground hover:text-primary">support@ecomm.com</a>
                                 </div>
                             </div>
-                             <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="bg-primary/10 rounded-full p-2">
                                     <Phone className="h-5 w-5 text-primary" />
                                 </div>
@@ -120,7 +120,7 @@ export default function Footer() {
                             ))}
                         </ul>
                     </div>
-                     <div>
+                    <div>
                         <h4 className="font-bold mb-4">Information</h4>
                         <ul className="space-y-2 text-sm">
                             {footerLinks.information.map(link => (
@@ -150,4 +150,3 @@ export default function Footer() {
     );
 }
 
-    

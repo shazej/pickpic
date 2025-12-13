@@ -5,6 +5,17 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import type { Coordinates } from '@/lib/types';
 import { useToast } from './use-toast';
 
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+interface AddressData {
+  address_components: AddressComponent[];
+  formatted_address: string;
+}
+
 interface LocationContextType {
   location: Coordinates | null;
   error: string | null;
@@ -30,11 +41,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKey] = useState<string | null>(null);
 
   useEffect(() => {
-     setApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null);
-     const prompted = sessionStorage.getItem('locationPrompted');
-     if(prompted) {
-        setIsPrompted(true);
-     }
+    setApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null);
+    const prompted = sessionStorage.getItem('locationPrompted');
+    if (prompted) {
+      setIsPrompted(true);
+    }
   }, []);
 
   const setAsPrompted = () => {
@@ -42,13 +53,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setIsPrompted(true);
   }
 
-  const updateLocationDetails = (coords: Coordinates, addressData: any) => {
+  const updateLocationDetails = (coords: Coordinates, addressData: AddressData) => {
     setLocation(coords);
-    
+
     const addressComponents = addressData.address_components;
-    const cityComp = addressComponents.find((c: any) => c.types.includes('locality') || c.types.includes('postal_town'));
-    const countryComp = addressComponents.find((c: any) => c.types.includes('country'));
-    
+    const cityComp = addressComponents.find((c: AddressComponent) => c.types.includes('locality') || c.types.includes('postal_town'));
+    const countryComp = addressComponents.find((c: AddressComponent) => c.types.includes('country'));
+
     setCity(cityComp ? cityComp.long_name : (addressData.formatted_address || ''));
     setCountry(countryComp ? countryComp.short_name : '');
   };
@@ -59,18 +70,18 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
-        const data = await response.json();
-        if (data.results && data.results.length > 0) {
-            updateLocationDetails(coords, data.results[0]);
-        }
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        updateLocationDetails(coords, data.results[0]);
+      }
     } catch (e) {
-        console.error("Failed to fetch city and country", e);
-        toast({
-            variant: "destructive",
-            title: "Geocoding Error",
-            description: "Could not fetch location details.",
-        });
+      console.error("Failed to fetch city and country", e);
+      toast({
+        variant: "destructive",
+        title: "Geocoding Error",
+        description: "Could not fetch location details.",
+      });
     }
   };
 
@@ -108,9 +119,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     };
 
     navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
     });
   };
 
@@ -134,9 +145,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setError(data.error_message || 'Could not find the location. Please try a different search term.');
         setLoading(false);
         toast({
-            variant: "destructive",
-            title: "Location Not Found",
-            description: "Please check your entry and try again.",
+          variant: "destructive",
+          title: "Location Not Found",
+          description: "Please check your entry and try again.",
         });
         return false;
       }

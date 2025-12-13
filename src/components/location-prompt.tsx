@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -35,11 +34,11 @@ export default function LocationPrompt() {
     setIsOpen(false);
     setAsPrompted();
   };
-  
+
   const handleSearch = async () => {
     if (!manualLocation) return;
     const success = await searchLocationByAddress(manualLocation);
-    if(success) {
+    if (success) {
       setIsOpen(false);
       setAsPrompted();
     }
@@ -49,7 +48,7 @@ export default function LocationPrompt() {
     setIsOpen(false);
     setAsPrompted();
   };
-  
+
   return (
     <AlertDialog open={isOpen}>
       <AlertDialogContent>
@@ -96,7 +95,7 @@ export default function LocationPrompt() {
             </div>
           </div>
         </div>
-        
+
         <AlertDialogFooter className="mt-4">
           <Button onClick={handleDeny} variant="outline" disabled={loading}>
             Maybe Later
