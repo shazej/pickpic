@@ -14,7 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface SellerAuthCardProps {
   title: string;
@@ -38,15 +41,14 @@ export function SellerAuthCard({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleAuth = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = await import('firebase/auth');
-      const { auth } = await import('@/lib/firebase');
-
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
         toast({
@@ -62,12 +64,12 @@ export function SellerAuthCard({
         });
         router.push('/seller/dashboard');
       }
-    } catch (error: any) {
-      console.error(error);
-      let errorMessage = 'An error occurred. Please try again.';
-      if (error.code === 'auth/invalid-credential') errorMessage = 'Invalid email or password.';
-      if (error.code === 'auth/email-already-in-use') errorMessage = 'Email is already in use.';
-      if (error.code === 'auth/weak-password') errorMessage = 'Password should be at least 6 characters.';
+    } catch (err: any) {
+      console.error("Firebase Auth Error:", err);
+      // Fallback custom error message
+      let errorMessage = `Error (${err.code}): ${err.message}`;
+
+      setError(errorMessage);
 
       toast({
         variant: 'destructive',
@@ -87,6 +89,15 @@ export function SellerAuthCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input
