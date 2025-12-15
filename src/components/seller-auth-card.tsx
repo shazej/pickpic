@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+/* import { useRouter } from 'next/navigation'; */
 import { useState } from 'react';
 import {
   Card,
@@ -15,8 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-context';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface SellerAuthCardProps {
@@ -42,39 +41,38 @@ export function SellerAuthCard({
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  /* const router = useRouter(); // Handled by AuthContext */
   const { toast } = useToast();
+
+  const { login, register } = useAuth();
 
   const handleAuth = async () => {
     setLoading(true);
     setError(null);
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        await login(email, password);
         toast({
           title: 'Login Successful',
           description: 'Redirecting to your dashboard...',
         });
-        router.push('/seller/dashboard');
+        // Redirect handled in AuthContext or here if needed, but Context has default redirect.
+        // For specific pages we might want to override.
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await register(email, password);
         toast({
           title: 'Account Created',
           description: 'Welcome! Redirecting to your dashboard...',
         });
-        router.push('/seller/dashboard');
       }
-    } catch (err: any) {
-      console.error("Firebase Auth Error:", err);
-      // Fallback custom error message
-      let errorMessage = `Error (${err.code}): ${err.message}`;
-
-      setError(errorMessage);
-
+    } catch (err) {
+      console.error("Auth Error:", err);
+      const message = err instanceof Error ? err.message : "Authentication failed";
+      setError(message);
       toast({
         variant: 'destructive',
         title: isLogin ? 'Login Failed' : 'Sign Up Failed',
-        description: errorMessage,
+        description: message,
       });
     } finally {
       setLoading(false);

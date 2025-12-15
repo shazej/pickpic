@@ -1,5 +1,17 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+const isServer = typeof window === "undefined";
+if (isServer) {
+    // Mock localStorage to prevent libraries from crashing on SSR
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).localStorage = {
+        getItem: () => null,
+        setItem: () => { },
+        removeItem: () => { },
+        clear: () => { },
+    };
+}
+
+import { initializeApp, getApp } from "firebase/app";
+import { getAuth, initializeAuth, browserLocalPersistence, inMemoryPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -23,11 +35,26 @@ const appName = "PICKPIC_APP";
 let app;
 try {
     app = getApp(appName);
-} catch (e) {
+} catch {
     app = initializeApp(firebaseConfig, appName);
 }
 
-const auth = getAuth(app);
+// Initialize Firebase Auth
+let auth;
+try {
+    const isServer = typeof window === "undefined";
+    auth = initializeAuth(app, {
+        persistence: isServer ? inMemoryPersistence : browserLocalPersistence,
+    });
+} catch (e) {
+    console.error("Firebase initializeAuth failed:", e);
+    try {
+        auth = getAuth(app);
+    } catch (e2) {
+        console.error("Firebase getAuth failed:", e2);
+    }
+}
+
 const db = getFirestore(app);
 const storage = getStorage(app);
 
