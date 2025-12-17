@@ -1,5 +1,6 @@
 
 const { createServer } = require('http');
+require('dotenv').config({ path: '.env.production' });
 const { parse } = require('url');
 const next = require('next');
 
