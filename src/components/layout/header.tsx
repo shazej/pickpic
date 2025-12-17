@@ -40,25 +40,25 @@ export function Header() {
                     <Link href="/search" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/search' ? 'text-foreground' : 'text-foreground/60'}`}>
                         Marketplace
                         {pathname === '/search' && (
-                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>
                     <Link href="/sell" className={`group relative py-2 transition-colors hover:text-foreground ${pathname?.startsWith('/sell') ? 'text-foreground' : 'text-foreground/60'}`}>
                         Sell
                         {pathname?.startsWith('/sell') && (
-                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>
                     <Link href="/tutorial" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
                         How it Works
                         {pathname === '/tutorial' && (
-                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>
                     <Link href="/support" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
                         Support
                         {pathname === '/support' && (
-                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>
                 </nav>
@@ -103,7 +103,7 @@ export function Header() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>
-                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <LogOut className="me-2 h-4 w-4" />
                                     <span>Log out</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

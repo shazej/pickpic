@@ -16,7 +16,7 @@ export function LanguageToggle() {
         >
             <Globe className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
             <span className="sr-only">Toggle language</span>
-            <span className="absolute -bottom-1 -right-1 text-[10px] font-bold">
+            <span className="absolute -bottom-1 -end-1 text-[10px] font-bold">
                 {language.toUpperCase()}
             </span>
         </Button>
