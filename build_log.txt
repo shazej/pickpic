@@ -1,0 +1,27 @@
+
+> nextn@0.1.0 build
+> cross-env NODE_ENV=production next build
+
+   ▲ Next.js 15.3.3
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 24.0s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/58) ...
+Error occurred prerendering page "/sell/new". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: useAuth must be used within an AuthProvider
+    at d (C:\inetpub\wwwroot\studioxo\.next\server\chunks\9942.js:1:7101)
+    at n (C:\inetpub\wwwroot\studioxo\.next\server\app\(seller)\sell\new\page.js:1:18005)
+    at nF (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:46843)
+    at nH (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:48618)
+    at nW (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:67762)
+    at nz (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:65337)
+    at nB (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:47195)
+    at nH (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:48664)
+    at nW (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:67762)
+    at nz (C:\inetpub\wwwroot\studioxo\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:76:65337)
+Export encountered an error on /(seller)/sell/new/page: /sell/new, exiting the build.
+ ⨯ Next.js build worker exited with code: 1 and signal: null

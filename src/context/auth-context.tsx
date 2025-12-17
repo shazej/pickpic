@@ -4,9 +4,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { useRouter } from "next/navigation";
 
 interface User {
-    id: number;
+    id: string;
     email: string;
     name?: string;
+    roles?: string[]; // Todo: Add roles
 }
 
 interface AuthContextType {
@@ -25,17 +26,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        // Check for persisted user session (simplified)
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch {
-                localStorage.removeItem('user');
-            }
-        }
-        setLoading(false);
+        checkSession();
     }, []);
+
+    const checkSession = async () => {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
+                setUser(data.user);
+            } else {
+                setUser(null);
+            }
+        } catch (error) {
+            console.error('Session check failed', error);
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const login = async (email: string, password: string) => {
         try {
@@ -52,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const data = await res.json();
             setUser(data.user);
-            localStorage.setItem('user', JSON.stringify(data.user));
             router.push('/');
         } catch (error) {
             console.error(error);
@@ -73,9 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error(errorData.error || 'Registration failed');
             }
 
-            // Auto login after register? Or just redirect to login.
-            // For now, let's login automatically.
-            await login(email, password);
+            const data = await res.json();
+            setUser(data.user); // Auto login
+            router.push('/');
 
         } catch (error) {
             console.error(error);
@@ -84,8 +92,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signOut = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (e) {
+            console.error(e);
+        }
         setUser(null);
-        localStorage.removeItem('user');
         router.push('/login');
     };
 

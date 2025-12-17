@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { query, sql } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { login } from '@/lib/auth';
 
 export async function POST(request: Request) {
     try {
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
         }
 
         // Check if user exists
-        const checkResult = await query('SELECT Id FROM Users WHERE Email = @email', [
+        const checkResult = await query('SELECT id FROM auth.Users WHERE email = @email', [
             { name: 'email', value: email, type: sql.NVarChar }
         ]);
 
@@ -22,15 +23,47 @@ export async function POST(request: Request) {
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
+        const passwordBuffer = Buffer.from(hashedPassword, 'utf8');
 
         // Insert user
-        await query('INSERT INTO Users (Email, PasswordHash, FullName) VALUES (@email, @password, @name)', [
+        await query('INSERT INTO auth.Users (email, password_hash, display_name) VALUES (@email, @password, @name)', [
             { name: 'email', value: email, type: sql.NVarChar },
-            { name: 'password', value: hashedPassword, type: sql.NVarChar },
+            { name: 'password', value: passwordBuffer, type: sql.VarBinary },
             { name: 'name', value: name || '', type: sql.NVarChar }
         ]);
 
-        return NextResponse.json({ message: 'User created successfully' }, { status: 201 });
+        // Get user details
+        const userResult = await query('SELECT id, email, display_name FROM auth.Users WHERE email = @email', [
+            { name: 'email', value: email, type: sql.NVarChar }
+        ]);
+        const user = userResult.recordset[0];
+
+        // Assign 'buyer' role by default
+        const roleResult = await query("SELECT id FROM auth.Roles WHERE name = 'buyer'");
+        if (roleResult.recordset.length > 0) {
+            const roleId = roleResult.recordset[0].id;
+            await query('INSERT INTO auth.UserRoles (user_id, role_id) VALUES (@userId, @roleId)', [
+                { name: 'userId', value: user.id, type: sql.UniqueIdentifier },
+                { name: 'roleId', value: roleId, type: sql.Int }
+            ]);
+        }
+
+        // Create Session
+        await login({
+            id: user.id,
+            email: user.email,
+            name: user.display_name,
+            roles: ['buyer']
+        });
+
+        return NextResponse.json({
+            message: 'User created successfully',
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.display_name
+            }
+        }, { status: 201 });
 
     } catch (error) {
         console.error('Registration error:', error);

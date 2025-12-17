@@ -1,49 +1,118 @@
-# Windows IIS Deployment Guide
 
-This guide will help you deploy the Next.js application on your Windows VPS using IIS as a reverse proxy.
+# Deploying PickPic on Windows Server
 
-## 1. Prerequisites (Install these on the Server)
-Connect to your server via Remote Desktop (RDP) and install:
+This guide describes how to deploy PickPic as a background service using **NSSM** (Non-Sucking Service Manager) on Windows Server (or Windows 10/11).
 
-1.  **Node.js (LTS)**: [Download here](https://nodejs.org/en/download/).
-2.  **IIS URL Rewrite Module**: [Download here](https://www.iis.net/downloads/microsoft/url-rewrite).
-3.  **Application Request Routing (ARR)**: [Download here](https://www.iis.net/downloads/microsoft/application-request-routing).
+## 1. Prerequisites
 
-> **IMPORTANT**: After installing ARR, open IIS Manager, click on the Server Node -> Application Request Routing Cache -> Server Proxy Settings -> Check **"Enable proxy"**.
+- **Node.js**: Install the latest LTS version (v18+) from [nodejs.org](https://nodejs.org/).
+- **NSSM**: Download from [nssm.cc](https://nssm.cc/download), extract `nssm.exe` (use the `win64` version), and copy it to `C:\Windows\System32` (or add its folder to your PATH).
+- **SQL Server**: Access to a running MSSQL instance.
 
 ## 2. Prepare the Application
-1.  Copy your project folder to the server (e.g., `C:\inetpub\wwwroot\studioxo`).
-2.  Open PowerShell/CMD in that folder.
-3.  Install dependencies and build:
+
+1.  **Navigate to the project directory:**
+    ```powershell
+    cd C:\inetpub\wwwroot\studioxo
+    ```
+
+2.  **Install dependencies:**
     ```powershell
     npm install
+    ```
+
+3.  **Configure Environment:**
+    Create a `.env.production` file (or just `.env`) with your secrets:
+    ```ini
+    DB_USER=sa
+    DB_PASSWORD=your_secure_password
+    DB_SERVER=localhost
+    DB_NAME=PickPicDB
+    # Port configuration is handled via environment variable in the service
+    ```
+
+4.  **Build the application:**
+    ```powershell
     npm run build
     ```
-4.  Test if it works:
-    ```powershell
-    npm start
-    ```
-    (You should see "Ready on http://localhost:3000").
-    **Press Ctrl+C to stop it for now.**
+    *Ensure the build completes successfully (creates `.next` directory).*
 
-## 3. Configure process management
-To keep the app running in the background, install PM2 globally:
+## 3. Configure Windows Firewall
+
+Allow traffic on the application port (4500). Run PowerShell as Administrator:
 
 ```powershell
-npm install -g pm2
-pm2 start ecosystem.config.js
-pm2 save
+New-NetFirewallRule -DisplayName "PickPic Web App" `
+    -Direction Inbound `
+    -Action Allow `
+    -Protocol TCP `
+    -LocalPort 4500
 ```
-*(If `ecosystem.config.js` causes issues on Windows, just use: `pm2 start npm --name "studioxo" -- start`)*
 
-## 4. Configure IIS
-1.  Open **IIS Manager**.
-2.  Right-click **Sites** -> **Add Website**.
-    *   **Site name**: studioxo
-    *   **Physical path**: `C:\inetpub\wwwroot\studioxo` (or wherever you put the files).
-    *   **Port**: 80 (or your specific port).
-3.  **IMPORTANT**: The `web.config` file I created in your project should technically exist in the physical path.
-    *   This file tells IIS to forward all traffic to `http://localhost:3000`.
+## 4. Install Service with NSSM
 
-## 5. Verify
-Open http://localhost (or your server IP) in the browser. You should see your Next.js app.
+We will create a service named `PickPicApp`.
+
+1.  **Open Command Prompt or PowerShell as Administrator.**
+
+2.  **Install the service:**
+    You can use the GUI by running `nssm install PickPicApp`, or use the command line below for automation.
+
+    **Path**: Path to `node.exe`.
+    **Startup Directory**: Your project folder (`C:\inetpub\wwwroot\studioxo`).
+    **Arguments**: `server.js` (runs the production server).
+
+    ```powershell
+    # Set the Path to Node (adjust if necessary)
+    $NodePath = (Get-Command node).Source
+
+    # Create Service
+    nssm install PickPicApp $NodePath "server.js"
+    nssm set PickPicApp AppDirectory "C:\inetpub\wwwroot\studioxo"
+    
+    # Set Environment Variables (PORT, NODE_ENV)
+    # IMPORTANT: Newlines separate variables
+    nssm set PickPicApp AppEnvironmentExtra "NODE_ENV=production`nPORT=4500"
+    
+    # Set Logs
+    nssm set PickPicApp AppStdout "C:\inetpub\wwwroot\studioxo\logs\service-out.log"
+    nssm set PickPicApp AppStderr "C:\inetpub\wwwroot\studioxo\logs\service-err.log"
+    
+    # Set Restart Policy (Restart application if it hangs/crashes)
+    nssm set PickPicApp AppExit Default Restart
+    nssm set PickPicApp AppRestartDelay 10000
+    
+    # Configure Startup type to Automatic
+    nssm set PickPicApp Start SERVICE_AUTO_START
+    ```
+
+3.  **Create Logs Directory:**
+    ```powershell
+    New-Item -ItemType Directory -Path "C:\inetpub\wwwroot\studioxo\logs" -Force
+    ```
+
+## 5. Start and Verify
+
+1.  **Start the service:**
+    ```powershell
+    nssm start PickPicApp
+    ```
+
+2.  **Verify status:**
+    ```powershell
+    nssm status PickPicApp
+    # Should say SERVICE_RUNNING
+    ```
+
+3.  **Check Logs:**
+    Inspect `C:\inetpub\wwwroot\studioxo\logs\service-out.log` to see startup messages (e.g., "> Ready on http://localhost:4500").
+
+4.  **Access the App:**
+    Open `http://localhost:4500` in your browser.
+
+## 6. Maintenance
+
+- **Restart Service:** `nssm restart PickPicApp`
+- **Stop Service:** `nssm stop PickPicApp`
+- **Edit Configuration:** `nssm edit PickPicApp` (Opens GUI)
+- **Remove Service:** `nssm remove PickPicApp confirm`
