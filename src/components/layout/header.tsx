@@ -37,17 +37,29 @@ export function Header() {
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <Link href="/search" className={`transition-colors hover:text-foreground/80 ${pathname === '/search' ? 'text-foreground' : 'text-foreground/60'}`}>
+                    <Link href="/search" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/search' ? 'text-foreground' : 'text-foreground/60'}`}>
                         Marketplace
+                        {pathname === '/search' && (
+                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                        )}
                     </Link>
-                    <Link href="/sell" className={`transition-colors hover:text-foreground/80 ${pathname?.startsWith('/sell') ? 'text-foreground' : 'text-foreground/60'}`}>
+                    <Link href="/sell" className={`group relative py-2 transition-colors hover:text-foreground ${pathname?.startsWith('/sell') ? 'text-foreground' : 'text-foreground/60'}`}>
                         Sell
+                        {pathname?.startsWith('/sell') && (
+                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                        )}
                     </Link>
-                    <Link href="/tutorial" className={`transition-colors hover:text-foreground/80 ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
+                    <Link href="/tutorial" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
                         How it Works
+                        {pathname === '/tutorial' && (
+                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                        )}
                     </Link>
-                    <Link href="/support" className={`transition-colors hover:text-foreground/80 ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
+                    <Link href="/support" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
                         Support
+                        {pathname === '/support' && (
+                            <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary rounded-full" />
+                        )}
                     </Link>
                 </nav>
 
