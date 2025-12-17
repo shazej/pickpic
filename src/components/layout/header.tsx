@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Camera, Search, User, LogOut } from "lucide-react";
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import { useState } from "react";
 
 export function Header() {
@@ -52,6 +53,7 @@ export function Header() {
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-4">
+                    <LanguageToggle />
                     {/* Visual Search CTA (Mobile/Desktop) */}
                     <Link href="/search?mode=visual">
                         <Button variant="ghost" size="icon" title="Visual Search">
