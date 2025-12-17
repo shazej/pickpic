@@ -14,24 +14,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 // Simple dictionary for demonstration
-const translations: Record<Language, Record<string, string>> = {
-    en: {
-        "nav.home": "Home",
-        "nav.search": "Search",
-        "nav.settings": "Settings",
-        "welcome": "Welcome to StudioXO",
-        "login": "Login",
-        "logout": "Logout",
-    },
-    ar: {
-        "nav.home": "الرئيسية",
-        "nav.search": "بحث",
-        "nav.settings": "الإعدادات",
-        "welcome": "موهبة StudioXO",
-        "login": "تسجيل الدخول",
-        "logout": "تسجيل الخروج",
-    },
-};
+
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [language, setLanguage] = useState<Language>("en");
