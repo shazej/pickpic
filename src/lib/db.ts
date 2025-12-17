@@ -1,14 +1,23 @@
 
 import sql from 'mssql';
 
-const config = "Server=162.55.212.193,14315;Database=pickpic;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
+const config = {
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    server: process.env.DB_SERVER,
+    database: process.env.DB_NAME,
+    options: {
+        encrypt: false, // For local dev/docker
+        trustServerCertificate: true
+    }
+};
 
 let pool: sql.ConnectionPool | null = null;
 
 export const getPool = async () => {
     if (pool) return pool;
     try {
-        pool = await sql.connect(config);
+        pool = await sql.connect(config as any);
         return pool;
     } catch (err) {
         console.error('Database connection failed:', err);
