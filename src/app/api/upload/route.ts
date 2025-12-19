@@ -9,6 +9,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'
 // Max file size: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+
 export async function POST(request: Request) {
     try {
         const session = await getSession();

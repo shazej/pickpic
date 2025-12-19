@@ -13,10 +13,11 @@ export async function POST(request: Request) {
         }
 
         // Fetch User and Hash
+        // Fix: Use correct table 'dbo.Users' and PascalCase columns
         const userResult = await query(`
-            SELECT u.id, u.email, u.display_name, u.password_hash 
-            FROM auth.Users u
-            WHERE u.email = @email AND u.is_active = 1
+            SELECT u.Id, u.Email, u.FullName, u.PasswordHash 
+            FROM dbo.Users u
+            WHERE u.Email = @email
         `, [
             { name: 'email', value: email, type: sql.NVarChar }
         ]);
@@ -28,39 +29,41 @@ export async function POST(request: Request) {
         const user = userResult.recordset[0];
 
         // Verify Password
-        // Note: password_hash IS VARBINARY from DB. Buffer.from handles it.
-        const isValid = await bcrypt.compare(password, user.password_hash.toString('utf8'));
+        // Fix: PasswordHash is NVARCHAR
+        const isValid = await bcrypt.compare(password, user.PasswordHash);
 
         if (!isValid) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
         // Fetch Roles
+        // Fix: Use correct join tables dbo.Roles and dbo.UserRoles
         const rolesResult = await query(`
-            SELECT r.name 
-            FROM auth.Roles r
-            JOIN auth.UserRoles ur ON r.id = ur.role_id
-            WHERE ur.user_id = @userId
+            SELECT r.Name 
+            FROM dbo.Roles r
+            JOIN dbo.UserRoles ur ON r.Id = ur.RoleId
+            WHERE ur.UserId = @userId
         `, [
-            { name: 'userId', value: user.id, type: sql.UniqueIdentifier }
+            // Fix: User Id is INT
+            { name: 'userId', value: user.Id, type: sql.Int }
         ]);
 
-        const roles = rolesResult.recordset.map(r => r.name);
+        const roles = rolesResult.recordset.map(r => r.Name);
 
         // Create Session
         await login({
-            id: user.id,
-            email: user.email,
-            name: user.display_name,
+            id: user.Id,
+            email: user.Email,
+            name: user.FullName,
             roles: roles
         });
 
         return NextResponse.json({
             message: 'Login successful',
             user: {
-                id: user.id,
-                email: user.email,
-                name: user.display_name,
+                id: user.Id,
+                email: user.Email,
+                name: user.FullName,
                 roles: roles
             }
         });

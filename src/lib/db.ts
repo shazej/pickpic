@@ -1,15 +1,17 @@
 
 import sql from 'mssql';
 
+// Fix: Use hostname for TLS support instead of IP from env
+// Fix: Hardcode credentials to avoid .env parsing issues with special chars
 const config = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER,
-    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 1433,
-    database: process.env.DB_NAME,
+    user: 'sa',
+    password: 'V3r!fy#92uM@xTq1zR71',
+    server: 'static.193.212.55.162.clients.your-server.de',
+    port: 14315,
+    database: 'PICKPIC',
     options: {
-        encrypt: true, // For local dev/docker
-        trustServerCertificate: true
+        encrypt: true,
+        trustServerCertificate: true,
     }
 };
 

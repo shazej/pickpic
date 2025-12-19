@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Phone, Facebook, Linkedin, Instagram, MessageSquare } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/contact';
 
 const footerLinks = {
     categories: [
@@ -69,7 +70,7 @@ export function Footer() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Email Support</p>
-                                    <a href="mailto:support@ecomm.com" className="font-semibold text-foreground hover:text-primary">support@ecomm.com</a>
+                                    <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-foreground hover:text-primary">{SUPPORT_EMAIL}</a>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -78,7 +79,7 @@ export function Footer() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Phone Support</p>
-                                    <a href="tel:9899454545" className="font-semibold text-foreground hover:text-primary">9899454545</a>
+                                    <a href={`tel:${SUPPORT_PHONE}`} className="font-semibold text-foreground hover:text-primary">{SUPPORT_PHONE}</a>
                                 </div>
                             </div>
                         </div>

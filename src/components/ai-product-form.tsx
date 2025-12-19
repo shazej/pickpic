@@ -18,6 +18,7 @@ export default function AiProductForm() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
 
@@ -27,6 +28,7 @@ export default function AiProductForm() {
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       setIsLoading(true);
       setHasGenerated(false);
       try {
@@ -68,15 +70,65 @@ export default function AiProductForm() {
     setDescription('');
     setPrice('');
     setImagePreview(null);
+    setSelectedFile(null);
     setHasGenerated(false);
   }
 
-  const handleCreateProduct = () => {
-    toast({
-      title: 'Product Created!',
-      description: `${productName} has been added to your inventory.`,
-    });
-    clearForm();
+  const handleCreateProduct = async () => {
+    if (!productName || !price || !selectedFile) return;
+
+    setIsLoading(true);
+    try {
+      // 1. Upload Image
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const imageUrl = uploadResult.url;
+
+      // 2. Create Product
+      const productResponse = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: productName,
+          description,
+          price,
+          image: imageUrl,
+        }),
+      });
+
+      if (!productResponse.ok) {
+        throw new Error('Failed to create product');
+      }
+
+      toast({
+        title: 'Product Created!',
+        description: `${productName} has been added to your inventory.`,
+      });
+      clearForm();
+
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create product. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const isFormValid = productName && description && price && imagePreview;

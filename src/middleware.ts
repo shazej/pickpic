@@ -6,11 +6,12 @@ import { decrypt } from '@/lib/auth';
 
 // Define protected routes and their required roles
 const roleRules = [
-    { prefix: '/sell', roles: ['seller', 'admin'] },
-    { prefix: '/admin', roles: ['admin'] },
+    { prefix: '/sell', roles: ['seller', 'admin', 'super_admin'] },
+    { prefix: '/super-admin', roles: ['super_admin'] },
+    { prefix: '/admin', roles: ['admin', 'super_admin'] },
 ];
 
-const protectedRoutes = ['/account', '/sell', '/messages', '/admin'];
+const protectedRoutes = ['/account', '/sell', '/messages', '/admin', '/super-admin'];
 const authRoutes = ['/login', '/register', '/forgot-password'];
 
 export async function middleware(request: NextRequest) {
