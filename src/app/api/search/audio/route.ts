@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+
+export async function POST() {
+    return NextResponse.json({ error: 'Audio search temporarily disabled' }, { status: 501 });
+}
+/*
 import { getPool, sql } from '@/lib/db';
 import { transcribeAndSearch } from '@/ai/flows/multimodal-search';
 
@@ -51,3 +56,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+*/
