@@ -1,6 +1,6 @@
 
 const fs = require('fs');
-const content = `DB_SERVER=162.55.212.193,14315
+const content = `DB_SERVER=162.55.212.193,1434
 DB_NAME=PICKPIC
 DB_USER=sa
 DB_PASSWORD=V3r!fy#92uM@xTq1zR71

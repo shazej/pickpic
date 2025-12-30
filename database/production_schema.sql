@@ -21,10 +21,6 @@ IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'ai') EXEC('CREATE SCHEMA 
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'audit') EXEC('CREATE SCHEMA [audit]');
 GO
 
--- Helper: UpdatedAt Trigger
--- We can't reuse one trigger for multiple tables easily in T-SQL without dynamic SQL, 
--- but we will define the logic to be applied via individual triggers.
-
 -- 3. Tables & Constraints
 
 -- =============================================
@@ -312,15 +308,316 @@ BEGIN
 END
 GO
 
--- 6. Verification
-PRINT 'Verifying Schema Creation...';
+-- =============================================
+-- SUPER ADMIN EXTENSIONS
+-- =============================================
 
-SELECT 'auth.Users' as [Table], COUNT(*) as [Count] FROM auth.Users;
-SELECT 'auth.Roles' as [Table], COUNT(*) as [Count] FROM auth.Roles;
-SELECT 'marketplace.Products' as [Table], COUNT(*) as [Count] FROM marketplace.Products;
+-- Schema: audit (Ensure exists)
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'audit') EXEC('CREATE SCHEMA [audit]');
+GO
 
--- Check Constraints
-SELECT name, definition FROM sys.check_constraints;
+-- Table: audit.events
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[audit].[events]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [audit].[events] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        actor_id UNIQUEIDENTIFIER NOT NULL, -- UUID to match auth.Users
+        action VARCHAR(100) NOT NULL, 
+        entity_type VARCHAR(50) NOT NULL, 
+        entity_id VARCHAR(100) NULL, 
+        details NVARCHAR(MAX) NULL, 
+        ip_address VARCHAR(45) NULL,
+        created_at DATETIME2 DEFAULT GETDATE()
+    );
+    CREATE INDEX IX_audit_events_actor ON [audit].[events](actor_id);
+    CREATE INDEX IX_audit_events_created_at ON [audit].[events](created_at);
+END
+GO
 
-PRINT 'Schema Production Script Completed Successfully.';
+-- Schema: moderation
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'moderation') EXEC('CREATE SCHEMA [moderation]');
+GO
+
+-- Table: moderation.reports
+-- Check if exists, if created with INT reporter_id, we might need to alter or drop. 
+-- For now, IF NOT EXISTS is safe.
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[moderation].[reports]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [moderation].[reports] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        reporter_id UNIQUEIDENTIFIER NOT NULL, -- UUID
+        target_type VARCHAR(50) NOT NULL, 
+        target_id VARCHAR(100) NOT NULL,
+        reason_category VARCHAR(50) NOT NULL,
+        details NVARCHAR(MAX) NULL,
+        status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED')),
+        resolution_notes NVARCHAR(MAX) NULL,
+        resolved_by UNIQUEIDENTIFIER NULL, -- UUID
+        resolved_at DATETIME2 NULL,
+        created_at DATETIME2 DEFAULT GETDATE()
+    );
+    CREATE INDEX IX_moderation_reports_status ON [moderation].[reports](status);
+END
+GO
+
+-- Schema: content
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'content') EXEC('CREATE SCHEMA [content]');
+GO
+
+-- Table: content.faq_categories
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[content].[faq_categories]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [content].[faq_categories] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        name NVARCHAR(100) NOT NULL,
+        display_order INT DEFAULT 0,
+        is_visible BIT DEFAULT 1,
+        created_at DATETIME2 DEFAULT GETDATE()
+    );
+END
+GO
+
+-- Table: content.faq_items
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[content].[faq_items]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [content].[faq_items] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        category_id INT NOT NULL,
+        question NVARCHAR(255) NOT NULL,
+        answer NVARCHAR(MAX) NOT NULL,
+        display_order INT DEFAULT 0,
+        is_visible BIT DEFAULT 1,
+        created_at DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (category_id) REFERENCES [content].[faq_categories](id)
+    );
+END
+GO
+
+-- Schema: settings
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'settings') EXEC('CREATE SCHEMA [settings]');
+GO
+
+-- Table: settings.feature_flags
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[settings].[feature_flags]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [settings].[feature_flags] (
+        key_name VARCHAR(100) PRIMARY KEY,
+        is_enabled BIT DEFAULT 0,
+        description NVARCHAR(255) NULL,
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        updated_by UNIQUEIDENTIFIER NULL -- UUID
+    );
+END
+GO
+
+-- Table: settings.system_config
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[settings].[system_config]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [settings].[system_config] (
+        key_name VARCHAR(100) PRIMARY KEY,
+        value NVARCHAR(MAX) NULL,
+        type VARCHAR(20) DEFAULT 'STRING', 
+        description NVARCHAR(255) NULL,
+        updated_at DATETIME2 DEFAULT GETDATE()
+    );
+END
+GO
+
+-- Schema: ai (Ensure exists)
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'ai') EXEC('CREATE SCHEMA [ai]');
+GO
+
+-- Table: ai.prompts
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[ai].[prompts]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [ai].[prompts] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        version INT NOT NULL,
+        prompt_text NVARCHAR(MAX) NOT NULL,
+        is_active BIT DEFAULT 0,
+        created_by UNIQUEIDENTIFIER NULL, -- UUID
+        created_at DATETIME2 DEFAULT GETDATE()
+    );
+    CREATE UNIQUE INDEX UX_ai_prompts_name_version ON [ai].[prompts](name, version);
+END
+GO
+
+-- Schema: localization
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'localization') EXEC('CREATE SCHEMA [localization]');
+GO
+
+-- Table: localization.languages
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[localization].[languages]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [localization].[languages] (
+        code VARCHAR(10) PRIMARY KEY, 
+        name NVARCHAR(50) NOT NULL,
+        is_rtl BIT DEFAULT 0,
+        is_active BIT DEFAULT 1
+    );
+END
+GO
+
+-- Table: localization.translation_keys
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[localization].[translation_keys]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [localization].[translation_keys] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        key_name VARCHAR(255) NOT NULL UNIQUE,
+        description NVARCHAR(255) NULL
+    );
+END
+GO
+
+-- Table: localization.translation_values
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[localization].[translation_values]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [localization].[translation_values] (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        key_id INT NOT NULL,
+        language_code VARCHAR(10) NOT NULL,
+        value NVARCHAR(MAX) NOT NULL,
+        FOREIGN KEY (key_id) REFERENCES [localization].[translation_keys](id),
+        FOREIGN KEY (language_code) REFERENCES [localization].[languages](code)
+    );
+    CREATE UNIQUE INDEX UX_localization_values ON [localization].[translation_values](key_id, language_code);
+END
+GO
+
+-- Seed Initial Data
+IF NOT EXISTS (SELECT * FROM [settings].[feature_flags] WHERE key_name = 'maintenance_mode')
+BEGIN
+    INSERT INTO [settings].[feature_flags] (key_name, is_enabled, description) VALUES ('maintenance_mode', 0, 'Put the site in maintenance mode');
+END
+
+IF NOT EXISTS (SELECT * FROM [localization].[languages] WHERE code = 'en')
+BEGIN
+    INSERT INTO [localization].[languages] (code, name, is_rtl, is_active) VALUES ('en', 'English', 0, 1);
+END
+GO
+
+-- =============================================
+-- BILLING SCHEMA
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'billing') EXEC('CREATE SCHEMA [billing]');
+GO
+
+IF OBJECT_ID('billing.usage_events', 'U') IS NULL
+BEGIN
+    CREATE TABLE billing.usage_events (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        user_id UNIQUEIDENTIFIER NULL,
+        feature_name NVARCHAR(100) NOT NULL,
+        metadata_json NVARCHAR(MAX) NULL,
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME()
+    );
+    CREATE INDEX IX_UsageEvents_Feature ON billing.usage_events(feature_name);
+END
+GO
+
+-- =============================================
+-- AI SCHEMA EXTENSIONS (Buyer Chat)
+-- =============================================
+IF OBJECT_ID('ai.buyer_chat_threads', 'U') IS NULL
+BEGIN
+    CREATE TABLE ai.buyer_chat_threads (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        product_id UNIQUEIDENTIFIER NOT NULL,
+        user_id UNIQUEIDENTIFIER NULL, -- Null if guest
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_BuyerChatThreads_Products FOREIGN KEY (product_id) REFERENCES marketplace.Products(id) ON DELETE CASCADE
+    );
+END
+GO
+
+IF OBJECT_ID('ai.buyer_chat_messages', 'U') IS NULL
+BEGIN
+    CREATE TABLE ai.buyer_chat_messages (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        thread_id UNIQUEIDENTIFIER NOT NULL,
+        role NVARCHAR(20) NOT NULL, -- user, assistant
+        content NVARCHAR(MAX) NOT NULL,
+        citations_json NVARCHAR(MAX) NULL,
+        suggested_questions_json NVARCHAR(MAX) NULL,
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_BuyerChatMessages_Threads FOREIGN KEY (thread_id) REFERENCES ai.buyer_chat_threads(id) ON DELETE CASCADE
+    );
+END
+GO
+
+IF OBJECT_ID('ai.error_log', 'U') IS NULL
+BEGIN
+    CREATE TABLE ai.error_log (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        service_name NVARCHAR(100) NOT NULL,
+        error_message NVARCHAR(MAX) NOT NULL,
+        stack_trace NVARCHAR(MAX) NULL,
+        metadata_json NVARCHAR(MAX) NULL,
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME()
+    );
+END
+GO
+
+-- =============================================
+-- MARKETPLACE SCHEMA EXTENSIONS (Seller Assistant)
+-- =============================================
+IF OBJECT_ID('marketplace.listing_assistant_sessions', 'U') IS NULL
+BEGIN
+    CREATE TABLE marketplace.listing_assistant_sessions (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        seller_id UNIQUEIDENTIFIER NOT NULL,
+        product_id UNIQUEIDENTIFIER NOT NULL, -- Draft product
+        status NVARCHAR(20) NOT NULL DEFAULT 'active', -- active, completed
+        current_state_json NVARCHAR(MAX) NULL,
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_ListingAssistant_Sellers FOREIGN KEY (seller_id) REFERENCES marketplace.SellerProfiles(id) ON DELETE NO ACTION,
+        CONSTRAINT FK_ListingAssistant_Products FOREIGN KEY (product_id) REFERENCES marketplace.Products(id) ON DELETE CASCADE
+    );
+END
+GO
+
+IF OBJECT_ID('marketplace.listing_assistant_questions', 'U') IS NULL
+BEGIN
+    CREATE TABLE marketplace.listing_assistant_questions (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        session_id UNIQUEIDENTIFIER NOT NULL,
+        question_key NVARCHAR(100) NOT NULL,
+        question_text NVARCHAR(MAX) NOT NULL,
+        suggestions_json NVARCHAR(MAX) NULL,
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_ListingAssistantQuestions_Sessions FOREIGN KEY (session_id) REFERENCES marketplace.listing_assistant_sessions(id) ON DELETE CASCADE
+    );
+END
+GO
+
+IF OBJECT_ID('marketplace.listing_assistant_answers', 'U') IS NULL
+BEGIN
+    CREATE TABLE marketplace.listing_assistant_answers (
+        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        question_id UNIQUEIDENTIFIER NOT NULL,
+        answer_text NVARCHAR(MAX) NOT NULL,
+        created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_ListingAssistantAnswers_Questions FOREIGN KEY (question_id) REFERENCES marketplace.listing_assistant_questions(id) ON DELETE CASCADE
+    );
+END
+GO
+
+-- Triggers for UpdatedAt
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_BuyerChatThreads_UpdatedAt') DROP TRIGGER ai.trg_BuyerChatThreads_UpdatedAt;
+GO
+CREATE TRIGGER ai.trg_BuyerChatThreads_UpdatedAt ON ai.buyer_chat_threads AFTER UPDATE AS
+BEGIN
+    UPDATE ai.buyer_chat_threads SET updated_at = SYSDATETIME() FROM ai.buyer_chat_threads t INNER JOIN inserted i ON t.id = i.id;
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_ListingAssistantSessions_UpdatedAt') DROP TRIGGER marketplace.trg_ListingAssistantSessions_UpdatedAt;
+GO
+CREATE TRIGGER marketplace.trg_ListingAssistantSessions_UpdatedAt ON marketplace.listing_assistant_sessions AFTER UPDATE AS
+BEGIN
+    UPDATE marketplace.listing_assistant_sessions SET updated_at = SYSDATETIME() FROM marketplace.listing_assistant_sessions t INNER JOIN inserted i ON t.id = i.id;
+END
 GO

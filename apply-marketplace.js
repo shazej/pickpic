@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Use the same config as apply-schema.js but ensure we target the right DB
-const config = "Server=162.55.212.193,14315;Database=pickpic;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
+const config = "Server=162.55.212.193,1434;Database=pickpic;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
 
 async function applyMarketplaceSchema() {
     try {

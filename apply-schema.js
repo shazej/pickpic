@@ -3,7 +3,7 @@ const sql = require('mssql');
 const fs = require('fs');
 const path = require('path');
 
-const config = "Server=162.55.212.193,14315;Database=pickpic;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
+const config = "Server=static.193.212.55.162.clients.your-server.de,1434;Database=PickPic;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=True";
 
 async function applySchema() {
     try {

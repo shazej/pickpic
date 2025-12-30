@@ -139,3 +139,26 @@ export const SqlPlanSchema = z.object({
     limit: z.number(),
     offset: z.number()
 });
+
+// Prompt 10: Buyer Chatbot
+export const BuyerChatResponseSchema = z.object({
+    reply: z.string(),
+    citations: z.array(z.object({
+        type: z.enum(['attribute', 'image', 'policy']),
+        ref: z.string()
+    })),
+    suggested_questions: z.array(z.string()),
+    safety_notes: z.array(z.string())
+});
+
+// Prompt 11: Seller Chatbot
+export const SellerChatResponseSchema = z.object({
+    updated_fields: z.record(z.any()),
+    next_question: z.object({
+        question_key: z.string(),
+        question_text: z.string(),
+        suggestions: z.array(z.string())
+    }).nullable(),
+    is_complete: z.boolean(),
+    feedback: z.string()
+});

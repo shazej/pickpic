@@ -4,7 +4,7 @@ const config = {
     user: 'sa',
     password: 'V3r!fy#92uM@xTq1zR71',
     server: 'static.193.212.55.162.clients.your-server.de',
-    port: 14315,
+    port: 1434,
     database: 'PICKPIC',
     options: { encrypt: true, trustServerCertificate: true }
 };

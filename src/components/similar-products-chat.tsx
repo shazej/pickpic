@@ -29,6 +29,21 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { ShoppingCart } from 'lucide-react';
+import { MockCheckoutForm } from '@/components/checkout-form';
+
+// Simplified helper to get order ID for immediate buy (mock)
+async function createInstantOrder(product: Product) {
+  // In real app, we'd add to cart or create immediate intent
+  const res = await fetch("/api/checkout/create-intent", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      items: [{ productId: product.id || product.name, quantity: 1 }]
+    }),
+  });
+  return await res.json();
+}
 
 type Message = {
   role: 'user' | 'model';
@@ -44,6 +59,11 @@ export default function SimilarProductsChat() {
   const [conversationState, setConversationState] = useState<ConversationState>('initial');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
+  // Checkout State
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
+  const [orderData, setOrderData] = useState<{ orderId: string, clientSecret: string, isMock: boolean } | null>(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -259,6 +279,30 @@ export default function SimilarProductsChat() {
                                 <div className="p-2">
                                   <h3 className="font-semibold text-xs leading-tight truncate">{product.name}</h3>
                                   <p className="text-xs text-primary font-bold mt-1">${product.price.toFixed(2)}</p>
+                                  {product.location && (
+                                    <p className="text-[10px] text-muted-foreground truncate">{product.location}</p>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    className="w-full mt-2 text-xs h-7"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setCheckoutProduct(product);
+                                      setIsCheckoutOpen(true);
+                                      // Create order immediately
+                                      createInstantOrder(product).then(data => {
+                                        if (data.error) {
+                                          toast({ variant: "destructive", title: "Error", description: data.error });
+                                          setIsCheckoutOpen(false);
+                                        } else {
+                                          setOrderData(data);
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <ShoppingCart className="w-3 h-3 mr-1" /> Buy Now
+                                  </Button>
                                 </div>
                               </CardContent>
                             </Card>
@@ -350,6 +394,29 @@ export default function SimilarProductsChat() {
             <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
             <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture Photo</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Buy {checkoutProduct?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {orderData ? (
+              <div className="space-y-4">
+                <div className="bg-muted p-3 rounded text-sm">
+                  <p><strong>Total:</strong> ${checkoutProduct?.price.toFixed(2)}</p>
+                  <p className="text-muted-foreground mt-1">Order ID: {orderData.orderId.slice(0, 8)}...</p>
+                </div>
+                {/* Reuse the MockCheckoutForm which handles the confirm call */}
+                <MockCheckoutForm orderId={orderData.orderId} />
+              </div>
+            ) : (
+              <div className="flex justify-center p-8">
+                <Loader2 className="animate-spin" />
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

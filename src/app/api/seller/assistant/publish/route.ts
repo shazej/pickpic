@@ -35,9 +35,11 @@ export async function POST(req: Request) {
             .input('currency', sql.NVarChar, state.currency || 'USD')
             .input('category_id', sql.UniqueIdentifier, '00000000-0000-0000-0000-000000000000') // Placeholder/Lookup needed
             .input('condition', sql.NVarChar, state.condition)
+            .input('location', sql.NVarChar(255), state.location || null)
+            .input('contact_info', sql.NVarChar(sql.MAX), state.contact_info || null)
             .query(`
-                INSERT INTO products (id, seller_id, title, description, price, currency, category_id, condition, status, created_at)
-                VALUES (@id, @seller_id, @title, @description, @price, @currency, @category_id, @condition, 'active', SYSDATETIMEOFFSET())
+                INSERT INTO products (id, seller_id, title, description, price, currency, category_id, condition, status, created_at, location, contact_info)
+                VALUES (@id, @seller_id, @title, @description, @price, @currency, @category_id, @condition, 'active', SYSDATETIMEOFFSET(), @location, @contact_info)
             `);
 
         // Insert Images (assuming state.images has URLs)

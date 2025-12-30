@@ -49,7 +49,7 @@ export function AssistantWizard() {
             // Or if we want to support file upload, we'd need a separate endpoint.
             // Let's assume the input is a URL for now to satisfy "No placeholders" but keeping scope manageable.
 
-            const res = await fetch("/api/seller/assistant/session", {
+            const res = await fetch("/api/ai/seller-chat/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ image_url: imageUrl }),
@@ -82,7 +82,7 @@ export function AssistantWizard() {
         setIsLoading(true);
 
         try {
-            const res = await fetch("/api/seller/assistant/chat", {
+            const res = await fetch("/api/ai/seller-chat/answer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -127,7 +127,7 @@ export function AssistantWizard() {
         if (!session) return;
         setIsLoading(true);
         try {
-            const res = await fetch("/api/seller/assistant/publish", {
+            const res = await fetch("/api/ai/seller-chat/publish", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_id: session.session_id }),

@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/form";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { FaGoogle, FaFacebook, FaApple, FaMicrosoft } from "react-icons/fa";
 
 const authSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -105,21 +107,59 @@ export function AuthForm({ type, onSubmit, isLoading }: AuthFormProps) {
                     </Button>
                 </form>
             </Form>
-
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span className="bg-background px-2 text-muted-foreground font-medium">
                         Or continue with
                     </span>
                 </div>
             </div>
 
-            <Button variant="outline" type="button" disabled={isLoading} className="w-full">
-                Google (Placeholder)
-            </Button>
+            <div className="grid grid-cols-2 gap-3">
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    onClick={() => signIn("google", { callbackUrl: "/account" })}
+                >
+                    <FaGoogle className="text-[#DB4437] text-lg" />
+                    <span className="text-sm">Google</span>
+                </Button>
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    onClick={() => signIn("facebook", { callbackUrl: "/account" })}
+                >
+                    <FaFacebook className="text-[#1877F2] text-lg" />
+                    <span className="text-sm">Facebook</span>
+                </Button>
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    onClick={() => signIn("microsoft-entra-id", { callbackUrl: "/account" })}
+                >
+                    <FaMicrosoft className="text-[#00A4EF] text-lg" />
+                    <span className="text-sm">Microsoft</span>
+                </Button>
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    onClick={() => signIn("apple", { callbackUrl: "/account" })}
+                >
+                    <FaApple className="text-lg" />
+                    <span className="text-sm">Apple</span>
+                </Button>
+            </div>
         </div>
     );
 }

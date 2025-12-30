@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
-/*
 import { getPool, sql } from '@/lib/db';
 import { processListingAnswer, generateListingQuestion } from '@/ai/flows/listing-assistant';
-*/
 
-export async function POST() {
-    return NextResponse.json({ error: 'Chat temporarily disabled' }, { status: 501 });
-}
-
-/*
 export async function POST(req: Request) {
     try {
         const { session_id, answer_text, question_key } = await req.json();
@@ -42,8 +35,8 @@ export async function POST(req: Request) {
             .input('content', sql.NVarChar(sql.MAX), answer_text)
             .query(`
                 INSERT INTO listing_assistant_conversation(session_id, role, content)
-VALUES(@session_id, @role, @content)
-    `);
+                VALUES(@session_id, @role, @content)
+            `);
 
         let nextQuestion = null;
 
@@ -63,8 +56,8 @@ VALUES(@session_id, @role, @content)
                 .input('meta_data', sql.NVarChar(sql.MAX), JSON.stringify(nextQuestion))
                 .query(`
                     INSERT INTO listing_assistant_conversation(session_id, role, content, message_type, meta_data)
-VALUES(@session_id, @role, @content, @message_type, @meta_data)
-    `);
+                    VALUES(@session_id, @role, @content, @message_type, @meta_data)
+                `);
         }
 
         // Update Session State

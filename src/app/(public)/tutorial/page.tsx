@@ -4,6 +4,7 @@ import { TutorialSection } from '@/components/tutorial/tutorial-section';
 import { TutorialStep } from '@/components/tutorial/tutorial-step';
 import { TutorialTOC } from '@/components/tutorial/table-of-contents';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import {
     UserPlus, Search, Upload, SlidersHorizontal, Image as ImageIcon,
@@ -39,6 +40,56 @@ export default function TutorialPage() {
                 ctaText="Start Exploring"
                 ctaHref="/search"
             />
+
+            {/* Video Tutorial Section */}
+            <section className="mb-20 max-w-5xl mx-auto">
+                <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative aspect-video group">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors z-10">
+                        <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-primary/20">
+                            <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+                        </div>
+                    </div>
+                    {/* Placeholder for actual video embed */}
+                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-60"></div>
+                    <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+                        <div>
+                            <Badge className="mb-2 bg-primary/20 text-primary border-primary/30 backdrop-blur-sm">Platform Overview</Badge>
+                            <h2 className="text-2xl font-bold text-white mb-1">Getting Started with PickPic</h2>
+                            <p className="text-white/70 text-sm">Watch this 2-minute video to see how visual search works in action.</p>
+                        </div>
+                        <div className="text-white/60 text-xs font-mono">02:14 / 02:30</div>
+                    </div>
+                </div>
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="flex gap-3 items-start">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary mt-1">
+                            <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-sm">AI Magic</h4>
+                            <p className="text-xs text-muted-foreground">Discover how our AI identifies objects instantly.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary mt-1">
+                            <ShieldCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-sm">Safe Trading</h4>
+                            <p className="text-xs text-muted-foreground">Learn about our secure messaging and reputation system.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 items-start">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary mt-1">
+                            <Zap className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-sm">Quick Sell</h4>
+                            <p className="text-xs text-muted-foreground">Set up your shop and list items in under 60 seconds.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <div className="grid lg:grid-cols-[1fr_250px] gap-12 max-w-6xl mx-auto">
                 <main>

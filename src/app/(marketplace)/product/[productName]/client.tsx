@@ -20,9 +20,12 @@ import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight, Map
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import { SellerChatDialog } from '@/components/seller-chat-dialog';
+import { useCart } from '@/context/cart-context';
+import { ShoppingCart } from 'lucide-react';
 
 export default function ProductClient() {
   const params = useParams();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null | undefined>(undefined);
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
@@ -224,7 +227,21 @@ export default function ProductClient() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <Button size="lg" className="w-full">
+                  <Button size="lg" className="w-full" onClick={() => {
+                    if (product) {
+                      addToCart({
+                        productId: product.id || product.name, // Use name as ID if undefined in mock data
+                        title: product.name,
+                        price: product.price,
+                        image: product.photoUrl || '',
+                        sellerId: seller.id
+                      });
+                    }
+                  }}>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Add to Cart
+                  </Button>
+                  <Button size="lg" variant="outline" className="w-full">
                     Call
                   </Button>
                   <SellerChatDialog sellerName={seller.name}>

@@ -74,34 +74,16 @@ export function Navbar() {
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className={cn(
-                                "group relative py-2 transition-colors hover:text-foreground flex items-center gap-2",
-                                isActive(link.href, link.exact) ? "text-foreground" : "text-foreground/60"
-                            )}
-                        >
-                            {link.icon && <link.icon className="h-4 w-4" />}
-                            {link.label}
-                            {isActive(link.href, link.exact) && (
-                                <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
-                            )}
-                        </Link>
-                    ))}
-
-                    {/* Sell Logic */}
                     <Link
-                        href={user ? "/sell" : "/login?redirect=/sell/new"}
+                        href="/"
                         className={cn(
                             "group relative py-2 transition-colors hover:text-foreground flex items-center gap-2",
-                            isActive("/sell") ? "text-foreground" : "text-foreground/60"
+                            isActive("/", true) ? "text-foreground" : "text-foreground/60"
                         )}
                     >
-                        <Store className="h-4 w-4" />
-                        Sell
-                        {isActive("/sell") && (
+                        <MessageCircle className="h-4 w-4" />
+                        Chat
+                        {isActive("/", true) && (
                             <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>

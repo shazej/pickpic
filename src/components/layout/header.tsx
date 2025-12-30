@@ -2,9 +2,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,11 +17,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Camera, Search, User, LogOut } from "lucide-react";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import { useLanguage } from "@/components/i18n/LanguageContext";
 import { useState } from "react";
 
 export function Header() {
     const { user, signOut } = useAuth();
+    const { t } = useLanguage();
     const pathname = usePathname();
+    const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -35,28 +39,30 @@ export function Header() {
                     </Link>
                 </div>
 
-                {/* Desktop Nav */}
+                {/* Desktop Nav - Mode Toggle */}
+                <div className="hidden md:flex flex-1 justify-center">
+                    <Tabs
+                        value={pathname?.startsWith('/sell') ? 'sell' : 'shop'}
+                        onValueChange={(v) => router.push(v === 'sell' ? '/sell' : '/')}
+                        className="w-[200px]"
+                    >
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="shop">{t("nav.shop")}</TabsTrigger>
+                            <TabsTrigger value="sell">{t("nav.sell")}</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
+
+                {/* Desktop Nav - Links */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <Link href="/search" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/search' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Marketplace
-                        {pathname === '/search' && (
-                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
-                        )}
-                    </Link>
-                    <Link href="/sell" className={`group relative py-2 transition-colors hover:text-foreground ${pathname?.startsWith('/sell') ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Sell
-                        {pathname?.startsWith('/sell') && (
-                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
-                        )}
-                    </Link>
                     <Link href="/tutorial" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        How it Works
+                        {t("nav.how_it_works")}
                         {pathname === '/tutorial' && (
                             <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>
                     <Link href="/support" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Support
+                        {t("nav.support")}
                         {pathname === '/support' && (
                             <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}

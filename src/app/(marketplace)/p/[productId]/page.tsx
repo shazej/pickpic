@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReviewList } from "@/components/reviews/review-list";
 import { AddReviewForm } from "@/components/reviews/add-review-form";
 import { MessageSellerButton } from "@/components/product/message-seller-button";
+import { BuyerAssistant } from "@/components/product/buyer-assistant";
 
 // Mock Data
 const PRODUCT = {
@@ -142,6 +143,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                     </Tabs>
                 </div>
             </div>
+            <BuyerAssistant productId={product.id} />
         </div>
     );
 }

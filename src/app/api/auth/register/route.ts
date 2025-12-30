@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         }
 
         // Check if user exists
-        const checkResult = await query('SELECT id FROM users WHERE email = @email', [
+        const checkResult = await query('SELECT id FROM auth.Users WHERE email = @email', [
             { name: 'email', value: email, type: sql.NVarChar }
         ]);
 
@@ -26,34 +26,39 @@ export async function POST(request: Request) {
         // Remove Buffer logic, store as string in NVARCHAR
 
         // Insert user
-        await query('INSERT INTO users (email, password_hash, full_name) VALUES (@email, @password, @name)', [
+        await query('INSERT INTO auth.Users (email, password_hash, display_name) VALUES (@email, @password, @name)', [
             { name: 'email', value: email, type: sql.NVarChar },
-            { name: 'password', value: hashedPassword, type: sql.NVarChar }, // Changed to NVarChar
+            { name: 'password', value: Buffer.from(hashedPassword), type: sql.VarBinary },
             { name: 'name', value: name || '', type: sql.NVarChar }
         ]);
 
         // Get user details
-        const userResult = await query('SELECT id, email, full_name FROM users WHERE email = @email', [
+        const userResult = await query('SELECT id, email, display_name FROM auth.Users WHERE email = @email', [
             { name: 'email', value: email, type: sql.NVarChar }
         ]);
         const user = userResult.recordset[0];
 
-        // Assign 'buyer' role by default
-        const roleResult = await query("SELECT id FROM roles WHERE name = 'buyer'");
-        if (roleResult.recordset.length > 0) {
-            const roleId = roleResult.recordset[0].id;
-            await query('INSERT INTO user_roles (user_id, role_id) VALUES (@userId, @roleId)', [
-                { name: 'userId', value: user.id, type: sql.UniqueIdentifier },
-                { name: 'roleId', value: roleId, type: sql.Int }
+        // Assign 'buyer' and 'seller' roles by default for demo
+        const rolesToAssign = ['buyer', 'seller'];
+        for (const roleName of rolesToAssign) {
+            const roleResult = await query("SELECT id FROM auth.Roles WHERE name = @roleName", [
+                { name: 'roleName', value: roleName, type: sql.NVarChar }
             ]);
+            if (roleResult.recordset.length > 0) {
+                const roleId = roleResult.recordset[0].id;
+                await query('INSERT INTO auth.UserRoles (user_id, role_id) VALUES (@userId, @roleId)', [
+                    { name: 'userId', value: user.id, type: sql.UniqueIdentifier },
+                    { name: 'roleId', value: roleId, type: sql.Int }
+                ]);
+            }
         }
 
         // Create Session
         await login({
             id: user.id,
             email: user.email,
-            name: user.full_name,
-            roles: ['buyer']
+            name: user.display_name,
+            roles: rolesToAssign
         });
 
         return NextResponse.json({
@@ -61,7 +66,7 @@ export async function POST(request: Request) {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.full_name
+                name: user.display_name
             }
         }, { status: 201 });
 

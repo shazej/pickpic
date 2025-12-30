@@ -18,7 +18,8 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const listingSchema = z.object({
     title: z.string().min(5, "Title must be at least 5 characters"),
@@ -49,6 +50,19 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
         }
     });
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (values: ListingValues) => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+            await onSubmit(values);
+        } catch (error) {
+            console.error("Submission error:", error);
+            setIsSubmitting(false);
+        }
+    };
+
     // Update form values when initialValues change (from AI)
     useEffect(() => {
         if (initialValues) {
@@ -58,16 +72,29 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Title</FormLabel>
+                            <div className="flex items-center gap-2">
+                                <FormLabel>Title</FormLabel>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Use clear, descriptive keywords that buyers might search for.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <FormControl>
-                                <Input placeholder="Item title" {...field} />
+                                <Input placeholder="e.g., Sony WH-1000XM4 Wireless Headphones" {...field} />
                             </FormControl>
+                            <FormDescription>At least 5 characters.</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -79,9 +106,21 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                         name="price"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Price</FormLabel>
+                                <div className="flex items-center gap-2">
+                                    <FormLabel>Price ($)</FormLabel>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Enter the list price. Research similar items for fair pricing.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                                 <FormControl>
-                                    <Input placeholder="0.00" {...field} />
+                                    <Input placeholder="0.00" type="text" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -150,9 +189,9 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     )}
                 />
 
-                <Button type="submit" disabled={isLoading} className="w-full">
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Listing
+                <Button type="submit" disabled={isLoading || isSubmitting} className="w-full">
+                    {(isLoading || isSubmitting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting ? "Creating..." : "Create Listing"}
                 </Button>
             </form>
         </Form>

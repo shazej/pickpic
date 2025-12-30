@@ -1,23 +1,15 @@
 
 const sql = require('mssql');
-require('dotenv').config();
-
-const dbServer = process.env.DB_SERVER || 'WIN-LE7OOSFFT8H';
-const [server, port] = dbServer.split(',');
-
-console.log('Raw DB_SERVER:', process.env.DB_SERVER);
-console.log('Parsed Server:', server);
-console.log('Parsed Port:', port);
 
 const config = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: server,
-    port: port ? parseInt(port) : undefined,
-    database: 'master',
+    user: 'sa',
+    password: 'V3r!fy#92uM@xTq1zR71',
+    server: 'static.193.212.55.162.clients.your-server.de',
+    port: 1434,
+    database: 'PICKPIC',
     options: {
         encrypt: true,
-        trustServerCertificate: true
+        trustServerCertificate: true,
     }
 };
 

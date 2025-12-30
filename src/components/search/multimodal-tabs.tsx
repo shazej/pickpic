@@ -9,33 +9,55 @@ import { AudioRecorder } from "./audio-recorder";
 import { VideoInput } from "./video-input";
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { BuyerAssistant } from "@/components/product/buyer-assistant";
+import { Sparkles, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
 
 export function MultimodalTabs() {
     const [results, setResults] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [textQuery, setTextQuery] = useState("");
-    const [activeTab, setActiveTab] = useState("text");
-    const [searchMeta, setSearchMeta] = useState<any>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    // Restore state on mount
+    useEffect(() => {
+        const saved = sessionStorage.getItem('pickpic_search_state');
+        if (saved) {
+            const { results, meta, textQuery, activeTab } = JSON.parse(saved);
+            setResults(results || []);
+            setSearchMeta(meta || null);
+            setTextQuery(textQuery || "");
+            setActiveTab(activeTab || "text");
+        }
+    }, []);
+
+    // Persist state on change
+    useEffect(() => {
+        sessionStorage.setItem('pickpic_search_state', JSON.stringify({
+            results,
+            meta: searchMeta,
+            textQuery,
+            activeTab
+        }));
+    }, [results, searchMeta, textQuery, activeTab]);
 
     const handleTextSearch = async () => {
-        // Standard search call (mocking endpoint for consistency or using existing)
-        // Assuming /api/products?search=... exists or similar. 
-        // Using the 'search-events' logic, let's just assume we search products table directly locally here or via existing API?
-        // The prompt said "Update /search".
-        // I will use a simple fetch to a generic search endpoint or just mock for this specific multimodal demo scope if the multimodal ones are strictly defined.
-        // However, the multimodal endpoints return results. Let's use those.
-
-        // For text search, I'll just use a direct query to products (or if existing API is available).
-        // I'll skip implementation detail of text search to focus on multimodal, but I'll add a dummy fetch.
+        if (!textQuery.trim()) return;
         setIsLoading(true);
+        setError(null);
         try {
-            // Mocking text search for now as the prompt focused on Audio/Video implementations for backend.
-            // In real implementation, this would hit /api/search?q=...
             const res = await fetch(`/api/products?search=${encodeURIComponent(textQuery)}`);
-            // Assuming this exists or I should've made it. I'll mock result.
-            const data = await res.json(); // Fallback if fails
+            if (res.ok) {
+                const data = await res.json();
+                setResults(data);
+                setSearchMeta({ type: 'text', query: textQuery });
+            } else {
+                setError("Failed to fetch products. Please try again.");
+            }
         } catch (e) {
-            // Ignore
+            setError("Network error. Please check your connection.");
         } finally {
             setIsLoading(false);
         }
@@ -43,6 +65,7 @@ export function MultimodalTabs() {
 
     const handleAudioSearch = async (blob: Blob) => {
         setIsLoading(true);
+        setError(null);
         const formData = new FormData();
         formData.append("audio", blob);
 
@@ -55,10 +78,11 @@ export function MultimodalTabs() {
             if (res.ok) {
                 setResults(data.results);
                 setSearchMeta({ type: 'audio', transcript: data.transcript, intent: data.intent });
+            } else {
+                setError(data.error || "Audio search failed");
             }
         } catch (e) {
-            console.error(e);
-            alert("Audio search failed");
+            setError("Audio processing error. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -66,6 +90,7 @@ export function MultimodalTabs() {
 
     const handleVideoSearch = async (file: File) => {
         setIsLoading(true);
+        setError(null);
         const formData = new FormData();
         formData.append("video", file);
 
@@ -78,10 +103,11 @@ export function MultimodalTabs() {
             if (res.ok) {
                 setResults(data.results);
                 setSearchMeta({ type: 'video', descriptor: data.visual_descriptor });
+            } else {
+                setError(data.error || "Video search failed");
             }
         } catch (e) {
-            console.error(e);
-            alert("Video search failed");
+            setError("Video processing error. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -143,30 +169,87 @@ export function MultimodalTabs() {
                 </TabsContent>
             </Tabs>
 
+            {/* Error State */}
+            {error && (
+                <div className="flex items-center gap-2 p-4 text-red-600 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-800">
+                    <XCircle className="h-5 w-5" />
+                    <p className="text-sm font-medium">{error}</p>
+                    <Button variant="ghost" size="sm" onClick={() => setError(null)} className="ml-auto">Dismiss</Button>
+                </div>
+            )}
+
             {/* Results Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {results.map((product) => (
-                    <Link href={`/products/${product.id}`} key={product.id}>
-                        <Card className="h-full hover:shadow-lg transition-shadow">
-                            <div className="aspect-square relative bg-muted">
-                                {/* Placeholder for image if we assume product_images is fetched */}
-                                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">Image</div>
-                            </div>
-                            <CardHeader className="p-4">
-                                <CardTitle className="text-base line-clamp-1">{product.title}</CardTitle>
-                                <p className="font-bold mt-2">
-                                    {product.currency || '$'}{product.price}
-                                </p>
+                {isLoading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                        <Card key={i} className="h-full overflow-hidden">
+                            <Skeleton className="aspect-square w-full" />
+                            <CardHeader className="p-4 space-y-2">
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-4 w-1/4" />
                             </CardHeader>
-                            <CardFooter className="p-4 pt-0 text-xs text-muted-foreground">
-                                {product.condition}
+                            <CardFooter className="p-4 pt-0">
+                                <Skeleton className="h-3 w-1/2" />
                             </CardFooter>
                         </Card>
-                    </Link>
-                ))}
-                {results.length === 0 && searchMeta && !isLoading && (
-                    <div className="col-span-full text-center py-10 text-muted-foreground">
-                        No results found.
+                    ))
+                ) : (
+                    results.map((product) => (
+                        <div key={product.id} className="group relative">
+                            <Link href={`/p/${product.id}`}>
+                                <Card className="h-full hover:shadow-lg transition-all hover:-translate-y-1">
+                                    <div className="aspect-square relative bg-muted overflow-hidden">
+                                        {product.image && (
+                                            <img
+                                                src={product.image}
+                                                alt={product.title}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            />
+                                        )}
+                                        {!product.image && (
+                                            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-slate-100 dark:bg-slate-900">
+                                                <Sparkles className="h-8 w-8 opacity-20" />
+                                            </div>
+                                        )}
+                                        <div className="absolute top-2 left-2">
+                                            <Badge variant="secondary" className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+                                                {product.condition}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <CardHeader className="p-4">
+                                        <CardTitle className="text-base line-clamp-1 group-hover:text-primary transition-colors">{product.title}</CardTitle>
+                                        <div className="flex items-baseline gap-1 mt-2">
+                                            <span className="text-lg font-bold text-primary">
+                                                {product.currency || '$'}{product.price}
+                                            </span>
+                                        </div>
+                                    </CardHeader>
+                                    <CardFooter className="p-4 pt-0 text-xs text-muted-foreground border-t bg-slate-50/50 dark:bg-slate-900/50">
+                                        Listed in {product.category}
+                                    </CardFooter>
+                                </Card>
+                            </Link>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+                                <BuyerAssistant productId={product.id} />
+                            </div>
+                        </div>
+                    ))
+                )}
+                {results.length === 0 && !isLoading && searchMeta && (
+                    <div className="col-span-full text-center py-20 border-2 border-dashed rounded-2xl bg-muted/5">
+                        <div className="max-w-xs mx-auto space-y-4">
+                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+                                <Search className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-lg font-medium">No products found</h3>
+                            <p className="text-sm text-muted-foreground">
+                                We couldn't find anything matching your {searchMeta.type} search. Try adjusting your keywords or using a different search method.
+                            </p>
+                            <Button variant="outline" onClick={() => { setResults([]); setSearchMeta(null); setTextQuery(""); }}>
+                                Clear Search
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>

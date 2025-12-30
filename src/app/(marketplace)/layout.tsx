@@ -29,8 +29,6 @@ export default function MarketplaceLayout({
         <main className="flex-1">
           {children}
         </main>
-        <Footer />
-        <ChatWidget />
       </div>
     </LocationProvider>
   );
