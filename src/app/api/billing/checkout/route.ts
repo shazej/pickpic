@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { getSession } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
 import { query, sql } from '@/lib/db';

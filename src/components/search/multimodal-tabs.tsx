@@ -20,27 +20,33 @@ export function MultimodalTabs() {
     const [isLoading, setIsLoading] = useState(false);
     const [textQuery, setTextQuery] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [searchMeta, setSearchMeta] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState("text");
 
     // Restore state on mount
     useEffect(() => {
-        const saved = sessionStorage.getItem('pickpic_search_state');
-        if (saved) {
-            const { results, meta, textQuery, activeTab } = JSON.parse(saved);
-            setResults(results || []);
-            setSearchMeta(meta || null);
-            setTextQuery(textQuery || "");
-            setActiveTab(activeTab || "text");
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('pickpic_search_state');
+            if (saved) {
+                const { results, meta, textQuery, activeTab } = JSON.parse(saved);
+                setResults(results || []);
+                setSearchMeta(meta || null);
+                setTextQuery(textQuery || "");
+                setActiveTab(activeTab || "text");
+            }
         }
     }, []);
 
     // Persist state on change
     useEffect(() => {
-        sessionStorage.setItem('pickpic_search_state', JSON.stringify({
-            results,
-            meta: searchMeta,
-            textQuery,
-            activeTab
-        }));
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('pickpic_search_state', JSON.stringify({
+                results,
+                meta: searchMeta,
+                textQuery,
+                activeTab
+            }));
+        }
     }, [results, searchMeta, textQuery, activeTab]);
 
     const handleTextSearch = async () => {
@@ -48,10 +54,10 @@ export function MultimodalTabs() {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await fetch(`/api/products?search=${encodeURIComponent(textQuery)}`);
+            const res = await fetch(`/api/products?q=${encodeURIComponent(textQuery)}`);
             if (res.ok) {
                 const data = await res.json();
-                setResults(data);
+                setResults(data.products || []);
                 setSearchMeta({ type: 'text', query: textQuery });
             } else {
                 setError("Failed to fetch products. Please try again.");
@@ -199,9 +205,9 @@ export function MultimodalTabs() {
                             <Link href={`/p/${product.id}`}>
                                 <Card className="h-full hover:shadow-lg transition-all hover:-translate-y-1">
                                     <div className="aspect-square relative bg-muted overflow-hidden">
-                                        {product.image && (
+                                        {product.image_url && (
                                             <img
-                                                src={product.image}
+                                                src={product.image_url}
                                                 alt={product.title}
                                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                             />

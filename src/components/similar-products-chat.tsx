@@ -220,9 +220,9 @@ export default function SimilarProductsChat() {
       <div className="bg-primary/10 rounded-full p-6 mb-6 border-8 border-primary/5">
         <ImageIcon className="h-16 w-16 text-primary" />
       </div>
-      <h1 className="text-3xl font-bold font-headline mb-2">Visual & Conversational Search</h1>
+      <h1 className="text-3xl font-bold font-headline mb-2">PickPic Search</h1>
       <p className="text-muted-foreground max-w-md mx-auto mb-6">
-        Upload an image of a product, and our AI will help you find what you&apos;re looking for. Ask questions to refine your search.
+        Upload or capture an image of a product, and our AI will find similar items instantly. Ask questions to refine your search.
       </p>
       <div className="flex gap-4">
         <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
@@ -282,27 +282,39 @@ export default function SimilarProductsChat() {
                                   {product.location && (
                                     <p className="text-[10px] text-muted-foreground truncate">{product.location}</p>
                                   )}
-                                  <Button
-                                    size="sm"
-                                    className="w-full mt-2 text-xs h-7"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setCheckoutProduct(product);
-                                      setIsCheckoutOpen(true);
-                                      // Create order immediately
-                                      createInstantOrder(product).then(data => {
-                                        if (data.error) {
-                                          toast({ variant: "destructive", title: "Error", description: data.error });
-                                          setIsCheckoutOpen(false);
-                                        } else {
-                                          setOrderData(data);
-                                        }
-                                      });
-                                    }}
-                                  >
-                                    <ShoppingCart className="w-3 h-3 mr-1" /> Buy Now
-                                  </Button>
+                                  <div className="flex gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 text-xs h-7"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setCheckoutProduct(product);
+                                        setIsCheckoutOpen(true);
+                                        // Create order immediately
+                                        createInstantOrder(product).then(data => {
+                                          if (data.error) {
+                                            toast({ variant: "destructive", title: "Error", description: data.error });
+                                            setIsCheckoutOpen(false);
+                                          } else {
+                                            setOrderData(data);
+                                          }
+                                        });
+                                      }}
+                                    >
+                                      <ShoppingCart className="w-3 h-3 mr-1" /> Buy Now
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs h-7 px-2"
+                                      asChild
+                                    >
+                                      <Link href={`/p/${encodeURIComponent(product.id || product.name)}`}>
+                                        <MessageCircle className="w-3 h-3" />
+                                      </Link>
+                                    </Button>
+                                  </div>
                                 </div>
                               </CardContent>
                             </Card>

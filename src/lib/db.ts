@@ -1,11 +1,7 @@
 
-import sql from 'mssql';
-
-// Fix: Use hostname for TLS support instead of IP from env
-// Fix: Hardcode credentials to avoid .env parsing issues with special chars
 const config = {
     user: process.env.DB_USER || 'sa',
-    password: process.env.DB_PASSWORD || 'V3r!fy#92uM@xTq1zR71',
+    password: 'V3r!fy#92uM@xTq1zR71',
     server: process.env.DB_SERVER || 'static.193.212.55.162.clients.your-server.de',
     port: parseInt(process.env.DB_PORT || '1434'),
     database: process.env.DB_NAME || 'PICKPIC',
@@ -15,12 +11,22 @@ const config = {
     }
 };
 
-let pool: sql.ConnectionPool | null = null;
+// Use global to preserve pool across HMR in dev
+let pool: any = (global as any).mssqlPool || null;
 
 export const getPool = async () => {
+    // Prevent DB connection during build phase
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return null;
+    }
+
     if (pool) return pool;
     try {
-        pool = await sql.connect(config as any);
+        console.log('Connecting to MSSQL...');
+        const sql = require('mssql');
+        pool = await sql.connect(config);
+        (global as any).mssqlPool = pool;
+        console.log('Database connected successfully');
         return pool;
     } catch (err) {
         console.error('Database connection failed:', err);
@@ -30,6 +36,11 @@ export const getPool = async () => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const query = async (text: string, params: { name: string, value: any, type?: any }[] = []) => {
+    // Prevent DB queries during build phase
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return { recordset: [], rowsAffected: [0], output: {} };
+    }
+
     const pool = await getPool();
     const request = pool.request();
 
@@ -44,4 +55,20 @@ export const query = async (text: string, params: { name: string, value: any, ty
     return await request.query(text);
 };
 
-export { sql };
+export const getSql = () => {
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return {
+            NVarChar: 'nvarchar',
+            Int: 'int',
+            UniqueIdentifier: 'uniqueidentifier',
+            DateTime2: 'datetime2',
+            Decimal: () => 'decimal',
+            Char: () => 'char',
+            VarBinary: () => 'varbinary',
+            MAX: 'max'
+        };
+    }
+    return require('mssql');
+};
+
+export const sql = getSql();

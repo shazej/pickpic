@@ -144,21 +144,27 @@ export const SqlPlanSchema = z.object({
 export const BuyerChatResponseSchema = z.object({
     reply: z.string(),
     citations: z.array(z.object({
-        type: z.enum(['attribute', 'image', 'policy']),
+        type: z.enum(['attribute', 'listing', 'image', 'policy']),
         ref: z.string()
     })),
     suggested_questions: z.array(z.string()),
-    safety_notes: z.array(z.string())
+    safety_notes: z.array(z.string()).optional()
 });
 
 // Prompt 11: Seller Chatbot
 export const SellerChatResponseSchema = z.object({
-    updated_fields: z.record(z.any()),
-    next_question: z.object({
-        question_key: z.string(),
-        question_text: z.string(),
-        suggestions: z.array(z.string())
-    }).nullable(),
-    is_complete: z.boolean(),
-    feedback: z.string()
+    updates: z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        price: z.number().optional(),
+        currency: z.string().optional(),
+        category: z.string().optional(),
+        attributes: z.record(z.any()).optional()
+    }),
+    next_question: z.string(),
+    progress: z.object({
+        required_complete: z.boolean(),
+        missing: z.array(z.string())
+    }),
+    suggestions: z.array(z.string())
 });

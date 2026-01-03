@@ -1,7 +1,10 @@
+
 "use client";
 
 import { Suspense } from 'react';
 import { MultimodalTabs } from '@/components/search/multimodal-tabs';
+
+export const dynamic = 'force-dynamic';
 
 function SearchContent() {
     return (

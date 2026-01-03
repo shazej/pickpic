@@ -3,6 +3,7 @@
 const nextConfig = {
     reactStrictMode: true,
     transpilePackages: ['lucide-react'],
+    serverExternalPackages: ['mssql', 'tedious'],
     eslint: {
         ignoreDuringBuilds: true,
     },

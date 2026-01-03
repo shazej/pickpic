@@ -149,7 +149,7 @@ export function AssistantWizard() {
         return (
             <Card className="w-full max-w-md mx-auto mt-10">
                 <CardHeader>
-                    <CardTitle>Start New Listing</CardTitle>
+                    <CardTitle>PickPic Assistant</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -159,7 +159,7 @@ export function AssistantWizard() {
                             value={imageUrl}
                             onChange={(e) => setImageUrl(e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">Paste a URL for the AI to analyze.</p>
+                        <p className="text-xs text-muted-foreground">The PickPic Assistant will analyze your image and help you build a professional listing in seconds.</p>
                     </div>
                     <Button onClick={startSession} disabled={!imageUrl || isLoading} className="w-full">
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
