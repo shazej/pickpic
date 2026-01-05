@@ -13,18 +13,20 @@ const config = {
     }
 };
 
-console.log('Config Server:', config.server);
-console.log('Config Port:', config.port);
-console.log('Config User:', config.user);
-
 async function run() {
+    const queryStr = process.argv[2];
+    if (!queryStr) {
+        console.error('Please provide a query.');
+        process.exit(1);
+    }
+
     try {
-        console.log('Connecting...');
         const pool = await sql.connect(config);
-        console.log('Connected!');
+        const result = await pool.request().query(queryStr);
+        console.log(JSON.stringify(result.recordset, null, 2));
         await pool.close();
     } catch (err) {
-        console.error('Connection failed:', err);
+        console.error('Query failed:', err);
     }
 }
 
