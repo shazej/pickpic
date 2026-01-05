@@ -154,17 +154,21 @@ export function SellerMode() {
                 </div>
             )}
 
-            {/* Existing listings list could go here */}
+            {/* Active listings list */}
             {step === "upload" && (
-                <div className="opacity-50 pointer-events-none filter blur-sm select-none">
-                    <h3 className="text-lg font-semibold mb-4">Your Active Listings</h3>
-                    <div className="space-y-4">
-                        {[1, 2].map(i => (
-                            <div key={i} className="h-24 rounded-lg bg-slate-100 dark:bg-slate-800"></div>
-                        ))}
+                <div className="pt-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">Your Active Listings</h3>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="/seller/dashboard/products">View All &rarr;</Link>
+                        </Button>
                     </div>
-                    <div className="mt-4 text-center text-xs text-muted-foreground">
-                        (Sign in to manage listings)
+                    <div className="space-y-4">
+                        <div className="p-8 border rounded-lg bg-muted/20 text-center">
+                            <p className="text-sm text-muted-foreground italic">
+                                Sign in to your seller dashboard to manage your active listings.
+                            </p>
+                        </div>
                     </div>
                 </div>
             )}

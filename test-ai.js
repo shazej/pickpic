@@ -1,7 +1,7 @@
 const https = require("https");
 const dotenv = require("dotenv");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-dotenv.config({ path: ".env.production" });
+dotenv.config({ path: ".env.local" });
 
 const key = process.env.GOOGLE_GENAI_API_KEY;
 

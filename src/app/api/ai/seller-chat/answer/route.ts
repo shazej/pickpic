@@ -58,11 +58,19 @@ export async function POST(request: Request) {
             );
         }
 
+        // 2.5 Fetch Image for context
+        const imageResult = await query(
+            `SELECT image_url FROM marketplace.ProductImages WHERE product_id = @pId AND is_primary = 1`,
+            [{ name: 'pId', value: assistantSession.product_id, type: sql.UniqueIdentifier }]
+        );
+        const imageUrl = imageResult.recordset[0]?.image_url;
+
         // 3. Get AI Update and Next Question
         const aiResponse = await AiService.getSellerChatResponse({
             draft: currentState,
             answer: answer_text,
-            sellerId: assistantSession.seller_id
+            sellerId: assistantSession.seller_id,
+            imageUrl: imageUrl
         });
 
         if (!aiResponse) {
@@ -117,7 +125,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
             updated_state: updatedState,
             next_question: aiResponse.next_question,
-            is_complete: aiResponse.is_complete,
+            is_complete: aiResponse.progress?.required_complete,
             message: aiResponse.feedback
         });
 

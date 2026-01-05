@@ -56,7 +56,7 @@ export async function POST(request: Request) {
                         currency: countryInfo.currency_code.toLowerCase(),
                         product_data: {
                             name: `${plan.name} Plan`,
-                            description: `PickPic ${plan.name} Subscription - Adjusted for ${countryInfo.country_name}`,
+                            description: `sale chat ${plan.name} Subscription - Adjusted for ${countryInfo.country_name}`,
                         },
                         unit_amount: Math.round(localizedAmount * 100), // Stripe expects cents/intervals
                         recurring: {

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         const { message, history, image } = body;
 
         const prompt = `
-            You are PickPic AI, a premium conversational assistant.
+            You are sale chat AI, a premium conversational assistant.
             You help users find products, sell items, or just chat.
             
             Context: The user is in a unified chat interface.

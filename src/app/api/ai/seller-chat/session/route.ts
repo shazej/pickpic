@@ -12,10 +12,16 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { image_url } = body;
+        let { image_url } = body;
 
         if (!image_url) {
             return NextResponse.json({ error: 'image_url is required' }, { status: 400 });
+        }
+
+        // Ensure absolute URL for AI service
+        if (image_url.startsWith('/')) {
+            const baseUrl = process.env.APP_BASE_URL || 'http://localhost:9002';
+            image_url = `${baseUrl}${image_url}`;
         }
 
         // 1. Get/Create Seller Profile
@@ -81,7 +87,8 @@ export async function POST(request: Request) {
         const aiResponse = await AiService.getSellerChatResponse({
             draft: draftState,
             answer: "Initial analysis of the image.",
-            sellerId: sellerId
+            sellerId: sellerId,
+            imageUrl: image_url
         });
 
         if (!aiResponse) {

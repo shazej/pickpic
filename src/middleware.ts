@@ -19,6 +19,8 @@ export default auth(async (req) => {
     const session = req.auth;
     const user = session?.user as any;
 
+    console.log(`MIDDLEWARE: path=${path} user=${user?.email} roles=${user?.roles}`);
+
     const requiredRoles = roleRules.find(r => path.startsWith(r.prefix))?.roles;
     const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route));
     const isAuthRoute = authRoutes.some(route => path.startsWith(route));

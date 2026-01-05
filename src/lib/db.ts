@@ -1,7 +1,7 @@
 
 const config = {
     user: process.env.DB_USER || 'sa',
-    password: 'V3r!fy#92uM@xTq1zR71',
+    password: process.env.DB_PASSWORD || 'V3r!fy#92uM@xTq1zR71',
     server: process.env.DB_SERVER || 'static.193.212.55.162.clients.your-server.de',
     port: parseInt(process.env.DB_PORT || '1434'),
     database: process.env.DB_NAME || 'PICKPIC',

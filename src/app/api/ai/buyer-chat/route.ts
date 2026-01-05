@@ -21,11 +21,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing product_id or message' }, { status: 400 });
         }
 
-        // 1. Fetch Product Details
+        console.log('[DEBUG] Buyer Chat Request:', { product_id, message, thread_id });
+
+        // 1. Fetch Product Details and Seller Location
         const productResult = await query(
-            `SELECT p.*, pa.attributes_json 
+            `SELECT p.*, pa.attributes_json, u.display_name as seller_name,
+                    sp.location_lat, sp.location_lng
              FROM marketplace.Products p
              LEFT JOIN marketplace.ProductAttributes pa ON p.id = pa.product_id
+             JOIN marketplace.SellerProfiles sp ON p.seller_id = sp.id
+             JOIN auth.Users u ON sp.user_id = u.id
              WHERE p.id = @productId`,
             [{ name: 'productId', value: product_id, type: sql.UniqueIdentifier }]
         );
@@ -35,6 +40,7 @@ export async function POST(request: Request) {
         }
 
         const product = productResult.recordset[0];
+        console.log('[DEBUG] Product Found:', product.id);
         try {
             product.attributes = JSON.parse(product.attributes_json || '{}');
         } catch (e) {
@@ -99,13 +105,20 @@ export async function POST(request: Request) {
             ]
         );
 
+        console.log('[DEBUG] Calling AI Service...');
+
         // 5. Get AI Response
+        const sellerLocation = product.location_lat && product.location_lng
+            ? `${product.location_lat}, ${product.location_lng}`
+            : 'Location not specified';
+
         const aiResponse = await AiService.getBuyerChatResponse({
             product,
             message,
             history,
             imageCount,
-            userId
+            userId,
+            sellerLocation: sellerLocation
         });
 
         if (!aiResponse) {

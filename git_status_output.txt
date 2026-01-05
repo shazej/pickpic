@@ -1,0 +1,68 @@
+ M inspect-marketplace.js
+ M package-lock.json
+ M package.json
+ M set-admin-password.js
+ M src/app/(account)/account/page.tsx
+ M src/app/(marketplace)/seller/dashboard/page.tsx
+ M src/app/(marketplace)/sellers/page.tsx
+ M src/app/(public)/faq/page.tsx
+ M src/app/(public)/tutorial/page.tsx
+ M src/app/api/ai/buyer-chat/route.ts
+ M src/app/api/ai/chat/route.ts
+ M src/app/api/ai/seller-chat/answer/route.ts
+ M src/app/api/ai/seller-chat/session/route.ts
+ M src/app/api/auth/register/route.ts
+ M src/app/api/billing/checkout/route.ts
+ M src/app/api/health/route.ts
+ M src/app/layout.tsx
+ M src/app/loading.tsx
+ M src/auth.config.ts
+ M src/auth.ts
+ M src/components/admin/app-sidebar.tsx
+ M src/components/app/app-shell.tsx
+ M src/components/app/seller-mode.tsx
+ M src/components/chat/chat-widget.tsx
+ M src/components/chat/unified-chat.tsx
+ M src/components/i18n/translations.ts
+ M src/components/layout/footer.tsx
+ M src/components/layout/header.tsx
+ M src/components/marketplace/help-dialog.tsx
+ M src/components/messaging/chat-window.tsx
+ M src/components/navbar/Navbar.tsx
+ M src/components/seller/assistant-wizard.tsx
+ M src/components/similar-products-chat.tsx
+ M src/lib/auth-adapter.ts
+ M src/lib/billing/pricing-service.ts
+ M src/lib/db.ts
+ M src/lib/genkit/flows.ts
+ M src/lib/genkit/prompts.ts
+ M src/lib/genkit/schemas.ts
+ M src/middleware.ts
+ M src/services/ai-service.ts
+ M test-ai.js
+ M tests/e2e/smoke.spec.ts
+?? check-db.js
+?? dev-output.log
+?? git_status_output.txt
+?? public/uploads/1767568844236-mercedes.jpg
+?? public/uploads/test_camera.png
+?? src/ai/engine/
+?? src/app/(account)/account/favorites/
+?? src/app/(account)/account/followers/
+?? src/app/(account)/account/security/
+?? src/app/(marketplace)/seller/dashboard/analytics/
+?? src/app/(marketplace)/seller/dashboard/customers/
+?? src/app/(public)/about/
+?? src/app/(public)/blog/
+?? src/app/(public)/prayer-times/
+?? src/app/(public)/privacy/
+?? src/app/(public)/terms/
+?? src/app/(public)/weather/
+?? src/app/api/admin/ai/
+?? src/components/tutorial/TutorialPopup.tsx
+?? test-ai-engine-simple.js
+?? test-prompt-gemini.js
+?? test-prompt.js
+?? test-register.js
+?? test-register.json
+?? verify-implementation.js

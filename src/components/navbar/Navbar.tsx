@@ -25,11 +25,13 @@ import { Menu, Camera, LogOut, MessageCircle, LifeBuoy, BookOpen, HelpCircle, St
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { TutorialPopup } from "@/components/tutorial/TutorialPopup";
 
 export function Navbar() {
     const { user, signOut } = useAuth();
     const pathname = usePathname();
     const [isScrolled, setIsScrolled] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -68,7 +70,7 @@ export function Navbar() {
                 <div className="flex items-center gap-2">
                     <Link href="/" className="font-bold text-xl flex items-center gap-2">
                         <Camera className="h-6 w-6 text-primary" />
-                        <span className="hidden sm:inline-block">PickPic</span>
+                        <span className="hidden sm:inline-block">sale chat</span>
                     </Link>
                 </div>
 
@@ -87,6 +89,16 @@ export function Navbar() {
                             <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
                         )}
                     </Link>
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowTutorial(true)}
+                        className="text-foreground/60 hover:text-foreground gap-2"
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        Tutorial
+                    </Button>
                 </nav>
 
                 {/* Right Actions */}
@@ -183,6 +195,16 @@ export function Navbar() {
                                             Sell
                                         </Link>
                                     </SheetClose>
+
+                                    <SheetClose asChild>
+                                        <button
+                                            onClick={() => setShowTutorial(true)}
+                                            className="flex items-center gap-2 px-2 py-3 text-lg font-medium rounded-md hover:bg-muted w-full text-left text-foreground/80"
+                                        >
+                                            <BookOpen className="h-5 w-5" />
+                                            Show Tutorial
+                                        </button>
+                                    </SheetClose>
                                 </div>
                                 <div className="h-px bg-border my-2" />
 
@@ -210,6 +232,11 @@ export function Navbar() {
                     </Sheet>
                 </div>
             </div>
-        </header>
+
+            <TutorialPopup
+                onClose={() => setShowTutorial(false)}
+                forceShow={showTutorial}
+            />
+        </header >
     );
 }

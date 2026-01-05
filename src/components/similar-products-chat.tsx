@@ -220,7 +220,7 @@ export default function SimilarProductsChat() {
       <div className="bg-primary/10 rounded-full p-6 mb-6 border-8 border-primary/5">
         <ImageIcon className="h-16 w-16 text-primary" />
       </div>
-      <h1 className="text-3xl font-bold font-headline mb-2">PickPic Search</h1>
+      <h1 className="text-3xl font-bold font-headline mb-2">sale chat Search</h1>
       <p className="text-muted-foreground max-w-md mx-auto mb-6">
         Upload or capture an image of a product, and our AI will find similar items instantly. Ask questions to refine your search.
       </p>

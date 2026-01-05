@@ -83,7 +83,7 @@ export function ChatWindow({ threadId }: { threadId: string }) {
 
             <div className="p-4 border-t">
                 <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
-                    <Button type="button" variant="ghost" size="icon">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => alert("Image upload feature is coming soon!")}>
                         <ImageIcon className="h-5 w-5 text-muted-foreground" />
                     </Button>
                     <Input

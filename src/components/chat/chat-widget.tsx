@@ -51,7 +51,7 @@ export function ChatWidget() {
                     <div className="p-3 border-b bg-primary text-primary-foreground flex justify-between items-center rounded-t-lg">
                         <div className="flex items-center gap-2">
                             <Bot className="h-5 w-5" />
-                            <span className="font-semibold">PickPic Assistant</span>
+                            <span className="font-semibold">sale chat Assistant</span>
                         </div>
                         <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-primary-foreground/20 text-primary-foreground" onClick={() => setIsOpen(false)}>
                             <X className="h-4 w-4" />

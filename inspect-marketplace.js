@@ -16,19 +16,11 @@ const config = {
 async function run() {
     try {
         const pool = await sql.connect(config);
+        const productsResult = await pool.request().query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'marketplace' AND TABLE_NAME = 'Products'");
+        console.log('Columns in marketplace.Products table:', productsResult.recordset.map(r => r.COLUMN_NAME));
 
-        const tables = ['marketplace.Products', 'marketplace.ProductAttributes', 'marketplace.Categories', 'marketplace.ProductImages'];
-
-        for (const table of tables) {
-            console.log(`\n--- Columns in ${table} ---`);
-            const result = await pool.request().query(`
-                SELECT c.name, t.name as type
-                FROM sys.columns c
-                JOIN sys.types t ON c.user_type_id = t.user_type_id
-                WHERE c.object_id = OBJECT_ID('${table}')
-            `);
-            console.log(result.recordset);
-        }
+        const sellersResult = await pool.request().query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'marketplace' AND TABLE_NAME = 'SellerProfiles'");
+        console.log('Columns in marketplace.SellerProfiles table:', sellersResult.recordset.map(r => r.COLUMN_NAME));
 
         pool.close();
     } catch (err) {

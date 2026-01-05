@@ -12,7 +12,6 @@ export const {
     signOut
 } = NextAuth({
     adapter: MSSQLAdapter(),
-    session: { strategy: "database" },
     ...authConfig,
     providers: [
         ...authConfig.providers,
@@ -21,12 +20,15 @@ export const {
                 if (!credentials?.email || !credentials?.password) return null;
 
                 const result = await query(`
-          SELECT id, email, password_hash, display_name as name
-          FROM auth.Users WHERE email = @email
+          SELECT u.id, u.email, u.password_hash, u.display_name as name,
+                 (SELECT STRING_AGG(r.name, ',') FROM auth.Roles r JOIN auth.UserRoles ur ON r.id = ur.role_id WHERE ur.user_id = u.id) as roles
+          FROM auth.Users u WHERE u.email = @email
         `, [{ name: 'email', value: credentials.email, type: sql.NVarChar }]);
 
                 const user = result.recordset[0];
                 if (!user || !user.password_hash) return null;
+
+                const roles = user.roles ? user.roles.split(',') : [];
 
                 let passwordHash = user.password_hash;
                 if (Buffer.isBuffer(passwordHash)) {
@@ -40,17 +42,9 @@ export const {
                     id: user.id,
                     email: user.email,
                     name: user.name,
+                    roles: roles
                 };
             },
         }),
     ],
-    callbacks: {
-        async session({ session, user }) {
-            if (session.user && user) {
-                session.user.id = user.id;
-                (session.user as any).roles = (user as any).roles;
-            }
-            return session;
-        },
-    },
 });

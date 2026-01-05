@@ -26,11 +26,14 @@ export function AssistantWizard() {
     const [currentQuestionKey, setCurrentQuestionKey] = useState("");
     const [isComplete, setIsComplete] = useState(false);
 
+    const [isUploading, setIsUploading] = useState(false);
+    const [filePreview, setFilePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (scrollRef.current) {
-            // Simple auto-scroll
             const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
             if (scrollContainer) {
                 scrollContainer.scrollTop = scrollContainer.scrollHeight;
@@ -38,21 +41,53 @@ export function AssistantWizard() {
         }
     }, [messages]);
 
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const objectUrl = URL.createObjectURL(file);
+            setFilePreview(objectUrl);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setImageUrl(data.url);
+            } else {
+                alert(data.error || "Upload failed");
+                setFilePreview(null);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Upload failed");
+            setFilePreview(null);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const startSession = async () => {
         if (!imageUrl) return;
         setIsLoading(true);
-        try {
-            // In a real app we'd upload the file first to get a URL.
-            // For this demo, we'll assume the user pasted a URL or we just use the string if it's external.
-            // If it's a local file input, we'd need an upload handler.
-            // To simplify, let's assume we proceed with the image URL string provided in the input (assuming user pastes one).
-            // Or if we want to support file upload, we'd need a separate endpoint.
-            // Let's assume the input is a URL for now to satisfy "No placeholders" but keeping scope manageable.
 
+        // Ensure URL is absolute for the server-side AI processing
+        const absoluteImageUrl = imageUrl.startsWith('/')
+            ? `${window.location.origin}${imageUrl}`
+            : imageUrl;
+
+        try {
             const res = await fetch("/api/ai/seller-chat/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image_url: imageUrl }),
+                body: JSON.stringify({ image_url: absoluteImageUrl }),
             });
             const data = await res.json();
             if (res.ok) {
@@ -96,11 +131,6 @@ export function AssistantWizard() {
             if (res.ok) {
                 setDraftState(data.updated_state);
                 setIsComplete(data.is_complete);
-
-                if (data.message) {
-                    // Info message from AI
-                    // newMessages.push({ role: 'assistant', content: data.message });
-                }
 
                 if (data.next_question) {
                     setMessages(prev => [...prev, {
@@ -149,22 +179,56 @@ export function AssistantWizard() {
         return (
             <Card className="w-full max-w-md mx-auto mt-10">
                 <CardHeader>
-                    <CardTitle>PickPic Assistant</CardTitle>
+                    <CardTitle className="text-center">sale chat AI Listing Assistant</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                    <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-10 hover:bg-muted/50 transition-colors cursor-pointer group"
+                        onClick={() => fileInputRef.current?.click()}>
+                        <input
+                            type="file"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            accept="image/*"
+                            id="ai-assistant-upload"
+                        />
+                        {filePreview ? (
+                            <div className="relative w-full aspect-square">
+                                <img src={filePreview} alt="Preview" className="w-full h-full object-contain rounded-md" />
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center">
+                                <div className="bg-primary/10 p-4 rounded-full inline-block mb-4 group-hover:scale-110 transition-transform">
+                                    <Upload className="h-8 w-8 text-primary" />
+                                </div>
+                                <h3 className="font-semibold text-lg">Upload Product Photo</h3>
+                                <p className="text-sm text-muted-foreground mt-2">The AI will analyze your photo to help you build a professional listing.</p>
+                                <Button variant="secondary" className="mt-4" id="select-image-btn">Select Image</Button>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Product Image URL</label>
+                        <label className="text-sm font-medium">Or paste image URL/path</label>
                         <Input
-                            placeholder="https://example.com/image.jpg"
+                            placeholder="C:\path\to\image.png or http://..."
                             value={imageUrl}
                             onChange={(e) => setImageUrl(e.target.value)}
+                            id="manual-url-input"
                         />
-                        <p className="text-xs text-muted-foreground">The PickPic Assistant will analyze your image and help you build a professional listing in seconds.</p>
                     </div>
-                    <Button onClick={startSession} disabled={!imageUrl || isLoading} className="w-full">
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                        Start AI Assistant
-                    </Button>
+
+                    {imageUrl && !isUploading && (
+                        <Button onClick={startSession} disabled={isLoading} className="w-full h-12" id="start-assistant-btn">
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                            Start AI Assistant
+                        </Button>
+                    )}
                 </CardContent>
             </Card>
         );

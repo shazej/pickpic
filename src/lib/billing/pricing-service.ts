@@ -95,8 +95,8 @@ export class PricingService {
         const plansRes = await query('SELECT id, name, price_id, amount, currency, listings_limit, ai_scans_limit, features_json FROM billing.Plans ORDER BY amount ASC');
 
         const plans = plansRes.recordset.map(plan => {
-            const baseAmount = parseFloat(plan.amount);
-            const localizedAmount = this.calculateLocalizedPrice(baseAmount, info);
+            const baseAmount = 0; // Force free
+            const localizedAmount = 0; // Force free
 
             return {
                 ...plan,

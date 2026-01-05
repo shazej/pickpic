@@ -35,7 +35,7 @@ export function Header() {
                 <div className="flex items-center gap-2">
                     <Link href="/" className="font-bold text-xl flex items-center gap-2">
                         <Camera className="h-6 w-6 text-primary" />
-                        <span className="hidden sm:inline-block">PickPic</span>
+                        <span className="hidden sm:inline-block">sale chat</span>
                     </Link>
                 </div>
 
@@ -105,7 +105,7 @@ export function Header() {
                                     <Link href="/account/billing">Billing</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link href="/messages">Messages</Link>
+                                    <Link href="/account/messages">Messages</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>

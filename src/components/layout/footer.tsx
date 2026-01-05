@@ -8,39 +8,39 @@ import { SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/contact';
 
 const footerLinks = {
     categories: [
-        { name: 'Automotive', href: '#' },
-        { name: 'Electronics', href: '#' },
-        { name: 'Services', href: '#' },
-        { name: 'Sports', href: '#' },
-        { name: 'Family', href: '#' },
-        { name: 'Furniture', href: '#' },
-        { name: 'Education', href: '#' },
-        { name: 'Property', href: '#' },
-        { name: 'Contracting', href: '#' },
-        { name: 'Camping', href: '#' },
-        { name: 'Animals', href: '#' },
-        { name: 'Gifts', href: '#' },
-        { name: 'Jobs', href: '#' },
-        { name: 'Others', href: '#' },
+        { name: 'Automotive', href: '/search?category=Automotive' },
+        { name: 'Electronics', href: '/search?category=Electronics' },
+        { name: 'Services', href: '/search?category=Services' },
+        { name: 'Sports', href: '/search?category=Sports' },
+        { name: 'Family', href: '/search?category=Family' },
+        { name: 'Furniture', href: '/search?category=Furniture' },
+        { name: 'Education', href: '/search?category=Education' },
+        { name: 'Property', href: '/search?category=Property' },
+        { name: 'Contracting', href: '/search?category=Contracting' },
+        { name: 'Camping', href: '/search?category=Camping' },
+        { name: 'Animals', href: '/search?category=Animals' },
+        { name: 'Gifts', href: '/search?category=Gifts' },
+        { name: 'Jobs', href: '/search?category=Jobs' },
+        { name: 'Others', href: '/search?category=Others' },
     ],
     myAccount: [
-        { name: 'Account Information', href: '#' },
-        { name: 'My Listings', href: '#' },
-        { name: 'My Favorites', href: '#' },
-        { name: 'My Payments', href: '#' },
-        { name: 'Followers', href: '#' },
+        { name: 'Account Information', href: '/account' },
+        { name: 'My Listings', href: '/seller/dashboard/products' },
+        { name: 'My Favorites', href: '/account/favorites' },
+        { name: 'My Payments', href: '/account/billing' },
+        { name: 'Followers', href: '/account/followers' },
         { name: 'Seller Dashboard', href: '/seller/dashboard' },
         { name: 'Seller Login', href: '/seller/login' },
         { name: 'Seller Signup', href: '/seller/signup' },
     ],
     information: [
-        { name: 'About Us', href: '#' },
-        { name: 'Terms & Conditions', href: '#' },
-        { name: 'Frequently Asked Questions', href: '#' },
-        { name: 'Privacy & Cookie Policy', href: '#' },
-        { name: 'Blog', href: '#' },
-        { name: 'Prayer times', href: '#' },
-        { name: 'Weather', href: '#' },
+        { name: 'About Us', href: '/about' },
+        { name: 'Terms & Conditions', href: '/terms' },
+        { name: 'Frequently Asked Questions', href: '/faq' },
+        { name: 'Privacy & Cookie Policy', href: '/privacy' },
+        { name: 'Blog', href: '/blog' },
+        { name: 'Prayer times', href: '/prayer-times' },
+        { name: 'Weather', href: '/weather' },
     ]
 }
 
@@ -90,9 +90,9 @@ export function Footer() {
             <div className="container mx-auto px-6 py-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div>
-                        <h3 className="text-2xl font-bold text-primary mb-4">Ecomm Now</h3>
-                        <p className="text-sm mb-4 text-muted-foreground">Buy and sell everything from cars, electronics, property and more on Ecomm Now.</p>
-                        <p className="text-sm mb-4 text-muted-foreground">Download Ecomm Now on iOS and Android and make Buying & Selling easy everywhere you go!</p>
+                        <h3 className="text-2xl font-bold text-primary mb-4">sale chat</h3>
+                        <p className="text-sm mb-4 text-muted-foreground">Buy and sell everything from cars, electronics, property and more on sale chat.</p>
+                        <p className="text-sm mb-4 text-muted-foreground">Download sale chat on iOS and Android and make Buying & Selling easy everywhere you go!</p>
                         <p className="font-semibold mb-2">Download our app</p>
                         <div className="flex gap-2">
                             <Link href="#">
@@ -136,7 +136,7 @@ export function Footer() {
 
             <div className="border-t">
                 <div className="container mx-auto px-6 py-4 flex flex-wrap justify-between items-center text-sm">
-                    <p className="text-muted-foreground mb-4 md:mb-0">&copy; All Rights Reserved by Ecomm Now 2025</p>
+                    <p className="text-muted-foreground mb-4 md:mb-0">&copy; All Rights Reserved by sale chat 2026</p>
                     <div className="flex gap-2">
                         {socialLinks.map(social => (
                             <Link key={social.name} href={social.href} className="text-muted-foreground hover:text-primary bg-muted/50 p-2 rounded-full">

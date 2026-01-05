@@ -22,24 +22,18 @@ export async function GET() {
         health.db_error = e.message;
     }
 
-    // Check AI Provider (Google Generative AI SDK)
+    // Check AI Engine
     try {
-        const { GoogleGenerativeAI } = await import("@google/generative-ai");
-        const apiKey = process.env.GOOGLE_GENAI_API_KEY;
-        if (apiKey && apiKey.length > 10) {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            if (model) {
-                health.ai_provider = 'configured';
-            } else {
-                health.ai_provider = 'error: model init failed';
-            }
-        } else {
-            health.ai_provider = 'not_configured';
+        const { aiEngine } = await import('@/ai/engine/service');
+        const aiStatus = await aiEngine.healthCheck();
+        health.ai_engine = aiStatus;
+        if (aiStatus.status === 'unhealthy') {
+            health.status = 'degraded';
         }
     } catch (e: any) {
-        console.error("Health Check AI Error:", e);
-        health.ai_provider = 'error: ' + e.message;
+        console.error("Health Check AI Engine Error:", e);
+        health.ai_engine = { status: 'error', details: e.message };
+        health.status = 'degraded';
     }
 
     return NextResponse.json(health, { status: health.status === 'ok' ? 200 : 503 });

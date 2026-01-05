@@ -28,4 +28,21 @@ export default {
             allowDangerousEmailAccountLinking: true,
         }),
     ],
+    session: { strategy: "jwt" },
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id;
+                token.roles = (user as any).roles;
+            }
+            return token;
+        },
+        async session({ session, token }) {
+            if (session.user) {
+                session.user.id = token.id as string;
+                (session.user as any).roles = token.roles as string[];
+            }
+            return session;
+        },
+    },
 } satisfies NextAuthConfig;

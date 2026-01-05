@@ -100,6 +100,7 @@ export function MSSQLAdapter(): Adapter {
         },
 
         async createSession({ sessionToken, userId, expires }) {
+            console.log("ADAPTER - createSession", { userId, sessionToken });
             await query(`
         INSERT INTO auth.sessions (user_id, session_token, expires_at)
         VALUES (@userId, @sessionToken, @expires)
@@ -112,6 +113,7 @@ export function MSSQLAdapter(): Adapter {
         },
 
         async getSessionAndUser(sessionToken: string) {
+            console.log("ADAPTER - getSessionAndUser", { sessionToken });
             const sessionResult = await query(`
         SELECT user_id as userId, session_token as sessionToken, expires_at as expires
         FROM auth.sessions WHERE session_token = @sessionToken AND (revoked_at IS NULL OR revoked_at > SYSDATETIME())
@@ -119,7 +121,10 @@ export function MSSQLAdapter(): Adapter {
                 { name: 'sessionToken', value: sessionToken, type: sql.NVarChar }
             ]);
 
-            if (sessionResult.recordset.length === 0) return null;
+            if (sessionResult.recordset.length === 0) {
+                console.log("ADAPTER - getSessionAndUser - NO SESSION FOUND");
+                return null;
+            }
             const session = sessionResult.recordset[0];
 
             const userResult = await query(`
@@ -130,8 +135,12 @@ export function MSSQLAdapter(): Adapter {
                 { name: 'id', value: session.userId, type: sql.UniqueIdentifier }
             ]);
 
-            if (userResult.recordset.length === 0) return null;
+            if (userResult.recordset.length === 0) {
+                console.log("ADAPTER - getSessionAndUser - NO USER FOUND");
+                return null;
+            }
             const user = userResult.recordset[0];
+            console.log("ADAPTER - getSessionAndUser - SUCCESS", { user: user.email, roles: user.roles });
 
             return {
                 session: {

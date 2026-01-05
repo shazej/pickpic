@@ -16,7 +16,7 @@ const config = {
 async function setAdminPassword() {
     try {
         const pool = await sql.connect(config);
-        const hash = await bcrypt.hash('Admin@123', 10);
+        const hash = await bcrypt.hash('Admin123!', 10);
 
         // Update hash for admin user
         await pool.request()
@@ -24,7 +24,7 @@ async function setAdminPassword() {
             .input('email', sql.NVarChar, 'admin@pickpic.com')
             .query('UPDATE auth.Users SET password_hash = @hash WHERE email = @email');
 
-        console.log('Admin password updated to: Admin@123');
+        console.log('Admin password updated to: Admin123!');
         process.exit(0);
     } catch (err) {
         console.error('Failed:', err);
