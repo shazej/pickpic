@@ -1,6 +1,9 @@
 "use client";
 
 import { VisualSearchUploader } from "@/components/search/visual-search-uploader";
+
+// Force dynamic rendering for this authenticated route
+export const dynamic = 'force-dynamic';
 import { ListingForm } from "@/components/seller/listing-form";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
