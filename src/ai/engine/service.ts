@@ -11,6 +11,7 @@ import { GeminiProvider } from "./gemini-provider";
 import { OpenAIProvider } from "./openai-provider";
 import { OllamaProvider } from "./ollama-provider";
 import { enforceJson, SYSTEM_PROMPT_PICKPIC } from "./utils";
+import { safetyGuard } from "./safety";
 
 export class AiEngineService {
     private static instance: AiEngineService;

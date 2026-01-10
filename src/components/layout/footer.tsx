@@ -92,7 +92,7 @@ export function Footer() {
                     <div>
                         <h3 className="text-2xl font-bold text-primary mb-4">kechiki</h3>
                         <p className="text-sm mb-4 text-muted-foreground">Buy and sell everything from cars, electronics, property and more on kechiki.</p>
-                        <p className="text-sm mb-4 text-muted-foreground">Download kechiki on iOS and Android and make Buying & Selling easy everywhere you go!</p>>
+                        <p className="text-sm mb-4 text-muted-foreground">Download kechiki on iOS and Android and make Buying & Selling easy everywhere you go!</p>
                         <p className="font-semibold mb-2">Download our app</p>
                         <div className="flex gap-2">
                             <Link href="#">

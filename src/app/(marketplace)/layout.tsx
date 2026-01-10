@@ -13,7 +13,7 @@ import { ChatWidget } from '@/components/chat/chat-widget';
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
 
 export const metadata: Metadata = {
-  title: 'Ecomm Now',
+  title: 'kechiki',
   description: 'Upload an image to find products sold by nearby sellers.',
 };
 

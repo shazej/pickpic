@@ -60,7 +60,7 @@ export const {
             if (token.id) {
                 try {
                     const subRes = await query(
-                        `SELECT status FROM subscriptions WHERE user_id = @userId AND status = 'active'`,
+                        `SELECT status FROM billing.Subscriptions WHERE user_id = @userId AND status = 'active'`,
                         [{ name: 'userId', value: token.id }]
                     );
                     token.subscription = subRes.recordset.length > 0 ? 'active' : 'free';

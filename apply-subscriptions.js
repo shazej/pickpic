@@ -22,7 +22,7 @@ async function apply() {
         const pool = await sql.connect(config);
         console.log('Connected.');
 
-        const schemaPath = path.join(__dirname, 'database', 'subscriptions.sql');
+        const schemaPath = path.join(__dirname, 'database', 'cleanup.sql');
         const schemaContent = fs.readFileSync(schemaPath, 'utf8');
 
         // Execute as a single batch since it's small, or split if needed.

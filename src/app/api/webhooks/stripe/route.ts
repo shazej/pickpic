@@ -26,36 +26,42 @@ export async function POST(req: Request) {
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object as any;
-                // Identify user from metadata or client_reference_id
+                // Identify user from metadata (preferred) or client_reference_id
                 const userId = session.metadata?.userId || session.client_reference_id;
                 const subscriptionId = session.subscription;
 
                 if (userId && subscriptionId) {
                     await query(
-                        `INSERT INTO subscriptions (id, user_id, status, plan_id, current_period_end) 
-                         VALUES (@id, @userId, 'active', @planId, SYSDATETIMEOFFSET())`, // Simplified end date for now, ideally fetch sub details
+                        `INSERT INTO billing.Subscriptions (id, stripe_subscription_id, user_id, status, plan_id, current_period_end) 
+                         VALUES (NEWID(), @stripeSubId, @userId, 'active', 2, SYSDATETIMEOFFSET())`,
                         [
-                            { name: 'id', value: subscriptionId },
-                            { name: 'userId', value: userId },
-                            { name: 'planId', value: 'premium' } // or fetch from line items
-                        ]
-                    );
-
-                    // Also update customer ID in users table if implemented
-                    await query(
-                        `UPDATE users SET stripe_customer_id = @custId WHERE id = @userId`,
-                        [
-                            { name: 'custId', value: session.customer },
+                            { name: 'stripeSubId', value: subscriptionId },
                             { name: 'userId', value: userId }
                         ]
                     );
+
+                    // Update customer ID in auth.Users
+                    if (session.customer) {
+                        try {
+                            await query(
+                                `UPDATE auth.Users SET stripe_customer_id = @custId WHERE id = @userId`,
+                                [
+                                    { name: 'custId', value: session.customer },
+                                    { name: 'userId', value: userId }
+                                ]
+                            );
+                        } catch (err: any) {
+                            // Ignore column missing error if stripe_customer_id doesn't exist yet on auth.Users
+                            console.warn("Could not update stripe_customer_id on users table", err.message);
+                        }
+                    }
                 }
                 break;
             }
             case 'customer.subscription.deleted': {
                 const subscription = event.data.object as any;
                 await query(
-                    `UPDATE subscriptions SET status = 'canceled' WHERE id = @id`,
+                    `UPDATE billing.Subscriptions SET status = 'canceled' WHERE stripe_subscription_id = @id`,
                     [{ name: 'id', value: subscription.id }]
                 );
                 break;
@@ -65,7 +71,7 @@ export async function POST(req: Request) {
                 const invoice = event.data.object as any;
                 if (invoice.subscription) {
                     await query(
-                        `UPDATE subscriptions SET status = 'active', current_period_end = DATEADD(month, 1, SYSDATETIMEOFFSET()) WHERE id = @id`,
+                        `UPDATE billing.Subscriptions SET status = 'active', current_period_end = DATEADD(month, 1, SYSDATETIMEOFFSET()) WHERE stripe_subscription_id = @id`,
                         [{ name: 'id', value: invoice.subscription }]
                     );
                 }
