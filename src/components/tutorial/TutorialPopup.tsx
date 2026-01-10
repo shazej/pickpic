@@ -25,7 +25,7 @@ interface Step {
 
 const steps: Step[] = [
     {
-        title: "Welcome to sale chat",
+        title: "Welcome to kechiki",
         description: "Your AI-powered free marketplace. No fees, just easy buying and selling with the power of AI.",
         icon: Sparkles,
         color: "bg-blue-500"

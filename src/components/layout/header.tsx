@@ -35,7 +35,7 @@ export function Header() {
                 <div className="flex items-center gap-2">
                     <Link href="/" className="font-bold text-xl flex items-center gap-2">
                         <Camera className="h-6 w-6 text-primary" />
-                        <span className="hidden sm:inline-block">sale chat</span>
+                        <span className="hidden sm:inline-block">kechiki</span>
                     </Link>
                 </div>
 

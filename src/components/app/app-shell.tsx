@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-14 items-center justify-between px-4 max-w-md mx-auto md:max-w-4xl">
                     <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-                        <span className="text-primary">sale chat</span>
+                        <span className="text-primary">kechiki</span>
                     </div>
 
                     {/* Mode Toggle */}

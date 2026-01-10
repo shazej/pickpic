@@ -14,8 +14,8 @@ import {
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/contact';
 
 export const metadata: Metadata = {
-    title: 'How to Use sale chat | Tutorial',
-    description: 'A step-by-step guide to buying and selling on sale chat using AI visual search.',
+    title: 'How to Use kechiki | Tutorial',
+    description: 'A step-by-step guide to buying and selling on kechiki using AI visual search.',
 };
 
 const SECTIONS = [
@@ -35,7 +35,7 @@ export default function TutorialPage() {
     return (
         <div className="container mx-auto px-4 pb-24">
             <TutorialHero
-                title="How to Use sale chat"
+                title="How to Use kechiki"
                 subtitle="A quick guide to buying and selling with AI-powered visual search"
                 ctaText="Start Exploring"
                 ctaHref="/search"
@@ -54,7 +54,7 @@ export default function TutorialPage() {
                     <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
                         <div>
                             <Badge className="mb-2 bg-primary/20 text-primary border-primary/30 backdrop-blur-sm">Platform Overview</Badge>
-                            <h2 className="text-2xl font-bold text-white mb-1">Getting Started with sale chat</h2>
+                            <h2 className="text-2xl font-bold text-white mb-1">Getting Started with kechiki</h2>
                             <p className="text-white/70 text-sm">Watch this 2-minute video to see how visual search works in action.</p>
                         </div>
                         <div className="text-white/60 text-xs font-mono">02:14 / 02:30</div>
@@ -215,7 +215,7 @@ export default function TutorialPage() {
                         <TutorialStep
                             stepNumber={3}
                             title="AI Smart Listing"
-                            description="sale chat AI analyzes your photos and automatically generates a title, description, and attributes for you."
+                            description="kechiki AI analyzes your photos and automatically generates a title, description, and attributes for you."
                             icon={Sparkles}
                         />
                         <TutorialStep
@@ -319,7 +319,7 @@ export default function TutorialPage() {
                         <div className="space-y-4 mb-6">
                             <details className="group">
                                 <summary className="font-medium cursor-pointer list-none flex items-center justify-between">
-                                    Is sale chat free to use?
+                                    Is kechiki free to use?
                                     <span className="transition group-open:rotate-180">▼</span>
                                 </summary>
                                 <p className="text-muted-foreground mt-2 text-sm">Yes! Browsing and basic selling are completely free. We also offer premium plans for power users.</p>
@@ -341,7 +341,7 @@ export default function TutorialPage() {
 
                     {/* Final CTA */}
                     <section className="text-center bg-primary text-primary-foreground rounded-2xl p-12 space-y-6">
-                        <h2 className="text-3xl font-bold">Ready to try sale chat?</h2>
+                        <h2 className="text-3xl font-bold">Ready to try kechiki?</h2>
                         <p className="text-primary-foreground/90 max-w-md mx-auto text-lg">
                             Join thousands of users buying and selling with the power of AI.
                         </p>

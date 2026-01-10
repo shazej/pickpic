@@ -42,6 +42,14 @@ export default auth(async (req) => {
         }
     }
 
+    // Subscription Gating (Entitlement)
+    // Example: /ai/advanced requires active subscription
+    if (path.startsWith('/ai/advanced') && user?.subscription !== 'active') {
+        const url = req.nextUrl.clone();
+        url.pathname = '/pricing'; // Redirect to upgrade page
+        return NextResponse.redirect(url);
+    }
+
     // Redirect authenticated users from auth routes
     if (isAuthRoute && user) {
         const url = req.nextUrl.clone();

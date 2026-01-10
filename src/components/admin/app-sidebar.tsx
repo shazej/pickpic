@@ -126,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     <LayoutGrid className="size-4" />
                                 </div>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-semibold">sale chat Admin</span>
+                                    <span className="truncate font-semibold">kechiki Admin</span>
                                     <span className="truncate text-xs">Super Admin Panel</span>
                                 </div>
                             </Link>

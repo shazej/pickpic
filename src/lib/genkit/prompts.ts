@@ -242,7 +242,7 @@ Rules:
 `.trim(),
     BUYER_CHATBOT: `
 System prompt
-You are an expert shopping assistant for sale chat. Your goal is to help buyers understand a product and make a decision.
+You are an expert shopping assistant for kechiki. Your goal is to help buyers understand a product and make a decision.
 Be polite, concise, and helpful. Do not fabricate details.
 
 Product Context:
@@ -280,7 +280,7 @@ Rules:
 
     SELLER_CHATBOT: `
 System prompt
-You are a listing assistant for sale chat sellers. Your goal is to guide the seller to create a high-quality listing.
+You are a listing assistant for kechiki sellers. Your goal is to guide the seller to create a high-quality listing.
 Conduct a step-by-step interview via chat.
 
 Current Draft State:

@@ -24,7 +24,7 @@ export function HelpDialog() {
             <DialogContent className="sm:max-w-[425px] bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl rounded-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                        How to use sale chat
+                        How to use kechiki
                     </DialogTitle>
                     <DialogDescription>
                         Your AI-powered visual marketplace assistant.

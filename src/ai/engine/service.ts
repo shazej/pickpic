@@ -110,6 +110,15 @@ export class AiEngineService {
             }
         }
 
+        // SAFETY CHECK
+        const lastUserMessage = request.messages.filter(m => m.role === 'user').pop();
+        if (lastUserMessage) {
+            const isSafe = await safetyGuard.validate(lastUserMessage.content as string);
+            if (!isSafe) {
+                throw new Error("Content Policy Violation: Request blocked by safety filters.");
+            }
+        }
+
         try {
             const response = await provider.chat(request);
 

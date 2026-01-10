@@ -47,4 +47,38 @@ export const {
             },
         }),
     ],
+    callbacks: {
+        async jwt({ token, user, trigger, session }) {
+            // Initial sign in
+            if (user) {
+                token.id = user.id;
+                token.roles = (user as any).roles;
+            }
+
+            // Fetch Subscription Status on every JWT check (in Node environment)
+            // Note: This relies on auth.ts only running in Node. Middleware uses auth.config.ts.
+            if (token.id) {
+                try {
+                    const subRes = await query(
+                        `SELECT status FROM subscriptions WHERE user_id = @userId AND status = 'active'`,
+                        [{ name: 'userId', value: token.id }]
+                    );
+                    token.subscription = subRes.recordset.length > 0 ? 'active' : 'free';
+                } catch (e) {
+                    console.error("Failed to fetch subscription", e);
+                    token.subscription = 'free';
+                }
+            }
+
+            return token;
+        },
+        async session({ session, token }) {
+            if (session.user) {
+                session.user.id = token.id as string;
+                (session.user as any).roles = token.roles as string[];
+                (session.user as any).subscription = token.subscription || 'free';
+            }
+            return session;
+        }
+    }
 });

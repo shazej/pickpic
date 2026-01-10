@@ -179,7 +179,7 @@ export function AssistantWizard() {
         return (
             <Card className="w-full max-w-md mx-auto mt-10">
                 <CardHeader>
-                    <CardTitle className="text-center">sale chat AI Listing Assistant</CardTitle>
+                    <CardTitle className="text-center">kechiki AI Listing Assistant</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-10 hover:bg-muted/50 transition-colors cursor-pointer group"

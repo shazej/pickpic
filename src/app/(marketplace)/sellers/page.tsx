@@ -52,7 +52,7 @@ function SellersPageContent() {
         </Button>
         <div className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">sale chat</span>
+          <span className="text-xl font-headline">kechiki</span>
         </div>
       </header>
 

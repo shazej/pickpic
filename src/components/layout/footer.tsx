@@ -90,9 +90,9 @@ export function Footer() {
             <div className="container mx-auto px-6 py-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div>
-                        <h3 className="text-2xl font-bold text-primary mb-4">sale chat</h3>
-                        <p className="text-sm mb-4 text-muted-foreground">Buy and sell everything from cars, electronics, property and more on sale chat.</p>
-                        <p className="text-sm mb-4 text-muted-foreground">Download sale chat on iOS and Android and make Buying & Selling easy everywhere you go!</p>
+                        <h3 className="text-2xl font-bold text-primary mb-4">kechiki</h3>
+                        <p className="text-sm mb-4 text-muted-foreground">Buy and sell everything from cars, electronics, property and more on kechiki.</p>
+                        <p className="text-sm mb-4 text-muted-foreground">Download kechiki on iOS and Android and make Buying & Selling easy everywhere you go!</p>>
                         <p className="font-semibold mb-2">Download our app</p>
                         <div className="flex gap-2">
                             <Link href="#">
@@ -136,7 +136,7 @@ export function Footer() {
 
             <div className="border-t">
                 <div className="container mx-auto px-6 py-4 flex flex-wrap justify-between items-center text-sm">
-                    <p className="text-muted-foreground mb-4 md:mb-0">&copy; All Rights Reserved by sale chat 2026</p>
+                    <p className="text-muted-foreground mb-4 md:mb-0">&copy; All Rights Reserved by kechiki 2026</p>
                     <div className="flex gap-2">
                         {socialLinks.map(social => (
                             <Link key={social.name} href={social.href} className="text-muted-foreground hover:text-primary bg-muted/50 p-2 rounded-full">

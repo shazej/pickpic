@@ -1,5 +1,5 @@
 
-# PickPic Frontend Architecture
+# Kechiki Frontend Architecture
 
 ## Directory Structure
 - `src/app/(marketplace)`: Core marketplace (Home, Search, Product Details)

@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"], variable: '--font-body' });
 
 export const metadata: Metadata = {
-    title: "sale chat",
+    title: "kechiki",
     description: "AI-Powered Marketplace",
 };
 

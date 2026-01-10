@@ -170,7 +170,7 @@ export default function AccountPage() {
                             <CardTitle className="text-lg">Need Help?</CardTitle>
                         </CardHeader>
                         <CardContent className="text-sm text-muted-foreground">
-                            Check out our <Link href="/tutorial" className="text-primary hover:underline font-medium">Step-by-Step Tutorial</Link> to learn how to make the most of sale chat's AI features.
+                            Check out our <Link href="/tutorial" className="text-primary hover:underline font-medium">Step-by-Step Tutorial</Link> to learn how to make the most of kechiki's AI features.
                         </CardContent>
                     </Card>
                 </div>

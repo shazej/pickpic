@@ -1,106 +1,81 @@
 
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-export const dynamic = 'force-dynamic';
 import { stripe } from '@/lib/stripe';
-import { query, sql } from '@/lib/db';
-import Stripe from 'stripe';
+import { query } from '@/lib/db';
 
 export async function POST(req: Request) {
     const body = await req.text();
-    const sig = req.headers.get('stripe-signature') as string;
+    const headersList = await headers();
+    const signature = headersList.get('stripe-signature') as string;
 
-    let event: Stripe.Event;
+    let event;
 
     try {
-        if (!process.env.STRIPE_WEBHOOK_SECRET) {
-            throw new Error('Missing Webhook Secret');
-        }
-        event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        event = stripe.webhooks.constructEvent(
+            body,
+            signature,
+            process.env.STRIPE_WEBHOOK_SECRET!
+        );
     } catch (err: any) {
-        console.error(`Webhook Signature Error: ${err.message}`);
-        return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
+        console.error(`Webhook signature verification failed: ${err.message}`);
+        return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
     }
 
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.userId;
-        const planId = session.metadata?.planId;
+    try {
+        switch (event.type) {
+            case 'checkout.session.completed': {
+                const session = event.data.object as any;
+                // Identify user from metadata or client_reference_id
+                const userId = session.metadata?.userId || session.client_reference_id;
+                const subscriptionId = session.subscription;
 
-        if (userId && planId) {
-            console.log(`Checkout completed for User ${userId}, Plan ${planId}`);
+                if (userId && subscriptionId) {
+                    await query(
+                        `INSERT INTO subscriptions (id, user_id, status, plan_id, current_period_end) 
+                         VALUES (@id, @userId, 'active', @planId, SYSDATETIMEOFFSET())`, // Simplified end date for now, ideally fetch sub details
+                        [
+                            { name: 'id', value: subscriptionId },
+                            { name: 'userId', value: userId },
+                            { name: 'planId', value: 'premium' } // or fetch from line items
+                        ]
+                    );
 
-            // 1. Get Plan Details (to set limits or just link)
-            const planRes = await query('SELECT * FROM billing.Plans WHERE id = @id', [
-                { name: 'id', value: parseInt(planId), type: sql.Int }
-            ]);
-
-            if (planRes.recordset.length > 0) {
-                // 2. Check if subscription already exists
-                const subRes = await query('SELECT id FROM billing.Subscriptions WHERE user_id = @userId', [
-                    { name: 'userId', value: userId, type: sql.UniqueIdentifier }
-                ]);
-
-                const subId = session.subscription as string;
-                const expiration = new Date();
-                expiration.setMonth(expiration.getMonth() + 1);
-
-                // PPP Pricing Info from metadata
-                const baseAmount = session.metadata?.baseAmount ? parseFloat(session.metadata.baseAmount) : null;
-                const pppMultiplier = session.metadata?.pppMultiplier ? parseFloat(session.metadata.pppMultiplier) : null;
-                const finalAmount = session.metadata?.finalAmount ? parseFloat(session.metadata.finalAmount) : null;
-                const currency = session.metadata?.currency || null;
-
-                if (subRes.recordset.length > 0) {
-                    // Update
-                    await query(`
-                        UPDATE billing.Subscriptions 
-                        SET plan_id = @planId, 
-                            stripe_subscription_id = @subId,
-                            status = 'active',
-                            current_period_end = @expiry,
-                            base_amount = @baseAmount,
-                            ppp_multiplier = @pppMultiplier,
-                            final_amount = @finalAmount,
-                            currency = @currency,
-                            updated_at = SYSDATETIME()
-                        WHERE user_id = @userId
-                    `, [
-                        { name: 'planId', value: parseInt(planId), type: sql.Int },
-                        { name: 'subId', value: subId, type: sql.NVarChar },
-                        { name: 'expiry', value: expiration, type: sql.DateTime2 },
-                        { name: 'baseAmount', value: baseAmount, type: sql.Decimal(18, 2) },
-                        { name: 'pppMultiplier', value: pppMultiplier, type: sql.Decimal(5, 2) },
-                        { name: 'finalAmount', value: finalAmount, type: sql.Decimal(18, 2) },
-                        { name: 'currency', value: currency, type: sql.Char(3) },
-                        { name: 'userId', value: userId, type: sql.UniqueIdentifier }
-                    ]);
-                } else {
-                    // Insert
-                    await query(`
-                        INSERT INTO billing.Subscriptions (user_id, plan_id, stripe_subscription_id, status, current_period_end, base_amount, ppp_multiplier, final_amount, currency)
-                        VALUES (@userId, @planId, @subId, 'active', @expiry, @baseAmount, @pppMultiplier, @finalAmount, @currency)
-                    `, [
-                        { name: 'userId', value: userId, type: sql.UniqueIdentifier },
-                        { name: 'planId', value: parseInt(planId), type: sql.Int },
-                        { name: 'subId', value: subId, type: sql.NVarChar },
-                        { name: 'expiry', value: expiration, type: sql.DateTime2 },
-                        { name: 'baseAmount', value: baseAmount, type: sql.Decimal(18, 2) },
-                        { name: 'pppMultiplier', value: pppMultiplier, type: sql.Decimal(5, 2) },
-                        { name: 'finalAmount', value: finalAmount, type: sql.Decimal(18, 2) },
-                        { name: 'currency', value: currency, type: sql.Char(3) }
-                    ]);
+                    // Also update customer ID in users table if implemented
+                    await query(
+                        `UPDATE users SET stripe_customer_id = @custId WHERE id = @userId`,
+                        [
+                            { name: 'custId', value: session.customer },
+                            { name: 'userId', value: userId }
+                        ]
+                    );
                 }
-
-                // 3. Notify User
-                await query(`
-                    INSERT INTO notifications.Notifications (user_id, type, title, body, link)
-                    VALUES (@userId, 'billing', 'Subscription Activated', 'Your Professional plan is now active!', '/account/billing')
-                `, [
-                    { name: 'userId', value: userId, type: sql.UniqueIdentifier }
-                ]);
+                break;
+            }
+            case 'customer.subscription.deleted': {
+                const subscription = event.data.object as any;
+                await query(
+                    `UPDATE subscriptions SET status = 'canceled' WHERE id = @id`,
+                    [{ name: 'id', value: subscription.id }]
+                );
+                break;
+            }
+            case 'invoice.payment_succeeded': {
+                // Extend subscription validity
+                const invoice = event.data.object as any;
+                if (invoice.subscription) {
+                    await query(
+                        `UPDATE subscriptions SET status = 'active', current_period_end = DATEADD(month, 1, SYSDATETIMEOFFSET()) WHERE id = @id`,
+                        [{ name: 'id', value: invoice.subscription }]
+                    );
+                }
+                break;
             }
         }
+    } catch (error) {
+        console.error('Webhook handler failed:', error);
+        return new NextResponse('Internal Server Error', { status: 500 });
     }
 
-    return NextResponse.json({ received: true });
+    return new NextResponse(null, { status: 200 });
 }

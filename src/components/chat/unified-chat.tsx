@@ -18,7 +18,7 @@ interface Message {
 
 export function UnifiedChat() {
     const [messages, setMessages] = useState<Message[]>([
-        { id: "1", role: "assistant", content: "👋 Hi! I'm your sale chat Assistant. I can help you find products using images, or help you create a listing if you're selling something. How can I assist you today?" }
+        { id: "1", role: "assistant", content: "👋 Hi! I'm your kechiki Assistant. I can help you find products using images, or help you create a listing if you're selling something. How can I assist you today?" }
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -238,7 +238,7 @@ export function UnifiedChat() {
                     </Button>
                 </div>
                 <p className="text-[10px] text-center mt-3 text-slate-400 font-medium">
-                    ✨ Powered by sale chat Visual Intelligence • Gemini 1.5 Flash
+                    ✨ Powered by kechiki Visual Intelligence • Gemini 1.5 Flash
                 </p>
             </div>
         </div>

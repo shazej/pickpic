@@ -3,7 +3,7 @@ export default function BlogPage() {
         <div className="container mx-auto px-6 py-12">
             <h1 className="text-3xl font-bold mb-6">Blog</h1>
             <p className="text-lg text-muted-foreground mb-8">
-                Stay updated with the latest news, tips, and insights from the sale chat community.
+                Stay updated with the latest news, tips, and insights from the kechiki community.
             </p>
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <div className="border rounded-lg p-6 bg-card">
