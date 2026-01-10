@@ -12,6 +12,7 @@ export const {
     signOut
 } = NextAuth({
     adapter: MSSQLAdapter(),
+    trustHost: true,
     ...authConfig,
     providers: [
         ...authConfig.providers,
