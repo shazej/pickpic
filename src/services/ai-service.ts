@@ -153,4 +153,19 @@ export class AiService {
             return null;
         }
     }
+
+    // Verify that the configured AI provider is reachable
+    static async verifyProvider(providerName: string): Promise<boolean> {
+        try {
+            const config = await aiEngine.getConfig();
+            if (config.provider !== providerName) return false;
+            // Simple ping to ensure provider is reachable
+            await aiEngine.chat({ messages: [{ role: 'user', content: 'ping' }] });
+            return true;
+        } catch (e) {
+            console.error('Provider verification failed:', e);
+            return false;
+        }
+    }
 }
+

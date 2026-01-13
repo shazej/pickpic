@@ -42,6 +42,17 @@ export function ChatWindow({ threadId }: { threadId: string }) {
             setInputValue("");
         } catch (error) {
             console.error("Failed to send", error);
+            // Show toast notification for error
+            try {
+                const { toast } = require('@/components/ui/use-toast');
+                toast({
+                    title: "Message send failed",
+                    description: error instanceof Error ? error.message : String(error),
+                    variant: "destructive",
+                });
+            } catch (e) {
+                console.error('Toast error handling failed', e);
+            }
         }
     };
 

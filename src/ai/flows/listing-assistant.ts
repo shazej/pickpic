@@ -43,7 +43,7 @@ export const generateListingQuestion = {
             if (!apiKey) throw new Error("Missing GOOGLE_GENAI_API_KEY");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             const prompt = `
             You are an expert e-commerce listing assistant.
@@ -112,7 +112,7 @@ export const processListingAnswer = {
             if (!apiKey) throw new Error("Missing GOOGLE_GENAI_API_KEY");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             const prompt = `
             You are an expert data extracting assistant.

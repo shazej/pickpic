@@ -6,7 +6,7 @@ const config = {
     port: parseInt(process.env.DB_PORT || '1434'),
     database: process.env.DB_NAME || 'PICKPIC',
     options: {
-        encrypt: true,
+        encrypt: process.env.DB_ENCRYPT === 'true', // Configurable for local vs remote
         trustServerCertificate: true,
     }
 };

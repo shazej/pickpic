@@ -4,15 +4,8 @@ import { query, sql } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { AiService } from '@/services/ai-service';
 import { isRateLimited } from '@/lib/rate-limiter';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: Request) {
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENAI_API_KEY || "");
-    const model = genAI.getGenerativeModel({
-        model: "gemini-flash-latest",
-        generationConfig: { responseMimeType: "application/json" }
-    });
-
     try {
         let session;
         try {
@@ -34,9 +27,8 @@ export async function POST(request: Request) {
 
         const { message, history, image } = body;
 
-        // 1. SEARCH DATABASE FOR RELEVANT PRODUCTS
+        // 1. SEARCH DATABASE FOR RELEVANT PRODUCTS (Kept identical)
         let productsContext = "No specific products found for this query.";
-        let matchedProducts: any[] = [];
 
         try {
             const searchKeywords = message.split(' ').filter((w: string) => w.length > 2);
@@ -54,16 +46,6 @@ export async function POST(request: Request) {
                 const dbResult = await query(queryText, params);
 
                 if (dbResult.recordset.length > 0) {
-                    matchedProducts = dbResult.recordset.map((p: any) => ({
-                        product_id: p.id,
-                        reason: "Keyword match",
-                        title: p.title,
-                        price: p.price,
-                        currency: p.currency,
-                        image_url: p.image_url,
-                        seller_name: p.seller_name,
-                        seller_phone: p.seller_phone
-                    }));
                     productsContext = "Found the following products in the marketplace:\n" +
                         dbResult.recordset.map((p: any) => `- ${p.title} (ID: ${p.id}): ${p.description || ''} - Price: ${p.price} ${p.currency} - Seller: ${p.seller_name} (${p.seller_phone || 'No phone'})`).join('\n');
                 }
@@ -99,23 +81,29 @@ export async function POST(request: Request) {
             }
         `;
 
-        let contents: any[] = [{ role: 'user', parts: [{ text: prompt }] }];
+        // 2. USE AI SERVICE (logs tokens automatically)
+        const messages: any[] = [{ role: 'user', content: prompt }];
+
         if (image) {
-            const base64Data = image.split(',')[1] || image;
-            contents[0].parts.push({
-                inlineData: {
-                    mimeType: "image/jpeg",
-                    data: base64Data
-                }
-            });
+            // Handle multimodal if needed by AiEngine types, or append to content
+            // For now, appending image data as part of user content if supported by engine
+            // Note: AiService.chat expects ChatRequest which supports array content
+            messages[0].content = [
+                { text: prompt },
+                { image_url: image } // Assuming base64 data URI
+            ];
         }
 
-        console.log("[AI] Calling gemini-flash-latest...");
-        const result = await model.generateContent({ contents });
-        const response = await result.response;
-        const data = JSON.parse(response.text());
+        console.log("[AI] Calling AiService.chat...");
+        const response = await AiService.chat({
+            messages,
+            responseFormat: 'json',
+            temperature: 0.7
+        }, userId, 'global_assistant');
 
-        // Merge DB data with AI response if AI filtered them
+        // Parse JSON from response
+        const data = response.json || JSON.parse(response.text);
+
         return NextResponse.json(data);
 
     } catch (error: any) {

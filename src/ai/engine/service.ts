@@ -37,7 +37,7 @@ export class AiEngineService {
         // Base from ENV
         const config: AIConfig = {
             provider: (process.env.AI_PROVIDER as ProviderType) || 'gemini',
-            model: process.env.AI_MODEL || 'gemini-1.5-flash',
+            model: process.env.AI_MODEL || 'gemini-2.0-flash',
             ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
             apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY
         };

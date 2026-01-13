@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
                 const genAI = new GoogleGenerativeAI(apiKey);
 
                 // Vision Model for Description
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                 const prompt = "Describe this product in detail for a marketplace search. Focus on visual attributes like color, material, shape, style, and category. Keep it dense and keyword-rich.";
                 const imagePart = {
                     inlineData: {
