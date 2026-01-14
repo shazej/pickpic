@@ -8,12 +8,15 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
+import { GenUiRenderer } from "./gen-ui-renderer";
+
 interface Message {
     id: string;
     role: "user" | "assistant";
     content: string;
     image?: string;
-    products?: any[];
+    type?: 'buyer_search' | 'seller_draft' | 'text' | 'error';
+    data?: any;
 }
 
 export function UnifiedChat() {
@@ -74,7 +77,8 @@ export function UnifiedChat() {
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
                     content: data.reply,
-                    products: data.matched_products
+                    type: data.type,
+                    data: data.data
                 }]);
             }
         } catch (error) {
@@ -119,53 +123,10 @@ export function UnifiedChat() {
                                     {m.content}
                                 </div>
 
-                                {m.products && m.products.length > 0 && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 w-full">
-                                        {m.products.map((p: any) => (
-                                            <div key={p.product_id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
-                                                <div className="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                                    {p.image_url ? (
-                                                        <img src={p.image_url} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                            <ImageIcon className="w-8 h-8 opacity-20" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="p-3">
-                                                    <h4 className="font-semibold text-sm truncate text-slate-900 dark:text-slate-100">{p.title}</h4>
-                                                    <div className="flex justify-between items-center mt-1">
-                                                        <span className="text-primary font-bold text-xs">{p.price} {p.currency || 'USD'}</span>
-                                                    </div>
 
-                                                    <div className="mt-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <User className="w-3 h-3 text-slate-400" />
-                                                            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{p.seller_name || 'Generic Seller'}</span>
-                                                        </div>
-                                                        {p.seller_phone && (
-                                                            <a href={`tel:${p.seller_phone}`} className="flex items-center gap-2 text-primary hover:underline transition-all">
-                                                                <Phone className="w-3 h-3" />
-                                                                <span className="text-[10px] font-bold">{p.seller_phone}</span>
-                                                            </a>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex gap-2 mt-3">
-                                                        <Button variant="outline" size="sm" className="flex-1 h-8 text-[10px] px-2 bg-slate-900 text-white hover:bg-slate-800 border-none" onClick={() => window.open(`/p/${p.product_id}`, '_blank')}>
-                                                            View Details
-                                                        </Button>
-                                                        {p.seller_phone && (
-                                                            <Button variant="outline" size="sm" className="h-8 w-8 p-0" asChild>
-                                                                <a href={`tel:${p.seller_phone}`}>
-                                                                    <Phone className="w-3 h-3" />
-                                                                </a>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                {m.type && m.data && (
+                                    <div className="w-full mt-2">
+                                        <GenUiRenderer type={m.type} data={m.data} />
                                     </div>
                                 )}
                             </div>

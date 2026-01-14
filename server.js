@@ -1,5 +1,9 @@
 
 const { createServer } = require('http');
+// Polyfill for Node 25
+if (!global.SlowBuffer) {
+    global.SlowBuffer = require('buffer').Buffer;
+}
 require('dotenv').config({ path: '.env.production' });
 const { parse } = require('url');
 const next = require('next');

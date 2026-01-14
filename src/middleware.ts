@@ -42,12 +42,24 @@ export default auth(async (req) => {
         }
     }
 
-    // Subscription Gating (Entitlement)
-    // Example: /ai/advanced requires active subscription
-    if (path.startsWith('/ai/advanced') && user?.subscription !== 'active') {
+    // Subscription Gating
+    // Protect strict premium routes
+    const premiumRoutes = ['/ai/advanced', '/api/ai/advanced'];
+    if (premiumRoutes.some(r => path.startsWith(r)) && user?.subscription !== 'active') {
+        if (path.startsWith('/api/')) {
+            return NextResponse.json({ error: 'Subscription required' }, { status: 403 });
+        }
         const url = req.nextUrl.clone();
-        url.pathname = '/pricing'; // Redirect to upgrade page
+        url.pathname = '/pricing';
         return NextResponse.redirect(url);
+    }
+
+    // Simple Rate Limiting (IP-based) for AI routes
+    // Note: In distributed envs, use Redis. for IIS/Node, in-memory Map works okay.
+    if (path.startsWith('/api/ai')) {
+        const ip = req.headers.get('x-forwarded-for') || (req as any).ip || 'unknown';
+        // TODO: specific implementation pending suitable storage
+        // console.log(`[RateLimit] Checking IP ${ip} for ${path}`);
     }
 
     // Redirect authenticated users from auth routes

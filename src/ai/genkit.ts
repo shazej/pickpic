@@ -1,9 +1,11 @@
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
-// Genkit is currently causing build/runtime issues in this environment.
-// It has been replaced by direct usage of @google/generative-ai SDK.
-// Keeping this file as a placeholder to avoid import errors if any static imports remain.
+// Initialize Genkit with Google AI plugin
+export const ai = genkit({
+  plugins: [googleAI()],
+  model: 'googleai/gemini-1.5-flash', // Set default model
+});
 
-export const getAI = () => {
-  throw new Error("Genkit is disabled. Use @google/generative-ai SDK instead.");
-};
-
+// Helper for legacy code if needed
+export const getAI = () => ai;

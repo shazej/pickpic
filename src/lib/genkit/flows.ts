@@ -4,6 +4,11 @@ import { PROMPTS } from './prompts';
 import {
     PickPicResponseSchema
 } from './schemas';
+import { recordAIUsage } from '@/lib/ai/usage';
+import { v4 as uuidv4 } from 'uuid';
+
+// ... existing code ...
+
 
 // --- Helper for Prompt Injection ---
 function fillPrompt(template: string, vars: Record<string, any>): string {
@@ -22,8 +27,11 @@ export async function runBuyerChat(params: {
     message: string,
     history: any[],
     imageCount: number,
-    sellerLocation?: string
+    sellerLocation?: string,
+    userId?: string
 }) {
+    const start = Date.now();
+    const requestId = uuidv4();
     const prompt = fillPrompt(PROMPTS.BUYER_CHATBOT, {
         TITLE: params.product.title,
         DESCRIPTION: params.product.description || 'No description provided.',
@@ -43,17 +51,46 @@ export async function runBuyerChat(params: {
         };
 
         const result = await aiEngine.chat(aiRequest);
+        const latencyMs = Date.now() - start;
         const mandatory = PickPicResponseSchema.parse(result.json || JSON.parse(result.text));
+
+        // Estimate tokens (1 token ~= 4 chars)
+        const promptChars = prompt.length;
+        const completionChars = result.text.length;
+        const promptTokens = Math.ceil(promptChars / 4);
+        const completionTokens = Math.ceil(completionChars / 4);
+
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro', // TODO: Get from engine config
+            promptTokens,
+            completionTokens,
+            totalTokens: promptTokens + completionTokens,
+            requestId,
+            latencyMs,
+            route: 'buyer-chat'
+        });
 
         // Map back to legacy schema
         return {
             reply: mandatory.response_text,
-            citations: [], // Legacy citations not easily mapped from new schema
+            citations: [],
             suggested_questions: mandatory.clarifying_question ? [mandatory.clarifying_question] : [],
             safety_notes: []
         };
     } catch (error) {
         console.error("[AI Engine] Buyer Chat Error:", error);
+        // Log failure usage if possible, or just error
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro',
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            requestId,
+            latencyMs: Date.now() - start,
+            route: 'buyer-chat-failed'
+        });
         throw error;
     }
 }
@@ -64,8 +101,11 @@ export async function runBuyerChat(params: {
 export async function runSellerChat(params: {
     draft: any,
     answer: string,
-    imageUrl?: string
+    imageUrl?: string,
+    userId?: string
 }) {
+    const start = Date.now();
+    const requestId = uuidv4();
     const prompt = fillPrompt(PROMPTS.SELLER_CHATBOT, {
         DRAFT_JSON: JSON.stringify(params.draft),
         ANSWER: params.answer
@@ -75,6 +115,7 @@ export async function runSellerChat(params: {
         const userContent: any[] = [{ text: prompt }];
 
         if (params.imageUrl) {
+            // ... strict image logic ...
             try {
                 // Multimodal generation - supporting data URIs or fetching
                 let imageData = params.imageUrl;
@@ -111,7 +152,25 @@ export async function runSellerChat(params: {
         };
 
         const result = await aiEngine.chat(aiRequest);
+        const latencyMs = Date.now() - start;
         const mandatory = PickPicResponseSchema.parse(result.json || JSON.parse(result.text));
+
+        // Estimate tokens
+        const promptChars = prompt.length;
+        const completionChars = result.text.length;
+        const promptTokens = Math.ceil(promptChars / 4);
+        const completionTokens = Math.ceil(completionChars / 4);
+
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro-vision',
+            promptTokens,
+            completionTokens,
+            totalTokens: promptTokens + completionTokens,
+            requestId,
+            latencyMs,
+            route: 'seller-chat'
+        });
 
         // Map back to legacy schema
         const missing = [];
@@ -143,6 +202,16 @@ export async function runSellerChat(params: {
         };
     } catch (error) {
         console.error("[AI Engine] Seller Chat Error:", error);
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro-vision',
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            requestId,
+            latencyMs: Date.now() - start,
+            route: 'seller-chat-failed'
+        });
         throw error;
     }
 }

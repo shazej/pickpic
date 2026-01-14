@@ -27,7 +27,10 @@ export const {
         `, [{ name: 'email', value: credentials.email, type: sql.NVarChar }]);
 
                 const user = result.recordset[0];
-                if (!user || !user.password_hash) return null;
+                if (!user || !user.password_hash) {
+                    console.log(`[Auth] Login failed for ${credentials.email}: user not found or no password hash.`);
+                    return null;
+                }
 
                 const roles = user.roles ? user.roles.split(',') : [];
 
@@ -37,7 +40,12 @@ export const {
                 }
 
                 const isValid = await bcrypt.compare(credentials.password as string, passwordHash);
-                if (!isValid) return null;
+                if (!isValid) {
+                    console.log(`[Auth] Login failed for ${credentials.email}: invalid password.`);
+                    return null;
+                }
+
+                console.log(`[Auth] Login success for ${user.email} (ID: ${user.id})`);
 
                 return {
                     id: user.id,
@@ -54,6 +62,7 @@ export const {
             if (user) {
                 token.id = user.id;
                 token.roles = (user as any).roles;
+                console.log(`[Auth] JWT created for user ${user.id}`);
             }
 
             // Fetch Subscription Status on every JWT check (in Node environment)

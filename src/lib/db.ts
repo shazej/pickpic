@@ -1,12 +1,14 @@
 
+import { env } from "@/env";
+
 const config = {
-    user: process.env.DB_USER || 'sa',
-    password: process.env.DB_PASSWORD || 'V3r!fy#92uM@xTq1zR71',
-    server: process.env.DB_SERVER || 'static.193.212.55.162.clients.your-server.de',
-    port: parseInt(process.env.DB_PORT || '1434'),
-    database: process.env.DB_NAME || 'PICKPIC',
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    server: env.DB_SERVER,
+    port: parseInt(env.DB_PORT),
+    database: env.DB_NAME,
     options: {
-        encrypt: process.env.DB_ENCRYPT === 'true', // Configurable for local vs remote
+        encrypt: env.DB_ENCRYPT === 'true',
         trustServerCertificate: true,
     }
 };

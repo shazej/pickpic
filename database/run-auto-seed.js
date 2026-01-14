@@ -1,16 +1,16 @@
-
 const sql = require('mssql');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const config = {
-    user: 'sa',
-    password: 'V3r!fy#92uM@xTq1zR71',
-    server: 'static.193.212.55.162.clients.your-server.de',
-    port: 1434,
-    database: 'PICKPIC',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    server: process.env.DB_SERVER,
+    port: parseInt(process.env.DB_PORT),
+    database: process.env.DB_NAME,
     options: {
-        encrypt: true,
+        encrypt: process.env.DB_ENCRYPT === 'true',
         trustServerCertificate: true,
     }
 };
