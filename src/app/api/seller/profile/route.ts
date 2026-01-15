@@ -48,8 +48,8 @@ export async function PUT(request: Request) {
                     location_precision = @location,
                     updated_at = SYSDATETIME()
             WHEN NOT MATCHED THEN
-                INSERT (user_id, store_name, bio, location_precision)
-                VALUES (@userId, @storeName, @bio, @location);
+                INSERT (user_id, store_name, bio, location_precision, approval_status)
+                VALUES (@userId, @storeName, @bio, @location, 'PENDING');
         `, [
             { name: 'userId', value: session.user.id, type: sql.UniqueIdentifier },
             { name: 'storeName', value: storeName, type: sql.NVarChar },

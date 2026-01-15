@@ -1,20 +1,6 @@
 import { ai } from '../genkit';
 import { z } from 'genkit';
-
-export const ProductResultSchema = z.object({
-    id: z.string(),
-    title: z.string(),
-    price: z.number(),
-    location: z.string(),
-    imageUrl: z.string().optional(),
-});
-
-export const BuyerSearchSchema = z.object({
-    query: z.string().describe('Search query extracted from user'),
-    locationFilter: z.string().optional(),
-    results: z.array(ProductResultSchema).optional().describe('Found products'),
-    message: z.string().describe('Response message to user'),
-});
+import { BuyerSearchSchema } from '../../types/schemas';
 
 export const buyerFlow = ai.defineFlow(
     {
@@ -37,7 +23,11 @@ export const buyerFlow = ai.defineFlow(
         User is searching for: ${message}.
         Generate 3 realistic mock marketplace listings relevant to this search.
         Return them in the 'results' field.
-        Also generate a friendly response message in 'message'.
+        
+        Also generate a short, friendly response message in 'message'.
+        If the user input is in Arabic, respond in Modern Standard Arabic (MSA).
+        If the user input is in English, respond in English.
+        If unsure, default to Arabic.
       `,
             output: { schema: BuyerSearchSchema },
         });

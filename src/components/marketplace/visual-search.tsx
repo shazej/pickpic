@@ -11,9 +11,12 @@ interface VisualSearchProps {
     isProcessing: boolean;
 }
 
+import { useLanguage } from "@/components/i18n/LanguageContext";
+
 export function VisualSearch({ onSearch, isProcessing }: VisualSearchProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const { t } = useLanguage();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -56,14 +59,14 @@ export function VisualSearch({ onSearch, isProcessing }: VisualSearchProps) {
                             <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
                             <Loader2 className="w-16 h-16 text-primary animate-spin relative z-10" />
                         </div>
-                        <p className="mt-4 text-lg font-medium text-muted-foreground">Analyzing image...</p>
+                        <p className="mt-4 text-lg font-medium text-muted-foreground">{t('buyer.analyzing_image')}</p>
                     </div>
                 ) : preview ? (
                     <div className="relative w-full aspect-video md:aspect-square max-h-96 rounded-lg overflow-hidden ring-4 ring-background shadow-xl">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <p className="text-white font-medium">Click to change</p>
+                            <p className="text-white font-medium">{t('buyer.click_to_change')}</p>
                         </div>
                     </div>
                 ) : (
@@ -72,15 +75,15 @@ export function VisualSearch({ onSearch, isProcessing }: VisualSearchProps) {
                             <Camera className="w-12 h-12 text-primary" />
                         </div>
                         <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-bold tracking-tight">Snap or Upload</h3>
+                            <h3 className="text-2xl font-bold tracking-tight">{t('buyer.snap_or_upload')}</h3>
                             <p className="text-muted-foreground">
-                                Drag an image here or click to open camera
+                                {t('buyer.drag_msg')}
                             </p>
                         </div>
                         <div className="flex gap-2 mt-4">
                             <Button variant="secondary" className="pointer-events-none">
                                 <Upload className="w-4 h-4 mr-2" />
-                                Upload File
+                                {t('buyer.upload_file')}
                             </Button>
                         </div>
                     </>

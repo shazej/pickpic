@@ -1,15 +1,6 @@
 import { ai } from '../genkit';
 import { z } from 'genkit';
-
-export const SellerListingSchema = z.object({
-    productName: z.string().describe('Name of the product'),
-    price: z.number().optional().describe('Price in local currency'),
-    description: z.string().optional().describe('Short description'),
-    location: z.string().optional().describe('City or area'),
-    category: z.string().optional().describe('Product category'),
-    confidence: z.number().describe('Confidence 0-1 that we have enough info to list'),
-    missingFields: z.array(z.string()).describe('List of fields still needed to be asked'),
-});
+import { SellerListingSchema } from '../../types/schemas';
 
 export const sellerFlow = ai.defineFlow(
     {
@@ -19,14 +10,21 @@ export const sellerFlow = ai.defineFlow(
     },
     async ({ message, history }) => {
         const prompt = `
-      You are a helpful selling assistant. Your goal is to extract listing details from the user.
-      Required fields: Produce Name, Price, Description, Location.
+      You are a helpful selling assistant in the Middle East. Your goal is to extract listing details from the user.
+      
+      Important:
+      - If the user writes in Arabic, converse in Modern Standard Arabic (MSA).
+      - If the user writes in English, converse in English.
+      - Extract listing details (Product Name, Price, Description, Location) regardless of the language used.
+      
+      Required fields: Product Name, Price, Description, Location.
       
       History: ${JSON.stringify(history || [])}
       User Input: "${message}"
       
       Extract what you can. If information is missing, list it in 'missingFields'.
       If confidence is high (>0.8) and all fields are present, we can proceed to confirmation.
+      Ensure all extracted text is kept in its original language unless translation improves clarity (e.g. converting currency to standard format).
     `;
 
         const response = await ai.generate({

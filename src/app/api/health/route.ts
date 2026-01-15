@@ -1,27 +1,29 @@
+
 import { NextResponse } from 'next/server';
-import { sql, query } from '@/lib/db';
+import { query } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        // Check DB connection
+        // Check DB
         await query('SELECT 1');
 
-        return NextResponse.json({
+        const healthData = {
             status: 'ok',
+            nodeVersion: process.version,
             timestamp: new Date().toISOString(),
-            services: {
-                database: 'healthy',
-                auth: 'healthy' // implicit if app is running
-            }
-        });
+            db: 'connected',
+            env: process.env.NODE_ENV
+        };
+
+        return NextResponse.json(healthData, { status: 200 });
     } catch (error) {
         console.error('Health check failed:', error);
         return NextResponse.json({
             status: 'error',
-            timestamp: new Date().toISOString(),
-            services: {
-                database: 'unhealthy'
-            }
+            message: 'Health check failed',
+            error: String(error)
         }, { status: 503 });
     }
 }

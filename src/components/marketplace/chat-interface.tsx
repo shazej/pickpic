@@ -151,12 +151,11 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
     // ... (previous imports)
 
     return (
-        <div className="flex flex-col h-[85vh] max-w-4xl mx-auto w-full border border-white/20 rounded-3xl overflow-hidden shadow-2xl bg-white/30 backdrop-blur-xl relative">
+        <div className="flex flex-col h-[85vh] max-w-3xl mx-auto w-full rounded-2xl overflow-hidden bg-background relative">
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 h-16 bg-white/40 backdrop-blur-md z-10 border-b border-white/20 flex items-center justify-between px-6 shadow-sm">
-                <div className="w-10"></div> {/* Spacer for centering */}
-                <h2 className="font-bold text-lg flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    <Sparkles className="w-5 h-5 text-purple-600" />
+            <div className="absolute top-0 left-0 right-0 h-16 bg-card border-b border-border z-10 flex items-center justify-between px-6">
+                <div className="w-10"></div>
+                <h2 className="font-medium text-lg text-foreground">
                     Marketplace AI
                 </h2>
                 <div className="w-10 flex justify-end">
@@ -165,18 +164,17 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
             </div>
 
             {/* Messages Area */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto pt-20 pb-32 px-4 space-y-6 scroll-smooth">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto pt-20 pb-32 px-6 space-y-6">
                 {messages.map(m => (
                     <MessageBubble key={m.id} role={m.role} content={m.content} attachments={m.attachments} />
                 ))}
                 {isLoading && (
-                    <div className="flex items-center gap-3 text-muted-foreground p-4 ml-2 animate-pulse">
+                    <div className="flex items-center gap-3 p-4">
                         <div className="flex gap-1">
-                            <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                            <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                            <span className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></span>
+                            <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-pulse"></span>
+                            <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-pulse [animation-delay:150ms]"></span>
+                            <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-pulse [animation-delay:300ms]"></span>
                         </div>
-                        <span className="text-sm font-medium text-indigo-500">Analyzing visual data...</span>
                     </div>
                 )}
             </div>
@@ -188,10 +186,10 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
                     <div className="absolute -top-24 left-0 animate-in slide-in-from-bottom-5 fade-in duration-300">
                         <div className="relative group">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={pendingPreview} alt="preview" className="h-20 w-20 object-cover rounded-2xl border-2 border-white shadow-lg" />
+                            <img src={pendingPreview} alt="preview" className="h-20 w-20 object-cover rounded-xl border-2 border-primary shadow-sm" />
                             <button
                                 onClick={() => { setPendingUpload(null); setPendingPreview(null); }}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs shadow-md hover:bg-red-600 transition-colors"
+                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs shadow-md hover:bg-destructive/90 transition-colors"
                             >
                                 ×
                             </button>
@@ -199,7 +197,7 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
                     </div>
                 )}
 
-                <div className="bg-white/80 backdrop-blur-xl p-2 rounded-full border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center gap-2 pl-4 pr-2">
+                <div className="bg-card p-2 rounded-full border border-border shadow-sm flex items-center gap-2 pl-4 pr-2 max-w-2xl mx-auto">
                     <form onSubmit={handleSend} className="flex w-full items-center gap-2">
                         <input
                             type="file"
@@ -213,7 +211,7 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="shrink-0 h-10 w-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 transition-colors"
+                            className="shrink-0 h-10 w-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <ImageIcon className="w-5 h-5" />
@@ -224,7 +222,7 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder={pendingUpload ? "Describe what you want to do..." : "Message Marketplace AI..."}
-                            className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-base placeholder:text-slate-400 h-12"
+                            className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-[15px] h-10"
                             autoFocus
                         />
 
@@ -232,9 +230,9 @@ export function ChatInterface({ initialMessage = "Snap a photo to buy or sell so
                             type="submit"
                             size="icon"
                             disabled={(!input && !pendingUpload) || isLoading}
-                            className="h-10 w-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-10 w-10 rounded-full shrink-0"
                         >
-                            <Send className="w-4 h-4 ml-0.5" />
+                            <Send className="w-4 h-4" />
                             <span className="sr-only">Send</span>
                         </Button>
                     </form>

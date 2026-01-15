@@ -9,20 +9,36 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 import { GenUiRenderer } from "./gen-ui-renderer";
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import { WelcomeGreeting } from "./welcome-greeting";
+import { ActionChips } from "./action-chips";
 
 interface Message {
     id: string;
     role: "user" | "assistant";
     content: string;
     image?: string;
-    type?: 'buyer_search' | 'seller_draft' | 'text' | 'error';
+    type?: 'buyer_search' | 'seller_draft' | 'text' | 'error' | 'clarification' | 'gated_access';
     data?: any;
 }
 
+import { useLanguage } from "@/components/i18n/LanguageContext";
+
 export function UnifiedChat() {
-    const [messages, setMessages] = useState<Message[]>([
-        { id: "1", role: "assistant", content: "👋 Hi! I'm your kechiki Assistant. I can help you find products using images, or help you create a listing if you're selling something. How can I assist you today?" }
-    ]);
+    const { t, detectAndSetLanguage, dir, language } = useLanguage();
+    const [messages, setMessages] = useState<Message[]>([]);
+
+    useEffect(() => {
+        // Initialize greeting only once or when language changes if empty or just greeting
+        if (messages.length === 0) {
+            setMessages([{
+                id: "1",
+                role: "assistant",
+                content: t('chat.greeting')
+            }]);
+        }
+    }, [t, messages.length]);
+
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -45,13 +61,17 @@ export function UnifiedChat() {
         }
     };
 
-    const sendMessage = async () => {
-        if ((!input.trim() && !selectedImage) || isLoading) return;
+    const sendMessage = async (overrideContent?: string) => {
+        const contentToSend = overrideContent || input;
+        if ((!contentToSend.trim() && !selectedImage) || isLoading) return;
+
+        // Detect language on first message (implied by contentToSend)
+        detectAndSetLanguage(contentToSend);
 
         const userMsg: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: input,
+            content: contentToSend,
             image: selectedImage || undefined
         };
 
@@ -65,9 +85,11 @@ export function UnifiedChat() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    message: input,
+                    message: contentToSend,
                     image: userMsg.image,
-                    history: messages.slice(-5).map(m => ({ role: m.role, content: m.content }))
+                    history: messages.slice(-5).map(m => ({ role: m.role, content: m.content })),
+                    // Pass the current language from the hook (detectAndSetLanguage updates it)
+                    language: language
                 })
             });
 
@@ -80,28 +102,82 @@ export function UnifiedChat() {
                     type: data.type,
                     data: data.data
                 }]);
+            } else {
+                const errorMsg = data.error || data.message || "Unknown error";
+                if (errorMsg.includes("Insufficient credits")) {
+                    setMessages(prev => [...prev, {
+                        id: Date.now().toString(),
+                        role: "assistant",
+                        content: t('access.gated_msg'),
+                        type: 'gated_access',
+                        data: { reason: 'credits' }
+                    }]);
+                } else if (errorMsg.includes("Authentication required")) {
+                    setMessages(prev => [...prev, {
+                        id: Date.now().toString(),
+                        role: "assistant",
+                        content: t('access.gated_title'),
+                        type: 'gated_access',
+                        data: { reason: 'auth' }
+                    }]);
+                } else {
+                    throw new Error(errorMsg);
+                }
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Only handle generic errors here now
             setMessages(prev => [...prev, {
                 id: "error",
                 role: "assistant",
-                content: "Sorry, I encountered an error. Please try again."
+                content: error.message || t('chat.error')
             }]);
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handleAction = (action: string, payload: any) => {
+        if (action === 'send_message') {
+            sendMessage(payload);
+        } else if (action === 'login') {
+            window.location.href = '/login';
+        } else if (action === 'buy_credits') {
+            window.location.href = '/pricing';
+        } else if (action === 'publish') {
+            // Handle seller listing publication
+            console.log('Publishing listing:', payload);
+            // TODO: Send to backend API to create actual listing
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: "assistant",
+                content: language === 'ar'
+                    ? "تم نشر إعلانك بنجاح! يمكنك رؤيته في صفحة منتجاتك."
+                    : "Your listing has been published successfully! You can view it in your products page."
+            }]);
+        }
+        console.log("Action triggered:", action, payload);
+    };
+
+    const showWelcome = messages.length <= 1;
+
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)] max-w-4xl mx-auto w-full bg-white dark:bg-slate-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mt-4">
+        <div className="flex flex-col h-[calc(100vh-120px)] max-w-3xl mx-auto w-full bg-background rounded-2xl overflow-hidden mt-4 relative">
+            {/* Header / Language Toggle */}
+            <div className="absolute top-4 right-4 z-10">
+                <LanguageToggle />
+            </div>
+
             {/* Chat Area */}
-            <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+            <ScrollArea className="flex-1 px-8 pt-16 pb-6" ref={scrollRef}>
                 <div className="space-y-6">
+                    {showWelcome && <WelcomeGreeting userName="Shaz" />}
                     {messages.map((m) => (
-                        <div key={m.id} className={cn("flex gap-4", m.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                        <div key={m.id} className={cn("flex gap-4 animate-in fade-in slide-in-from-top-2 duration-500",
+                            m.role === "user" ? "flex-row-reverse" : "flex-row"
+                        )}>
                             <div className={cn(
-                                "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm",
-                                m.role === "user" ? "bg-slate-900 border-slate-700" : "bg-purple-500 border-purple-400"
+                                "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
+                                m.role === "user" ? "bg-muted" : "bg-secondary"
                             )}>
                                 {m.role === "user" ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                             </div>
@@ -115,18 +191,21 @@ export function UnifiedChat() {
                                     </div>
                                 )}
                                 <div className={cn(
-                                    "p-4 rounded-2xl text-sm leading-relaxed shadow-sm",
+                                    "px-4 py-3 rounded-2xl text-[15px] leading-relaxed",
                                     m.role === "user"
-                                        ? "bg-slate-900 text-slate-100 rounded-tr-none"
-                                        : "bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-tl-none border border-slate-200 dark:border-slate-800"
+                                        ? "bg-foreground/90 text-background rounded-tr-sm"
+                                        : "bg-transparent text-foreground rounded-tl-sm",
+                                    dir === "rtl" && m.role === "user" && "rounded-tr-2xl rounded-tl-sm",
+                                    dir === "rtl" && m.role === "assistant" && "rounded-tl-2xl rounded-tr-sm"
                                 )}>
                                     {m.content}
                                 </div>
 
 
+
                                 {m.type && m.data && (
                                     <div className="w-full mt-2">
-                                        <GenUiRenderer type={m.type} data={m.data} />
+                                        <GenUiRenderer type={m.type} data={m.data} onAction={handleAction} />
                                     </div>
                                 )}
                             </div>
@@ -134,16 +213,15 @@ export function UnifiedChat() {
                     ))}
                     {isLoading && (
                         <div className="flex gap-4">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center animate-bounce">
-                                <Bot className="w-5 h-5 text-white" />
+                            <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+                                <Bot className="w-5 h-5 text-muted-foreground" />
                             </div>
-                            <div className="bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-3 border border-slate-200/50 dark:border-slate-800/50">
+                            <div className="flex items-center gap-2 px-4 py-3">
                                 <div className="flex gap-1">
-                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
-                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse delay-75" />
-                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse delay-150" />
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-pulse" />
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-pulse [animation-delay:150ms]" />
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-pulse [animation-delay:300ms]" />
                                 </div>
-                                <span className="text-xs font-medium text-slate-500">PickPic is analyzing...</span>
                             </div>
                         </div>
                     )}
@@ -151,20 +229,22 @@ export function UnifiedChat() {
             </ScrollArea>
 
             {/* Input Area */}
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
+            <div className="p-6 pb-8">
                 {selectedImage && (
                     <div className="mb-4 relative inline-block group">
-                        <img src={selectedImage} alt="Preview" className="h-20 w-20 object-cover rounded-lg border-2 border-primary" />
+                        <img src={selectedImage} alt="Preview" className="h-20 w-20 object-cover rounded-xl border-2 border-primary shadow-sm" />
                         <button
                             onClick={() => setSelectedImage(null)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                             <X className="w-3 h-3" />
                         </button>
                     </div>
                 )}
 
-                <div className="flex items-center gap-4 bg-white dark:bg-slate-950 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                {showWelcome && <ActionChips onAction={(prompt) => sendMessage(prompt)} />}
+
+                <div className="flex items-center gap-3 bg-card p-2 rounded-full border border-border shadow-sm focus-within:shadow-md transition-shadow max-w-2xl mx-auto">
                     <input
                         type="file"
                         className="hidden"
@@ -175,7 +255,7 @@ export function UnifiedChat() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="rounded-xl h-10 w-10 text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors"
+                        className="rounded-full h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-accent/50 shrink-0"
                         onClick={() => fileInputRef.current?.click()}
                     >
                         <Plus className="w-5 h-5" />
@@ -184,23 +264,20 @@ export function UnifiedChat() {
                     <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                        placeholder="Describe what you want to find or sell..."
-                        className="flex-1 border-none bg-transparent focus-visible:ring-0 text-base"
+                        onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                        placeholder={t('chat.placeholder')}
+                        className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none text-[15px] h-10"
                     />
 
                     <Button
-                        onClick={sendMessage}
+                        onClick={() => sendMessage()}
                         disabled={isLoading || (!input.trim() && !selectedImage)}
-                        className="rounded-xl h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white gap-2 transition-all active:scale-95"
+                        size="icon"
+                        className="rounded-full h-10 w-10 shrink-0"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        <span className="hidden sm:inline font-medium">Send</span>
                     </Button>
                 </div>
-                <p className="text-[10px] text-center mt-3 text-slate-400 font-medium">
-                    ✨ Powered by kechiki Visual Intelligence • Gemini 1.5 Flash
-                </p>
             </div>
         </div>
     );

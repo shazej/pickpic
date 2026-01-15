@@ -15,12 +15,12 @@ export function MessageBubble({ role, content, attachments }: MessageBubbleProps
     const isUser = role === 'user';
 
     return (
-        <div className={cn("flex w-full gap-4 p-4 animate-in slide-in-from-bottom-2 duration-500", isUser ? "flex-row-reverse" : "flex-row")}>
+        <div className={cn("flex w-full gap-4 p-4 animate-in fade-in slide-in-from-bottom-2 duration-300", isUser ? "flex-row-reverse" : "flex-row")}>
             <div className={cn(
-                "flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full border shadow-sm transition-transform hover:scale-105",
+                "flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full",
                 isUser
-                    ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-transparent"
-                    : "bg-white text-indigo-600 border-indigo-100 ring-2 ring-indigo-50"
+                    ? "bg-muted"
+                    : "bg-secondary"
             )}>
                 {isUser ? <User className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
             </div>
@@ -37,10 +37,10 @@ export function MessageBubble({ role, content, attachments }: MessageBubbleProps
                 )}
 
                 <div className={cn(
-                    "rounded-2xl px-6 py-4 shadow-sm text-sm leading-relaxed",
+                    "rounded-2xl px-4 py-3 text-[15px] leading-relaxed",
                     isUser
-                        ? "bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-tr-sm"
-                        : "bg-white/80 backdrop-blur-md border border-white/40 text-slate-800 rounded-tl-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                        ? "bg-foreground/90 text-background rounded-tr-sm"
+                        : "bg-transparent text-foreground rounded-tl-sm"
                 )}>
                     {typeof content === 'string' ? <p className="whitespace-pre-wrap">{content}</p> : content}
                 </div>

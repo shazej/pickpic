@@ -1,16 +1,13 @@
 
 const { createServer } = require('http');
-// Polyfill for Node 25
-if (!global.SlowBuffer) {
-    global.SlowBuffer = require('buffer').Buffer;
-}
+
 require('dotenv').config({ path: '.env.production' });
 const { parse } = require('url');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME || '0.0.0.0';
-const port = process.env.PORT || 4500; // Default to 4500
+const port = 4500; // FORCED 4500
 
 const app = next({ dev, hostname, port, dir: __dirname });
 const handle = app.getRequestHandler();

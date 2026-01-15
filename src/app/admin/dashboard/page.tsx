@@ -63,6 +63,13 @@ export default function AdminDashboard() {
                     description="Registered accounts"
                 />
                 <StatCard
+                    title="Pending Sellers"
+                    value={stats.pendingSellers || 0}
+                    icon={Users} // Reuse Users or Store icon if imported
+                    color="orange"
+                    description="Awaiting approval"
+                />
+                <StatCard
                     title="Active Listings"
                     value={stats.activeListings}
                     icon={ShoppingBag}

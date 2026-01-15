@@ -37,7 +37,10 @@ interface ListingFormProps {
     isLoading?: boolean;
 }
 
+import { useLanguage } from "@/components/i18n/LanguageContext";
+
 export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormProps) {
+    const { t } = useLanguage();
     const form = useForm<ListingValues>({
         resolver: zodResolver(listingSchema),
         defaultValues: {
@@ -79,7 +82,7 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     render={({ field }) => (
                         <FormItem>
                             <div className="flex items-center gap-2">
-                                <FormLabel>Title</FormLabel>
+                                <FormLabel>{t('seller.product_name')}</FormLabel>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
@@ -92,7 +95,7 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                                 </TooltipProvider>
                             </div>
                             <FormControl>
-                                <Input placeholder="e.g., Sony WH-1000XM4 Wireless Headphones" {...field} />
+                                <Input placeholder={t('seller.product_name')} {...field} />
                             </FormControl>
                             <FormDescription>At least 5 characters.</FormDescription>
                             <FormMessage />
@@ -107,17 +110,7 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                         render={({ field }) => (
                             <FormItem>
                                 <div className="flex items-center gap-2">
-                                    <FormLabel>Price ($)</FormLabel>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Enter the list price. Research similar items for fair pricing.</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <FormLabel>{t('seller.price')}</FormLabel>
                                 </div>
                                 <FormControl>
                                     <Input placeholder="0.00" type="text" {...field} />
@@ -131,11 +124,11 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                         name="category"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Category</FormLabel>
+                                <FormLabel>{t('seller.category')}</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select a category" />
+                                            <SelectValue placeholder={t('seller.select_category')} />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -156,16 +149,16 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     name="condition"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Condition</FormLabel>
+                            <FormLabel>{t('seller.condition')}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                 <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select condition" />
+                                        <SelectValue placeholder={t('seller.select_condition')} />
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="new">New</SelectItem>
-                                    <SelectItem value="like-new">Like New</SelectItem>
+                                    <SelectItem value="new">{t('seller.condition_new')}</SelectItem>
+                                    <SelectItem value="like-new">{t('seller.condition_like_new')}</SelectItem>
                                     <SelectItem value="good">Good</SelectItem>
                                     <SelectItem value="fair">Fair</SelectItem>
                                 </SelectContent>
@@ -180,9 +173,9 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>{t('seller.description')}</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Describe your item..." className="min-h-[100px]" {...field} />
+                                <Textarea placeholder={t('seller.description')} className="min-h-[100px]" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -191,7 +184,7 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
 
                 <Button type="submit" disabled={isLoading || isSubmitting} className="w-full">
                     {(isLoading || isSubmitting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSubmitting ? "Creating..." : "Create Listing"}
+                    {isSubmitting ? t('seller.creating') : t('seller.create')}
                 </Button>
             </form>
         </Form>

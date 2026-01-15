@@ -44,7 +44,7 @@ export function ChatWindow({ threadId }: { threadId: string }) {
             console.error("Failed to send", error);
             // Show toast notification for error
             try {
-                const { toast } = require('@/components/ui/use-toast');
+                const { toast } = require('@/hooks/use-toast');
                 toast({
                     title: "Message send failed",
                     description: error instanceof Error ? error.message : String(error),
@@ -58,7 +58,7 @@ export function ChatWindow({ threadId }: { threadId: string }) {
 
     return (
         <div className="flex flex-col h-[600px] border rounded-lg bg-background">
-            <div className="p-4 border-b flex items-center justify-between bg-muted/30">
+            <div className="p-4 border-b flex items-center justify-between bg-card">
                 <div className="flex items-center gap-3">
                     <Avatar>
                         <AvatarFallback>S</AvatarFallback>
@@ -77,8 +77,8 @@ export function ChatWindow({ threadId }: { threadId: string }) {
                         return (
                             <div key={msg.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
                                 <div className={cn(
-                                    "max-w-[70%] rounded-lg p-3 text-sm",
-                                    isMe ? "bg-primary text-primary-foreground" : "bg-muted"
+                                    "max-w-[70%] rounded-xl px-3 py-2 text-sm",
+                                    isMe ? "bg-foreground/90 text-background" : "bg-transparent text-foreground"
                                 )}>
                                     <p>{msg.text}</p>
                                     <p className={cn("text-[10px] mt-1 opacity-70", isMe ? "text-primary-foreground" : "text-muted-foreground")}>

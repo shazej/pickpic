@@ -17,23 +17,42 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { message, history } = body;
-        // Note: 'image' support temporarily paused for text-first router validation 
+        const { message, history, language = 'ar' } = body;
 
-        // 1. Semantic Routing
-        console.log('[HybridUI] Routing intent for:', message);
+        console.log('[HybridUI] Routing intent for:', message, 'Lang:', language);
         const route = await semanticRouter({ message });
         const intent = route.intent;
-        console.log('[HybridUI] Intent:', intent);
+        console.log('[HybridUI] Intent:', intent, 'Confidence:', route.confidence);
+
+        const isAr = language === 'ar';
 
         let responseData: any = {
-            reply: "I'm not sure how to help with that yet.",
+            reply: isAr ? "عذراً، لم أفهم طلبك تماماً." : "Sorry, I didn't quite get that.",
             type: 'text',
             data: null
         };
 
-        // 2. Specialized Logic
-        if (intent === 'BUY') {
+        // Clarification Logic for Low Confidence or Ambiguous
+        if (intent === 'AMBIGUOUS' || (route.confidence !== undefined && route.confidence < 0.6)) {
+            responseData = {
+                reply: isAr
+                    ? `لست متأكداً، هل تريد شراء أم بيع "${message}"؟`
+                    : `I'm not sure. Do you want to BUY or SELL "${message}"?`,
+                type: 'clarification',
+                data: {
+                    options: [
+                        {
+                            label: isAr ? `أريد شراء ${message}` : `I want to buy ${message}`,
+                            value: isAr ? `أريد شراء ${message}` : `I want to buy ${message}`
+                        },
+                        {
+                            label: isAr ? `أريد بيع ${message}` : `I want to sell ${message}`,
+                            value: isAr ? `أريد بيع ${message}` : `I want to sell ${message}`
+                        }
+                    ]
+                }
+            };
+        } else if (intent === 'BUY') {
             const result = await buyerFlow({ message });
             responseData = {
                 reply: result.message,
@@ -50,16 +69,18 @@ export async function POST(request: Request) {
 
             if (isReady) {
                 responseData = {
-                    reply: "I've drafted a listing for you. Please confirm the details below.",
+                    reply: isAr
+                        ? "لقد قمت بتجهيز مسودة الإعلان. يرجى تأكيد التفاصيل أدناه."
+                        : "I've prepared a draft listing. Please confirm the details below.",
                     type: 'seller_draft',
                     data: result
                 };
             } else {
-                // Generate a follow-up question based on missing fields
-                // For MVP, we'll just ask generically or list missing fields in text
-                const missing = result.missingFields.join(', ');
+                const missing = result.missingFields.join(isAr ? '، ' : ', ');
                 responseData = {
-                    reply: `I can help you list this. I still need to know: ${missing}.`,
+                    reply: isAr
+                        ? `يمكنني مساعدتك في عرض هذا للبيع. أحتاج لمعرفة: ${missing}.`
+                        : `I can help you list this. I need to know: ${missing}.`,
                     type: 'seller_draft', // Show partial draft
                     data: result
                 };
@@ -67,14 +88,9 @@ export async function POST(request: Request) {
 
         } else if (intent === 'SUPPORT') {
             responseData = {
-                reply: "Please contact support@kechiki.com for assistance.",
-                type: 'text',
-                data: null
-            };
-        } else {
-            // AMBIGUOUS or CHAT
-            responseData = {
-                reply: "Could you clarify if you want to buy something or sell something?",
+                reply: isAr
+                    ? "يرجى التواصل مع الدعم الفني support@kechiki.com للمساعدة."
+                    : "Please contact support@kechiki.com for help.",
                 type: 'text',
                 data: null
             };
