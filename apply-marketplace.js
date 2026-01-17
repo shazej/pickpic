@@ -3,12 +3,26 @@ const sql = require('mssql');
 const fs = require('fs');
 const path = require('path');
 
-// Use the same config as apply-schema.js but ensure we target the right DB
-const config = "Server=162.55.212.193,1434;Database=pickpic;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
+require('dotenv').config({ path: '.env.local' });
+// Fallback
+require('dotenv').config();
+
+const config = {
+    user: process.env.DB_USER || 'sa',
+    password: process.env.DB_PASSWORD || 'V3r!fy#92uM@xTq1zR71',
+    server: '162.55.212.193',
+    port: parseInt(process.env.DB_PORT || '1434'),
+    database: process.env.DB_NAME || 'PICKPIC',
+    options: {
+        encrypt: false,
+        trustServerCertificate: true,
+        enableArithAbort: true
+    }
+};
 
 async function applyMarketplaceSchema() {
     try {
-        console.log('Connecting to database...');
+        console.log(`Connecting to ${config.server}...`);
         const pool = await sql.connect(config);
         console.log('Connected.');
 

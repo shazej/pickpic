@@ -15,9 +15,9 @@ export const sellerFlow = ai.defineFlow(
       Important:
       - If the user writes in Arabic, converse in Modern Standard Arabic (MSA).
       - If the user writes in English, converse in English.
-      - Extract listing details (Product Name, Price, Description, Location) regardless of the language used.
+      - Extract listing details (Product Name, Price, Description, Condition, Location, Contact Info) regardless of the language used.
       
-      Required fields: Product Name, Price, Description, Location.
+      Required fields: Product Name, Price, Condition, Location, Contact Info (Phone/WhatsApp), Image (if provided in history).
       
       History: ${JSON.stringify(history || [])}
       User Input: "${message}"

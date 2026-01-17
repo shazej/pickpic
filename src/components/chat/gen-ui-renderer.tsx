@@ -5,22 +5,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, MapPin, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
+import { ProductCard } from '@/components/product-card';
+import { ProductResult } from '@/types/schemas';
+import { useLanguage } from "@/components/i18n/LanguageContext";
 
-// Types matching the AI Flow Schemas
-type BuyerResult = {
-    id: string;
-    title: string;
-    price: number;
-    location: string;
-    imageUrl?: string;
-};
-
+// Types matching the AI Flow Schemas (referencing the main schema is better if shared)
+// But for now keeping compatibility for SellerListing
 type SellerListing = {
     productName: string;
     price?: number;
     description?: string;
     location?: string;
     category?: string;
+    condition?: 'New' | 'Like New' | 'Used';
+    images?: string[];
+    contactInfo?: { phone?: string; whatsapp?: string };
     confidence: number;
     missingFields: string[];
 };
@@ -31,53 +30,21 @@ interface GenUiRendererProps {
     onAction?: (action: string, payload?: any) => void;
 }
 
-import { useLanguage } from "@/components/i18n/LanguageContext";
-
 export function GenUiRenderer({ type, data, onAction }: GenUiRendererProps) {
     const { t } = useLanguage();
 
     if (type === 'buyer_search') {
-        const results = data.results as BuyerResult[];
+        const results = data.results;
         if (!results || results.length === 0) return null;
 
         return (
             <div className="flex flex-col space-y-4 my-2">
                 <div className="text-sm text-gray-500 mb-2">{t('buyer.search_found_msg')}</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {results.map((item, index) => (
-                        <Card
-                            key={item.id}
-                            className="w-full bg-white shadow-sm border-2 border-gray-100 hover:border-blue-100 transition-colors animate-in fade-in slide-in-from-top-2 duration-500"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                            <CardHeader className="p-4 pb-2">
-                                <CardTitle className="text-lg font-semibold truncate">{item.title}</CardTitle>
-                                <div className="flex items-center text-sm text-gray-500">
-                                    <MapPin className="w-3 h-3 me-1" />
-                                    {item.location}
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-4 pt-2">
-                                {item.imageUrl ? (
-                                    <div className="relative w-full h-32 mb-2 bg-gray-100 rounded-md overflow-hidden">
-                                        <img src={item.imageUrl} alt={item.title} className="object-cover w-full h-full" />
-                                    </div>
-                                ) : (
-                                    <div className="w-full h-32 mb-2 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
-                                        No Image
-                                    </div>
-                                )}
-                                <div className="text-xl font-bold text-green-600">${item.price}</div>
-                            </CardContent>
-                            <CardFooter className="p-4 pt-0">
-                                <Button
-                                    className="w-full" variant="outline"
-                                    onClick={() => onAction?.('view_details', item.id)}
-                                >
-                                    {t('buyer.view_details')}
-                                </Button>
-                            </CardFooter>
-                        </Card>
+                    {results.map((item: any, index: number) => (
+                        <div key={item.id || index} className="animate-in fade-in slide-in-from-top-2 duration-500" style={{ animationDelay: `${index * 100}ms` }}>
+                            <ProductCard product={item as ProductResult} />
+                        </div>
                     ))}
                 </div>
             </div>

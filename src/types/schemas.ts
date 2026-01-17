@@ -5,8 +5,15 @@ export const ProductResultSchema = z.object({
     id: z.string(),
     title: z.string(),
     price: z.number(),
-    location: z.string(),
+    currency: z.string().default('KWD'),
+    location: z.string().optional(),
     imageUrl: z.string().optional(),
+    condition: z.enum(['New', 'Like New', 'Used']).optional(),
+    sellerName: z.string().optional(),
+    sellerContact: z.object({
+        phone: z.string().optional(),
+        whatsapp: z.string().optional()
+    }).optional()
 });
 
 export const BuyerSearchSchema = z.object({
@@ -17,11 +24,17 @@ export const BuyerSearchSchema = z.object({
 });
 
 export const SellerListingSchema = z.object({
-    productName: z.string().describe('Name of the product'),
+    productName: z.string().optional().describe('Name of the product'),
     price: z.number().optional().describe('Price in local currency'),
     description: z.string().optional().describe('Short description'),
     location: z.string().optional().describe('City or area'),
     category: z.string().optional().describe('Product category'),
+    condition: z.enum(['New', 'Like New', 'Used']).optional().describe('Product condition'),
+    images: z.array(z.string()).optional().describe('Image URLs'),
+    contactInfo: z.object({
+        phone: z.string().optional(),
+        whatsapp: z.string().optional()
+    }).optional().describe('Seller direct contact info'),
     confidence: z.number().describe('Confidence 0-1 that we have enough info to list'),
     missingFields: z.array(z.string()).describe('List of fields still needed to be asked'),
 });

@@ -33,7 +33,8 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { storeName, bio, location } = await request.json();
+        const { storeName, bio, location, contactInfo } = await request.json();
+        const contactJson = contactInfo ? JSON.stringify(contactInfo) : null;
 
         // Upsert Profile
         // Note: Using MERGE or basic IF/ELSE
@@ -46,15 +47,17 @@ export async function PUT(request: Request) {
                     store_name = @storeName,
                     bio = @bio,
                     location_precision = @location,
+                    contact_info = ISNULL(@contactInfo, contact_info),
                     updated_at = SYSDATETIME()
             WHEN NOT MATCHED THEN
-                INSERT (user_id, store_name, bio, location_precision, approval_status)
-                VALUES (@userId, @storeName, @bio, @location, 'PENDING');
+                INSERT (user_id, store_name, bio, location_precision, contact_info, approval_status)
+                VALUES (@userId, @storeName, @bio, @location, @contactInfo, 'PENDING');
         `, [
             { name: 'userId', value: session.user.id, type: sql.UniqueIdentifier },
             { name: 'storeName', value: storeName, type: sql.NVarChar },
             { name: 'bio', value: bio || '', type: sql.NVarChar },
-            { name: 'location', value: location || '', type: sql.NVarChar }
+            { name: 'location', value: location || '', type: sql.NVarChar },
+            { name: 'contactInfo', value: contactJson, type: sql.NVarChar }
         ]);
 
         // Ensure Seller Role

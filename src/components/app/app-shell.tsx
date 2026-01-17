@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 // Assuming shadcn components exist or using standard HTMLElements with tailwind
 import { Button } from "@/components/ui/button"
 import { Home, Search, MessageSquare, User, PlusCircle, Store } from "lucide-react"
-import { NotificationBell } from "@/components/notification-bell"
+
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const { mode, setMode } = useAppState()
@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <NotificationBell />
+
                         <Button variant="ghost" size="icon" className="rounded-full">
                             <User className="h-5 w-5" />
                         </Button>
