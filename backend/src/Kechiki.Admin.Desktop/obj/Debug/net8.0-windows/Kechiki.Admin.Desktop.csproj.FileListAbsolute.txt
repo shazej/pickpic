@@ -1,0 +1,7 @@
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\Kechiki.Admin.Desktop.csproj.AssemblyReference.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\MainWindow.g.cs
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\Views\LoginWindow.g.cs
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\Views\MainWindow.g.cs
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\App.g.cs
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\Kechiki.Admin.Desktop_MarkupCompile.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Admin.Desktop\obj\Debug\net8.0-windows\Kechiki.Admin.Desktop_MarkupCompile.lref

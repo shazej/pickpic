@@ -1,0 +1,16 @@
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\bin\Debug\net8.0\Kechiki.Application.deps.json
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\bin\Debug\net8.0\Kechiki.Application.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\bin\Debug\net8.0\Kechiki.Application.pdb
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\bin\Debug\net8.0\Kechiki.Domain.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\bin\Debug\net8.0\Kechiki.Domain.pdb
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.csproj.AssemblyReference.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.AssemblyInfoInputs.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.AssemblyInfo.cs
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.csproj.CoreCompileInputs.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.sourcelink.json
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki..3ACAF54D.Up2Date
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\refint\Kechiki.Application.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\Kechiki.Application.pdb
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Application\obj\Debug\net8.0\ref\Kechiki.Application.dll

@@ -1,0 +1,6 @@
+@Kechiki.Api_HostAddress = http://localhost:5145
+
+GET {{Kechiki.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
