@@ -143,3 +143,4 @@ C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Api\bin\Debug\net8.0\Npgsql.Enti
 C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Api\bin\Debug\net8.0\Npgsql.NetTopologySuite.dll
 C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Api\bin\Debug\net8.0\Pgvector.dll
 C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Api\bin\Debug\net8.0\Pgvector.EntityFrameworkCore.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Api\bin\Debug\net8.0\appsettings.Production.json
