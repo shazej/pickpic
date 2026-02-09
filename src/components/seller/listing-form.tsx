@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 const listingSchema = z.object({
     title: z.string().min(5, "Title must be at least 5 characters"),
@@ -37,6 +38,7 @@ interface ListingFormProps {
 }
 
 export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormProps) {
+    const { t } = useLanguage();
     const form = useForm<ListingValues>({
         resolver: zodResolver(listingSchema),
         defaultValues: {
@@ -64,9 +66,9 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     name="title"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Title</FormLabel>
+                            <FormLabel>{t("form.title")}</FormLabel>
                             <FormControl>
-                                <Input placeholder="Item title" {...field} />
+                                <Input placeholder={t("form.titlePlaceholder")} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -79,7 +81,7 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                         name="price"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Price</FormLabel>
+                                <FormLabel>{t("form.price")}</FormLabel>
                                 <FormControl>
                                     <Input placeholder="0.00" {...field} />
                                 </FormControl>
@@ -92,18 +94,22 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                         name="category"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Category</FormLabel>
+                                <FormLabel>{t("form.category")}</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select a category" />
+                                            <SelectValue placeholder={t("form.selectCategory")} />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="electronics">Electronics</SelectItem>
-                                        <SelectItem value="fashion">Fashion</SelectItem>
-                                        <SelectItem value="home">Home & Garden</SelectItem>
-                                        <SelectItem value="automotive">Automotive</SelectItem>
+                                        <SelectItem value="vehicles">{t("category.vehicles")}</SelectItem>
+                                        <SelectItem value="electronics">{t("category.electronics")}</SelectItem>
+                                        <SelectItem value="property">{t("category.property")}</SelectItem>
+                                        <SelectItem value="fashion">{t("category.fashion")}</SelectItem>
+                                        <SelectItem value="furniture">{t("category.furniture")}</SelectItem>
+                                        <SelectItem value="services">{t("category.services")}</SelectItem>
+                                        <SelectItem value="jobs">{t("category.jobs")}</SelectItem>
+                                        <SelectItem value="other">{t("category.other")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -117,18 +123,18 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     name="condition"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Condition</FormLabel>
+                            <FormLabel>{t("form.condition")}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                 <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select condition" />
+                                        <SelectValue placeholder={t("form.selectCondition")} />
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="new">New</SelectItem>
-                                    <SelectItem value="like-new">Like New</SelectItem>
-                                    <SelectItem value="good">Good</SelectItem>
-                                    <SelectItem value="fair">Fair</SelectItem>
+                                    <SelectItem value="new">{t("condition.new")}</SelectItem>
+                                    <SelectItem value="like-new">{t("condition.like_new")}</SelectItem>
+                                    <SelectItem value="good">{t("condition.good")}</SelectItem>
+                                    <SelectItem value="fair">{t("condition.fair")}</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />
@@ -141,9 +147,9 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>{t("form.description")}</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Describe your item..." className="min-h-[100px]" {...field} />
+                                <Textarea placeholder={t("form.descriptionPlaceholder")} className="min-h-[100px]" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -151,8 +157,8 @@ export function ListingForm({ initialValues, onSubmit, isLoading }: ListingFormP
                 />
 
                 <Button type="submit" disabled={isLoading} className="w-full">
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Listing
+                    {isLoading && <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />}
+                    {t("form.createListing")}
                 </Button>
             </form>
         </Form>

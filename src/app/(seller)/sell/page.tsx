@@ -1,21 +1,26 @@
 
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 export default function SellerDashboard() {
+    const { t } = useLanguage();
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h1>
                     <p className="text-muted-foreground">Overview of your store performance.</p>
                 </div>
                 <Button asChild>
                     <Link href="/sell/new">
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Listing
+                        <Plus className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                        {t("dashboard.createListing")}
                     </Link>
                 </Button>
             </div>
@@ -53,7 +58,7 @@ export default function SellerDashboard() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Views</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("dashboard.views")}</CardTitle>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
                     </CardHeader>
                     <CardContent>

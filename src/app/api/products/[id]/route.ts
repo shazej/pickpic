@@ -1,62 +1,247 @@
+// Single Product API
+// GET /api/products/[id] - Get product details
+// PUT /api/products/[id] - Update product (owner only)
+// DELETE /api/products/[id] - Delete product (owner only)
 
-import { NextResponse } from 'next/server';
-import { query, sql } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { deleteProductFromIndex } from '@/lib/qdrant/client';
 
-export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
-    try {
-        const { id } = await context.params;
+// GET: Get product details
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
 
-        if (!id) {
-            return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
-        }
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        images: {
+          orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
+        },
+        category: {
+          select: { slug: true, name: true, nameAr: true },
+        },
+        seller: {
+          select: {
+            phonePublic: true,
+            whatsappNumber: true,
+            businessName: true,
+            businessNameAr: true,
+            rating: true,
+            totalReviews: true,
+            totalSales: true,
+            isVerified: true,
+            user: {
+              select: { name: true, nameAr: true, avatarUrl: true },
+            },
+          },
+        },
+        region: {
+          select: { id: true, name: true, nameAr: true },
+        },
+        country: {
+          select: { code: true, name: true, nameAr: true, currencyCode: true, currencySymbol: true },
+        },
+      },
+    });
 
-        // Fetch Product & Seller
-        const productResult = await query(`
-            SELECT 
-                p.*,
-                sp.store_name,
-                sp.location_precision,
-                sp.user_id as seller_user_id
-            FROM marketplace.Products p
-            JOIN marketplace.SellerProfiles sp ON p.seller_id = sp.id
-            WHERE p.id = @id
-        `, [{ name: 'id', value: id, type: sql.UniqueIdentifier }]);
-
-        if (productResult.recordset.length === 0) {
-            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-        }
-
-        const product = productResult.recordset[0];
-
-        // Fetch Images
-        const imagesResult = await query(`
-            SELECT id, image_url, is_primary, width, height
-            FROM marketplace.ProductImages
-            WHERE product_id = @id
-            ORDER BY is_primary DESC
-        `, [{ name: 'id', value: id, type: sql.UniqueIdentifier }]);
-
-        // Fetch Attributes
-        const attrsResult = await query(`
-            SELECT attributes_json
-            FROM marketplace.ProductAttributes
-            WHERE product_id = @id
-        `, [{ name: 'id', value: id, type: sql.UniqueIdentifier }]);
-
-        const attributes = attrsResult.recordset.length > 0
-            ? JSON.parse(attrsResult.recordset[0].attributes_json)
-            : {};
-
-        return NextResponse.json({
-            product: {
-                ...product,
-                images: imagesResult.recordset,
-                attributes
-            }
-        });
-
-    } catch (error) {
-        console.error('Product Detail API Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
     }
+
+    // Increment view count (fire and forget)
+    prisma.product.update({
+      where: { id },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => {});
+
+    return NextResponse.json({
+      product: {
+        id: product.id,
+        title: product.title,
+        titleAr: product.titleAr,
+        description: product.description,
+        descriptionAr: product.descriptionAr,
+        price: product.price,
+        currency: product.currency,
+        isNegotiable: product.isNegotiable,
+        condition: product.condition,
+        status: product.status,
+        viewCount: product.viewCount,
+        contactCount: product.contactCount,
+        images: product.images.map((img) => ({
+          id: img.id,
+          url: img.url,
+          isPrimary: img.isPrimary,
+        })),
+        category: product.category,
+        region: product.region,
+        country: product.country,
+        seller: {
+          id: product.sellerId,
+          name: product.seller.businessName || product.seller.user.name,
+          nameAr: product.seller.businessNameAr || product.seller.user.nameAr,
+          avatarUrl: product.seller.user.avatarUrl,
+          phonePublic: product.seller.phonePublic,
+          whatsappNumber: product.seller.whatsappNumber,
+          rating: product.seller.rating,
+          totalReviews: product.seller.totalReviews,
+          totalSales: product.seller.totalSales,
+          isVerified: product.seller.isVerified,
+        },
+        createdAt: product.createdAt,
+        expiresAt: product.expiresAt,
+      },
+    });
+  } catch (error) {
+    console.error('Product GET error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch product' },
+      { status: 500 }
+    );
+  }
+}
+
+// Validation schema for updating product
+const updateProductSchema = z.object({
+  title: z.string().min(3).optional(),
+  titleAr: z.string().optional(),
+  description: z.string().optional(),
+  descriptionAr: z.string().optional(),
+  price: z.number().positive().optional(),
+  isNegotiable: z.boolean().optional(),
+  condition: z.enum(['new', 'like_new', 'good', 'fair', 'poor']).optional(),
+  status: z.enum(['active', 'sold']).optional(),
+  regionId: z.number().optional(),
+});
+
+// PUT: Update product
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const body = await request.json();
+    const validatedData = updateProductSchema.parse(body);
+
+    // Check if product exists and user owns it
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: { sellerId: true },
+    });
+
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    if (product.sellerId !== user.userId) {
+      return NextResponse.json(
+        { error: 'You can only edit your own products' },
+        { status: 403 }
+      );
+    }
+
+    // Update product
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: validatedData,
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        status: true,
+        updatedAt: true,
+      },
+    });
+
+    return NextResponse.json({ product: updatedProduct });
+  } catch (error) {
+    console.error('Product PUT error:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to update product' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Delete product
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+
+    // Check if product exists and user owns it
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: { sellerId: true, qdrantPointId: true },
+    });
+
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    if (product.sellerId !== user.userId) {
+      return NextResponse.json(
+        { error: 'You can only delete your own products' },
+        { status: 403 }
+      );
+    }
+
+    // Delete from Qdrant if indexed
+    if (product.qdrantPointId) {
+      deleteProductFromIndex(product.qdrantPointId).catch((err) => {
+        console.error('Failed to delete from Qdrant:', err);
+      });
+    }
+
+    // Delete product (cascades to images)
+    await prisma.product.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      message: 'Product deleted successfully',
+    });
+  } catch (error) {
+    console.error('Product DELETE error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete product' },
+      { status: 500 }
+    );
+  }
 }

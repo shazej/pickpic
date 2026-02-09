@@ -1,0 +1,9 @@
+Available env keys: ALLUSERSPROFILE, APPDATA, APP_POOL_CONFIG, APP_POOL_ID, ASPNETCORE_IIS_APPLICATION_ID, ASPNETCORE_IIS_APPLICATION_VIRTUAL_PATH, ASPNETCORE_IIS_APP_CONFIG_PATH, ASPNETCORE_IIS_APP_POOL_CONFIG_FILE, ASPNETCORE_IIS_APP_POOL_ID, ASPNETCORE_IIS_SITE_ID, ASPNETCORE_IIS_SITE_NAME, ASPNETCORE_IIS_VERSION, CommonProgramFiles, CommonProgramFiles(x86), CommonProgramW6432, COMPUTERNAME, ComSpec, DriverData, LOCALAPPDATA, NUMBER_OF_PROCESSORS, OS, Path, PATHEXT, PROCESSOR_ARCHITECTURE, PROCESSOR_IDENTIFIER, PROCESSOR_LEVEL, PROCESSOR_REVISION, ProgramData, ProgramFiles, ProgramFiles(x86), ProgramW6432, PSModulePath, PUBLIC, SystemDrive, SystemRoot, TEMP, TMP, USERDOMAIN, USERNAME, USERPROFILE, windir, ASPNETCORE_IIS_HTTPAUTH, ASPNETCORE_PORT, NODE_ENV, ASPNETCORE_IIS_PHYSICAL_PATH, ASPNETCORE_HOSTINGSTARTUPASSEMBLIES, ASPNETCORE_TOKEN, ASPNETCORE_ANCM_HTTPS_PORT, ASPNETCORE_APPL_PATH, ASPNETCORE_IIS_WEBSOCKETS_SUPPORTED
+Starting server with process.env.PORT: undefined, ASPNETCORE_PORT: 43880
+------------------- INSTRUMENTATION LOADED -------------------
+Polyfilling localStorage for SSR
+App prepared, listening on 43880
+> Ready on http://0.0.0.0:43880
+(node:11424) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+------------------- INSTRUMENTATION LOADED -------------------

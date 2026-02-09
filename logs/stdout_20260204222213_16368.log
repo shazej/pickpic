@@ -1,0 +1,22 @@
+------------------- INSTRUMENTATION LOADED -------------------
+Polyfilling localStorage for SSR
+Error: listen EADDRINUSE: address already in use :::4500
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::4500)
+    at <unknown> (C:\inetpub\wwwroot\pickpic\server.js:28:10) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 4500
+}
+------------------- INSTRUMENTATION LOADED -------------------
+Polyfilling localStorage for SSR
+Error: listen EADDRINUSE: address already in use :::4500
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::4500)
+    at <unknown> (C:\inetpub\wwwroot\pickpic\server.js:28:10) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 4500
+}

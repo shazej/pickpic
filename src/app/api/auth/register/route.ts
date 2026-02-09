@@ -1,72 +1,123 @@
+// User Registration API
+// POST /api/auth/register
 
-import { NextResponse } from 'next/server';
-import { query, sql } from '@/lib/db';
-import bcrypt from 'bcryptjs';
-import { login } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { hash } from 'bcryptjs';
+import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
+import { generateToken, setAuthCookie } from '@/lib/auth/jwt';
 
-export async function POST(request: Request) {
-    try {
-        const { email, password, name } = await request.json();
+// Validation schema
+const registerSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  phone: z.string().max(20).optional(),
+  role: z.enum(['buyer', 'seller']).default('buyer'),
+  countryCode: z.string().length(2, 'Invalid country code').default('KW'),
+  preferredLanguage: z.enum(['en', 'ar']).default('ar'),
+  // Seller-specific fields
+  phonePublic: z.string().optional(),
+  businessName: z.string().optional(),
+});
 
-        if (!email || !password) {
-            return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
-        }
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validatedData = registerSchema.parse(body);
 
-        // Check if user exists
-        const checkResult = await query('SELECT id FROM users WHERE email = @email', [
-            { name: 'email', value: email, type: sql.NVarChar }
-        ]);
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: validatedData.email.toLowerCase() },
+    });
 
-        if (checkResult.recordset.length > 0) {
-            return NextResponse.json({ error: 'User already exists' }, { status: 400 });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        // Remove Buffer logic, store as string in NVARCHAR
-
-        // Insert user
-        await query('INSERT INTO users (email, password_hash, full_name) VALUES (@email, @password, @name)', [
-            { name: 'email', value: email, type: sql.NVarChar },
-            { name: 'password', value: hashedPassword, type: sql.NVarChar }, // Changed to NVarChar
-            { name: 'name', value: name || '', type: sql.NVarChar }
-        ]);
-
-        // Get user details
-        const userResult = await query('SELECT id, email, full_name FROM users WHERE email = @email', [
-            { name: 'email', value: email, type: sql.NVarChar }
-        ]);
-        const user = userResult.recordset[0];
-
-        // Assign 'buyer' role by default
-        const roleResult = await query("SELECT id FROM roles WHERE name = 'buyer'");
-        if (roleResult.recordset.length > 0) {
-            const roleId = roleResult.recordset[0].id;
-            await query('INSERT INTO user_roles (user_id, role_id) VALUES (@userId, @roleId)', [
-                { name: 'userId', value: user.id, type: sql.UniqueIdentifier },
-                { name: 'roleId', value: roleId, type: sql.Int }
-            ]);
-        }
-
-        // Create Session
-        await login({
-            id: user.id,
-            email: user.email,
-            name: user.full_name,
-            roles: ['buyer']
-        });
-
-        return NextResponse.json({
-            message: 'User created successfully',
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.full_name
-            }
-        }, { status: 201 });
-
-    } catch (error) {
-        console.error('Registration error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Email already registered' },
+        { status: 409 }
+      );
     }
+
+    // Hash password
+    const passwordHash = await hash(validatedData.password, 12);
+
+    // Create user with transaction
+    const user = await prisma.$transaction(async (tx) => {
+      // Create user
+      const newUser = await tx.user.create({
+        data: {
+          email: validatedData.email.toLowerCase(),
+          passwordHash,
+          name: validatedData.name,
+          phone: validatedData.phone || null,
+          role: validatedData.role,
+          countryCode: validatedData.countryCode,
+          preferredLanguage: validatedData.preferredLanguage,
+        },
+      });
+
+      // If seller, create seller profile
+      if (validatedData.role === 'seller') {
+        if (!validatedData.phonePublic) {
+          throw new Error('Phone number is required for sellers');
+        }
+
+        await tx.seller.create({
+          data: {
+            userId: newUser.id,
+            phonePublic: validatedData.phonePublic,
+            businessName: validatedData.businessName,
+          },
+        });
+      }
+
+      return newUser;
+    });
+
+    // Generate JWT token
+    const token = await generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Set auth cookie
+    await setAuthCookie(token);
+
+    return NextResponse.json(
+      {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          countryCode: user.countryCode,
+          preferredLanguage: user.preferredLanguage,
+        },
+        token,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error('Registration error:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Registration failed' },
+      { status: 500 }
+    );
+  }
 }

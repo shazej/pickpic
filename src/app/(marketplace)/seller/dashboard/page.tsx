@@ -2,6 +2,7 @@
 
 import { BarChart, Home, Package, Users, DollarSign, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/language-context';
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ import {
 } from '@/components/ui/sidebar';
 
 export default function SellerDashboard() {
+  const { t } = useLanguage();
   const totalRevenue = salesHistory.reduce((acc, sale) => acc + sale.price * sale.quantity, 0);
   const totalSales = salesHistory.reduce((acc, sale) => acc + sale.quantity, 0);
   const uniqueCustomers = new Set(salesHistory.map(sale => sale.customerName)).size;
@@ -44,7 +46,7 @@ export default function SellerDashboard() {
             <SidebarHeader>
               <div className="flex items-center gap-2 p-2 justify-center">
                  <Package className="h-6 w-6 text-primary" />
-                 <span className="text-lg font-semibold font-headline">Seller Dashboard</span>
+                 <span className="text-lg font-semibold font-headline">{t("dashboard.title")}</span>
               </div>
             </SidebarHeader>
             <SidebarMenu>
@@ -52,7 +54,7 @@ export default function SellerDashboard() {
                 <Link href="/seller/dashboard">
                     <SidebarMenuButton isActive>
                     <Home className="h-5 w-5" />
-                    <span>Dashboard</span>
+                    <span>{t("dashboard.title")}</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -60,7 +62,7 @@ export default function SellerDashboard() {
                  <Link href="/seller/dashboard/products">
                     <SidebarMenuButton>
                     <Package className="h-5 w-5" />
-                    <span>Products</span>
+                    <span>{t("dashboard.products")}</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -68,7 +70,7 @@ export default function SellerDashboard() {
                 <Link href="#">
                     <SidebarMenuButton>
                     <Users className="h-5 w-5" />
-                    <span>Customers</span>
+                    <span>{t("dashboard.customers")}</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -76,7 +78,7 @@ export default function SellerDashboard() {
                  <Link href="#">
                     <SidebarMenuButton>
                     <BarChart className="h-5 w-5" />
-                    <span>Analytics</span>
+                    <span>{t("dashboard.analytics")}</span>
                     </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -88,7 +90,7 @@ export default function SellerDashboard() {
                  <Link href="/">
                     <SidebarMenuButton>
                         <LogOut className="h-5 w-5" />
-                        <span>Logout</span>
+                        <span>{t("dashboard.logout")}</span>
                     </SidebarMenuButton>
                  </Link>
               </SidebarMenuItem>

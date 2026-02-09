@@ -2,19 +2,15 @@ import "@/lib/polyfill";
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../globals.css';
-import { Toaster } from "@/components/ui/toaster";
 import { LocationProvider } from '@/hooks/use-location';
-import { AuthProvider } from '@/context/auth-context';
 import { ReactNode } from 'react';
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { ChatWidget } from '@/components/chat/chat-widget';
+import { AppShell } from './app-shell';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
 
 export const metadata: Metadata = {
-  title: 'Ecomm Now',
-  description: 'Upload an image to find products sold by nearby sellers.',
+  title: 'PickPic - AI Marketplace',
+  description: 'Chat with AI to find and buy products. Upload images, use voice, or just type what you need.',
 };
 
 export default function MarketplaceLayout({
@@ -24,14 +20,7 @@ export default function MarketplaceLayout({
 }>) {
   return (
     <LocationProvider>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <ChatWidget />
-      </div>
+      <AppShell>{children}</AppShell>
     </LocationProvider>
   );
 }

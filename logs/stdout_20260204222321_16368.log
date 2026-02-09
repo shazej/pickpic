@@ -1,0 +1,8 @@
+------------------- INSTRUMENTATION LOADED -------------------
+Polyfilling localStorage for SSR
+> Ready on http://0.0.0.0:4500
+Starting server with process.env.PORT: undefined
+------------------- INSTRUMENTATION LOADED -------------------
+Polyfilling localStorage for SSR
+App prepared, listening on 4500
+> Ready on http://0.0.0.0:4500

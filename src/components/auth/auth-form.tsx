@@ -15,12 +15,13 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 
 const authSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     displayName: z.string().optional(),
+    phone: z.string().optional(),
 });
 
 type AuthValues = z.infer<typeof authSchema>;
@@ -38,6 +39,7 @@ export function AuthForm({ type, onSubmit, isLoading }: AuthFormProps) {
             email: "",
             password: "",
             displayName: "",
+            phone: "",
         },
     });
 
@@ -46,6 +48,7 @@ export function AuthForm({ type, onSubmit, isLoading }: AuthFormProps) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     {type === "register" && (
+                        <>
                         <FormField
                             control={form.control}
                             name="displayName"
@@ -59,6 +62,23 @@ export function AuthForm({ type, onSubmit, isLoading }: AuthFormProps) {
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-1.5">
+                                        <Phone className="h-3.5 w-3.5" />
+                                        Phone Number
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="+965 XXXX XXXX" type="tel" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        </>
                     )}
 
                     <FormField

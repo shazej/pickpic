@@ -1,49 +1,37 @@
-
+// Metrics API - Admin analytics
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function GET() {
-    // Protected: Admin/Internal Only
-    const session = await getSession();
-    // In real world, use API Key or Internal IP check.
-    // For now, allow Admins.
-    const isAdmin = session?.user?.roles?.includes('admin');
-
-    if (!isAdmin) {
-        // Fallback for demo: Allow if localhost or secret header? 
-        // Strict: 403
-        return NextResponse.json({ error: 'Access Denied' }, { status: 403 });
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'seller') {
+      return NextResponse.json({ error: 'Access Denied' }, { status: 403 });
     }
 
-    // Collect Metrics
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // 1. AI Anomalies (Example: Users with > 50 calls in 24h)
-    const aiUsage = await query(`
-        SELECT user_id, COUNT(*) as call_count 
-        FROM audit.SearchEvents 
-        WHERE created_at > DATEADD(hour, -24, GETDATE()) 
-        GROUP BY user_id 
-        HAVING COUNT(*) > 50
-    `);
-
-    // 2. Error Rate (simulated count log)
-    // 3. Thread Activity
-    const threads = await query(`
-        SELECT COUNT(*) as recent_threads 
-        FROM marketplace.MessageThreads 
-        WHERE created_at > DATEADD(hour, -24, GETDATE())
-    `);
+    const [searchCount, productCount, userCount] = await Promise.all([
+      prisma.searchLog.count({ where: { createdAt: { gte: dayAgo } } }),
+      prisma.product.count({ where: { status: 'active' } }),
+      prisma.user.count({ where: { isActive: true } }),
+    ]);
 
     return NextResponse.json({
-        ai_anomalies: aiUsage.recordset,
-        activity: {
-            threads_24h: threads.recordset[0].recent_threads
-        },
-        system: {
-            node_env: process.env.NODE_ENV,
-            memory: process.memoryUsage()
-        }
+      activity: {
+        searches_24h: searchCount,
+        active_products: productCount,
+        active_users: userCount,
+      },
+      system: {
+        node_env: process.env.NODE_ENV,
+        memory: process.memoryUsage(),
+      },
     });
-
+  } catch (error) {
+    console.error('Metrics error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }
