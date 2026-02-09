@@ -1,0 +1,55 @@
+2026-02-06 05:33:22:  ⨯ [TypeError: Cannot read properties of undefined (reading 'c')] {
+2026-02-06 05:33:22:   digest: '3231991214'
+2026-02-06 05:33:22: }
+2026-02-06 05:33:22:  ⨯ [TypeError: Cannot read properties of undefined (reading 'q')] {
+2026-02-06 05:33:22:   digest: '3162919214'
+2026-02-06 05:33:22: }
+2026-02-06 05:33:22:  ⨯ [TypeError: Cannot read properties of undefined (reading 'h')] {
+2026-02-06 05:33:22:   digest: '3725912366'
+2026-02-06 05:33:22: }
+2026-02-06 05:33:22:  ⨯ [TypeError: Cannot read properties of undefined (reading 'm')] {
+2026-02-06 05:33:22:   digest: '339885102'
+2026-02-06 05:33:22: }
+2026-02-06 05:33:25: (node:15776) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-02-06 05:33:25: (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-02-06 05:34:22:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2026-02-06 05:54:59: Registration error: Error [ZodError]: [
+2026-02-06 05:54:59:   {
+2026-02-06 05:54:59:     "code": "too_small",
+2026-02-06 05:54:59:     "minimum": 2,
+2026-02-06 05:54:59:     "type": "string",
+2026-02-06 05:54:59:     "inclusive": true,
+2026-02-06 05:54:59:     "exact": false,
+2026-02-06 05:54:59:     "message": "Name must be at least 2 characters",
+2026-02-06 05:54:59:     "path": [
+2026-02-06 05:54:59:       "name"
+2026-02-06 05:54:59:     ]
+2026-02-06 05:54:59:   }
+2026-02-06 05:54:59: ]
+2026-02-06 05:54:59:     at get error (c:\inetpub\wwwroot\pickpic\.next\server\chunks\762.js:1:9088)
+2026-02-06 05:54:59:     at es.parse (c:\inetpub\wwwroot\pickpic\.next\server\chunks\762.js:1:10328)
+2026-02-06 05:54:59:     at m (c:\inetpub\wwwroot\pickpic\.next\server\app\api\auth\register\route.js:1:1075) {
+2026-02-06 05:54:59:   issues: [Array],
+2026-02-06 05:54:59:   addIssue: [Function (anonymous)],
+2026-02-06 05:54:59:   addIssues: [Function (anonymous)]
+2026-02-06 05:54:59: }
+2026-02-06 05:55:13: Registration error: Error [ZodError]: [
+2026-02-06 05:55:13:   {
+2026-02-06 05:55:13:     "code": "too_small",
+2026-02-06 05:55:13:     "minimum": 2,
+2026-02-06 05:55:13:     "type": "string",
+2026-02-06 05:55:13:     "inclusive": true,
+2026-02-06 05:55:13:     "exact": false,
+2026-02-06 05:55:13:     "message": "Name must be at least 2 characters",
+2026-02-06 05:55:13:     "path": [
+2026-02-06 05:55:13:       "name"
+2026-02-06 05:55:13:     ]
+2026-02-06 05:55:13:   }
+2026-02-06 05:55:13: ]
+2026-02-06 05:55:13:     at get error (c:\inetpub\wwwroot\pickpic\.next\server\chunks\762.js:1:9088)
+2026-02-06 05:55:13:     at es.parse (c:\inetpub\wwwroot\pickpic\.next\server\chunks\762.js:1:10328)
+2026-02-06 05:55:13:     at m (c:\inetpub\wwwroot\pickpic\.next\server\app\api\auth\register\route.js:1:1075) {
+2026-02-06 05:55:13:   issues: [Array],
+2026-02-06 05:55:13:   addIssue: [Function (anonymous)],
+2026-02-06 05:55:13:   addIssues: [Function (anonymous)]
+2026-02-06 05:55:13: }

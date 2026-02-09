@@ -5,8 +5,9 @@ module.exports = {
   apps: [
     {
       name: 'pickpic',
-      // For standalone build (output: 'standalone' in next.config.ts)
-      script: '.next/standalone/server.js',
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start -p 3000',
+      cwd: 'c:\\inetpub\\wwwroot\\pickpic',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,

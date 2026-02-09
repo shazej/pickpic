@@ -1,0 +1,22 @@
+2026-02-06 05:24:55:    ▲ Next.js 15.3.3
+2026-02-06 05:24:55:    - Local:        http://localhost:3000
+2026-02-06 05:24:55:    - Network:      http://101.53.150.23:3000
+2026-02-06 05:24:55: 
+2026-02-06 05:24:55:  ✓ Starting...
+2026-02-06 05:24:55: ------------------- INSTRUMENTATION LOADED -------------------
+2026-02-06 05:24:55: Polyfilling localStorage for SSR
+2026-02-06 05:24:55:  ✓ Ready in 552ms
+2026-02-06 05:25:03: ------------------- INSTRUMENTATION LOADED -------------------
+2026-02-06 05:27:34:    ▲ Next.js 15.3.3
+2026-02-06 05:27:34:    - Local:        http://localhost:3000
+2026-02-06 05:27:34:    - Network:      http://101.53.150.23:3000
+2026-02-06 05:27:34: 
+2026-02-06 05:27:34:  ✓ Starting...
+2026-02-06 05:27:34: ------------------- INSTRUMENTATION LOADED -------------------
+2026-02-06 05:27:34: Polyfilling localStorage for SSR
+2026-02-06 05:27:34:  ✓ Ready in 592ms
+2026-02-06 05:27:37: ------------------- INSTRUMENTATION LOADED -------------------
+2026-02-06 07:41:12: prisma:error Error in PostgreSQL connection: Error { kind: Io, cause: Some(Os { code: 10054, kind: ConnectionReset, message: "An existing connection was forcibly closed by the remote host." }) }
+2026-02-06 07:41:41: prisma:error Error in PostgreSQL connection: Error { kind: Io, cause: Some(Os { code: 10054, kind: ConnectionReset, message: "An existing connection was forcibly closed by the remote host." }) }
+2026-02-06 08:51:46: prisma:error Error in PostgreSQL connection: Error { kind: Io, cause: Some(Os { code: 10054, kind: ConnectionReset, message: "An existing connection was forcibly closed by the remote host." }) }
+2026-02-06 16:17:28: prisma:error Error in PostgreSQL connection: Error { kind: Io, cause: Some(Os { code: 10054, kind: ConnectionReset, message: "An existing connection was forcibly closed by the remote host." }) }
