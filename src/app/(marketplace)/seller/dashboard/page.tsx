@@ -43,41 +43,41 @@ export default function SellerDashboard() {
           <SidebarContent>
             <SidebarHeader>
               <div className="flex items-center gap-2 p-2 justify-center">
-                 <Package className="h-6 w-6 text-primary" />
-                 <span className="text-lg font-semibold font-headline">Seller Dashboard</span>
+                <Package className="h-6 w-6 text-primary" />
+                <span className="text-lg font-semibold font-headline">Seller Dashboard</span>
               </div>
             </SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>
                 <Link href="/seller/dashboard">
-                    <SidebarMenuButton isActive>
+                  <SidebarMenuButton isActive>
                     <Home className="h-5 w-5" />
                     <span>Dashboard</span>
-                    </SidebarMenuButton>
+                  </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                 <Link href="/seller/dashboard/products">
-                    <SidebarMenuButton>
+                <Link href="/seller/dashboard/products">
+                  <SidebarMenuButton>
                     <Package className="h-5 w-5" />
                     <span>Products</span>
-                    </SidebarMenuButton>
+                  </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                <Link href="#">
-                    <SidebarMenuButton>
+              <SidebarMenuItem>
+                <Link href="/seller/dashboard/customers">
+                  <SidebarMenuButton>
                     <Users className="h-5 w-5" />
                     <span>Customers</span>
-                    </SidebarMenuButton>
+                  </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                 <Link href="#">
-                    <SidebarMenuButton>
+              <SidebarMenuItem>
+                <Link href="/seller/dashboard/analytics">
+                  <SidebarMenuButton>
                     <BarChart className="h-5 w-5" />
                     <span>Analytics</span>
-                    </SidebarMenuButton>
+                  </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -85,12 +85,12 @@ export default function SellerDashboard() {
           <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>
-                 <Link href="/">
-                    <SidebarMenuButton>
-                        <LogOut className="h-5 w-5" />
-                        <span>Logout</span>
-                    </SidebarMenuButton>
-                 </Link>
+                <Link href="/">
+                  <SidebarMenuButton>
+                    <LogOut className="h-5 w-5" />
+                    <span>Logout</span>
+                  </SidebarMenuButton>
+                </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
@@ -98,8 +98,8 @@ export default function SellerDashboard() {
         <div className="flex flex-1 flex-col">
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
             <div className='flex items-center gap-4'>
-                <SidebarTrigger className="md:hidden" />
-                <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
+              <SidebarTrigger className="md:hidden" />
+              <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card>
@@ -170,10 +170,10 @@ export default function SellerDashboard() {
                           </div>
                         </TableCell>
                         <TableCell>{sale.productName}</TableCell>
-                         <TableCell>
-                            <Badge variant={sale.status === 'Fulfilled' ? 'default' : sale.status === 'Pending' ? 'secondary' : 'destructive'} className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                                {sale.status}
-                            </Badge>
+                        <TableCell>
+                          <Badge variant={sale.status === 'Fulfilled' ? 'default' : sale.status === 'Pending' ? 'secondary' : 'destructive'} className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                            {sale.status}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           ${(sale.price * sale.quantity).toFixed(2)}

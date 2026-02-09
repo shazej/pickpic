@@ -18,6 +18,6 @@ PORT=8080 npm start
 ### Docker
 The Dockerfile exposes port 4500.
 ```bash
-docker build -t pickpic-app .
-docker run -p 4500:4500 pickpic-app
+docker build -t kechiki-app .
+docker run -p 4500:4500 kechiki-app
 ```

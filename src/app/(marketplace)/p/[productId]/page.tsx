@@ -3,48 +3,70 @@ import { ProductGallery } from "@/components/product/product-gallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, MessageCircle, Heart, Flag } from "lucide-react";
+import { MapPin, Heart, Flag } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReviewList } from "@/components/reviews/review-list";
 import { AddReviewForm } from "@/components/reviews/add-review-form";
 import { MessageSellerButton } from "@/components/product/message-seller-button";
-
-// Mock Data
-const PRODUCT = {
-    id: '1',
-    title: 'Vintage Film Camera - Canon AE-1',
-    price: 150.00,
-    currency: 'USD',
-    description: 'Excellent condition vintage Canon AE-1 Program 35mm film camera. Comes with 50mm f/1.8 FD lens. Tested and working perfectly. New light seals installed.',
-    condition: 'Used - Good',
-    category: 'Electronics',
-    postedAt: '2 days ago',
-    images: [
-        { id: '1', url: 'https://picsum.photos/seed/camera1/800/800', alt: 'Front view' },
-        { id: '2', url: 'https://picsum.photos/seed/camera2/800/800', alt: 'Back view' },
-        { id: '3', url: 'https://picsum.photos/seed/camera3/800/800', alt: 'Top view' },
-    ],
-    attributes: {
-        Brand: 'Canon',
-        Model: 'AE-1 Program',
-        Type: 'SLR',
-        Format: '35mm',
-        Focus: 'Manual'
-    },
-    seller: {
-        id: 'seller1',
-        name: 'Alex Photography',
-        rating: 4.8,
-        location: 'Downtown District',
-        joinDate: '2023'
-    }
-};
+import { BuyerAssistant } from "@/components/product/buyer-assistant";
+import { query, sql } from "@/lib/db";
+import { notFound } from "next/navigation";
 
 export default async function ProductPage({ params }: { params: Promise<{ productId: string }> }) {
-    // In real app: const { productId } = await params; const product = await getProduct(productId);
     const { productId } = await params;
-    const product = PRODUCT;
+
+    const productResult = await query(
+        `SELECT p.*, pa.attributes_json, 
+                u.display_name as seller_name, u.phone as seller_phone, u.id as user_id,
+                sp.id as seller_id, sp.store_name, sp.bio as seller_bio
+         FROM marketplace.Products p
+         LEFT JOIN marketplace.ProductAttributes pa ON p.id = pa.product_id
+         LEFT JOIN marketplace.SellerProfiles sp ON p.seller_id = sp.id
+         LEFT JOIN auth.Users u ON sp.user_id = u.id
+         WHERE p.id = @productId`,
+        [{ name: 'productId', value: productId, type: sql.UniqueIdentifier }]
+    );
+
+    if (!productResult || productResult.recordset.length === 0) {
+        notFound();
+    }
+
+    const dbProduct = productResult.recordset[0];
+
+    const imagesResult = await query(
+        `SELECT image_url FROM marketplace.ProductImages WHERE product_id = @productId ORDER BY is_primary DESC, created_at ASC`,
+        [{ name: 'productId', value: productId, type: sql.UniqueIdentifier }]
+    );
+
+    const images = imagesResult.recordset.map((img: any, i: number) => ({
+        id: i.toString(),
+        url: img.image_url,
+        alt: dbProduct.title
+    }));
+
+    const attributes = dbProduct.attributes_json ? JSON.parse(dbProduct.attributes_json) : {};
+
+    const product = {
+        id: dbProduct.id,
+        title: dbProduct.title,
+        price: dbProduct.price,
+        currency: dbProduct.currency || 'USD',
+        description: dbProduct.description,
+        condition: attributes.condition || 'New',
+        category: dbProduct.category || 'General',
+        postedAt: 'Recently',
+        images: images.length > 0 ? images : [{ id: '0', url: '/placeholder-product.png', alt: dbProduct.title }],
+        attributes: attributes,
+        seller: {
+            id: dbProduct.seller_id,
+            name: dbProduct.seller_name || dbProduct.store_name || 'Seller',
+            rating: '5.0',
+            location: 'Kuwait City',
+            joinDate: '2024',
+            phone: dbProduct.seller_phone
+        }
+    };
 
     return (
         <div className="container py-8">
@@ -75,6 +97,13 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                             sellerId={product.seller.id}
                             productId={product.id}
                         />
+                        {product.seller.phone && (
+                            <Button className="w-full bg-slate-900 text-white" asChild>
+                                <a href={`tel:${product.seller.phone}`}>
+                                    Call Seller: {product.seller.phone}
+                                </a>
+                            </Button>
+                        )}
                         <div className="flex gap-2">
                             <Button variant="outline" className="flex-1">
                                 <Heart className="mr-2 h-4 w-4" />
@@ -128,7 +157,7 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                                 {Object.entries(product.attributes).map(([key, value]) => (
                                     <div key={key} className="flex flex-col">
                                         <dt className="font-medium text-foreground">{key}</dt>
-                                        <dd className="text-muted-foreground">{value}</dd>
+                                        <dd className="text-muted-foreground">{String(value)}</dd>
                                     </div>
                                 ))}
                             </dl>
@@ -136,12 +165,13 @@ export default async function ProductPage({ params }: { params: Promise<{ produc
                         <TabsContent value="reviews" className="mt-4">
                             <div className="grid gap-8">
                                 <ReviewList />
-                                <AddReviewForm onSubmit={(d) => console.log(d)} />
+                                {/* AddReviewForm removed for now due to serialization issues */}
                             </div>
                         </TabsContent>
                     </Tabs>
                 </div>
             </div>
+            <BuyerAssistant productId={product.id} />
         </div>
     );
 }

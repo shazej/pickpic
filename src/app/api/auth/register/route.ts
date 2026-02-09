@@ -13,55 +13,70 @@ export async function POST(request: Request) {
         }
 
         // Check if user exists
-        const checkResult = await query('SELECT id FROM users WHERE email = @email', [
+        const checkResult = await query('SELECT id FROM auth.Users WHERE email = @email', [
             { name: 'email', value: email, type: sql.NVarChar }
         ]);
 
         if (checkResult.recordset.length > 0) {
+            console.log('Registration error: User already exists:', email);
             return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
+        console.log('User check passed for:', email);
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         // Remove Buffer logic, store as string in NVARCHAR
 
         // Insert user
-        await query('INSERT INTO users (email, password_hash, full_name) VALUES (@email, @password, @name)', [
+        console.log('Inserting user into DB...');
+        await query('INSERT INTO auth.Users (email, password_hash, display_name) VALUES (@email, @password, @name)', [
             { name: 'email', value: email, type: sql.NVarChar },
-            { name: 'password', value: hashedPassword, type: sql.NVarChar }, // Changed to NVarChar
+            { name: 'password', value: Buffer.from(hashedPassword) },
             { name: 'name', value: name || '', type: sql.NVarChar }
         ]);
+        console.log('User inserted successfully');
 
         // Get user details
-        const userResult = await query('SELECT id, email, full_name FROM users WHERE email = @email', [
+        const userResult = await query('SELECT id, email, display_name FROM auth.Users WHERE email = @email', [
             { name: 'email', value: email, type: sql.NVarChar }
         ]);
         const user = userResult.recordset[0];
 
-        // Assign 'buyer' role by default
-        const roleResult = await query("SELECT id FROM roles WHERE name = 'buyer'");
-        if (roleResult.recordset.length > 0) {
-            const roleId = roleResult.recordset[0].id;
-            await query('INSERT INTO user_roles (user_id, role_id) VALUES (@userId, @roleId)', [
-                { name: 'userId', value: user.id, type: sql.UniqueIdentifier },
-                { name: 'roleId', value: roleId, type: sql.Int }
+        // Assign 'buyer' and 'seller' roles by default for demo
+        const rolesToAssign = ['buyer', 'seller'];
+        console.log('Assigning roles:', rolesToAssign);
+        for (const roleName of rolesToAssign) {
+            const roleResult = await query("SELECT id FROM auth.Roles WHERE name = @roleName", [
+                { name: 'roleName', value: roleName, type: sql.NVarChar }
             ]);
+            if (roleResult.recordset.length > 0) {
+                const roleId = roleResult.recordset[0].id;
+                console.log(`Assigning role ${roleName} (ID: ${roleId}) to user ${user.id}`);
+                await query('INSERT INTO auth.UserRoles (user_id, role_id) VALUES (@userId, @roleId)', [
+                    { name: 'userId', value: user.id, type: sql.UniqueIdentifier },
+                    { name: 'roleId', value: roleId, type: sql.Int }
+                ]);
+            } else {
+                console.warn(`Role ${roleName} not found in database`);
+            }
         }
 
-        // Create Session
+        // Create Session - redundant as frontend calls login() after register
+        /*
         await login({
             id: user.id,
             email: user.email,
-            name: user.full_name,
-            roles: ['buyer']
+            name: user.display_name,
+            roles: rolesToAssign
         });
+        */
 
         return NextResponse.json({
             message: 'User created successfully',
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.full_name
+                name: user.display_name
             }
         }, { status: 201 });
 

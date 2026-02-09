@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('PickPic Smoke Tests', () => {
+test.describe('sale chat Smoke Tests', () => {
 
     // 1. Buyer Flow
     test('Buyer: Register, Search, and View Product', async ({ page }) => {

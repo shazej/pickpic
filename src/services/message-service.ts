@@ -1,154 +1,75 @@
-const STORAGE_KEY = 'pickpic_mock_threads';
-const MESSAGES_KEY = 'pickpic_mock_messages';
 
 export interface Thread {
     id: string;
+    productId: string;
+    productTitle?: string;
+    productImage?: string;
     participants: string[];
     lastMessage: string;
-    lastMessageAt: string; // Serialized Date
-    productId?: string;
+    lastMessageAt: string;
+    participantName?: string;
 }
 
 export interface Message {
     id: string;
-    threadId: string;
     senderId: string;
-    text: string;
+    text: string; // Mapped from 'content' in API
     timestamp: string;
 }
 
-const getThreads = (): Thread[] => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-
-    // Default mocks
-    const defaults = [
-        {
-            id: '1',
-            participants: ['me', 'seller1'],
-            lastMessage: 'Yes, original lens cap included.',
-            lastMessageAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-            productId: '1'
-        }
-    ];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
-    return defaults;
-};
-
-const getMessages = (threadId: string): Message[] => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem(MESSAGES_KEY);
-    let messages: Message[] = stored ? JSON.parse(stored) : [];
-
-    // If no messages for default thread, add some
-    if (threadId === '1' && !messages.some(m => m.threadId === '1')) {
-        messages = [
-            ...messages,
-            { id: '1', threadId: '1', senderId: 'seller1', text: 'Hi! Yes, the camera is still available.', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-            { id: '2', threadId: '1', senderId: 'me', text: 'Great! Does it come with the lens cap?', timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString() },
-            { id: '3', threadId: '1', senderId: 'seller1', text: 'Yes, original lens cap included.', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() }
-        ];
-        localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
-    }
-
-    return messages.filter(m => m.threadId === threadId);
-};
-
-const saveThreads = (threads: Thread[]) => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(threads));
-};
-
-const saveMessage = (message: Message) => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem(MESSAGES_KEY);
-    const messages: Message[] = stored ? JSON.parse(stored) : [];
-    messages.push(message);
-    localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
-};
-
 export const messageService = {
     async createThread(sellerId: string, productId?: string): Promise<string> {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const threads = getThreads();
-
-        // Check if thread already exists
-        const existingThread = threads.find(t =>
-            t.participants.includes(sellerId) &&
-            t.participants.includes('me') &&
-            t.productId === productId
-        );
-
-        if (existingThread) {
-            return existingThread.id;
-        }
-
-        // Create new thread
-        const newThread: Thread = {
-            id: Date.now().toString(),
-            participants: ['me', sellerId],
-            lastMessage: 'Started conversation',
-            lastMessageAt: new Date().toISOString(),
-            productId
-        };
-
-        const initialMessage: Message = {
-            id: Date.now().toString(),
-            threadId: newThread.id,
-            senderId: 'me',
-            text: 'I am interested in this item.',
-            timestamp: new Date().toISOString()
-        };
-
-        saveThreads([...threads, newThread]);
-        saveMessage(initialMessage);
-
-        return newThread.id;
+        const res = await fetch('/api/chat/threads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sellerId, productId })
+        });
+        if (!res.ok) throw new Error('Failed to create thread');
+        const data = await res.json();
+        return data.id;
     },
 
     async getThreads(): Promise<Thread[]> {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return getThreads();
+        const res = await fetch('/api/chat/threads');
+        if (!res.ok) throw new Error('Failed to fetch threads');
+        const data = await res.json();
+        return data.threads;
     },
 
     async getThread(threadId: string): Promise<Thread | undefined> {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return getThreads().find(t => t.id === threadId);
+        const threads = await this.getThreads();
+        return threads.find(t => t.id === threadId);
     },
 
     async getMessages(threadId: string): Promise<Message[]> {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return getMessages(threadId);
+        const res = await fetch(`/api/chat/threads/${threadId}/messages`);
+        if (!res.ok) throw new Error('Failed to fetch messages');
+        const data = await res.json();
+        // API returns { messages: [{id, senderId, content, timestamp}] }
+        // We map 'content' to 'text' for frontend compatibility
+        return data.messages.map((m: any) => ({
+            id: m.id,
+            senderId: m.senderId,
+            text: m.content,
+            timestamp: m.timestamp
+        }));
     },
 
     async sendMessage(threadId: string, text: string): Promise<Message> {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        const res = await fetch(`/api/chat/threads/${threadId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: text })
+        });
+        if (!res.ok) throw new Error('Failed to send message');
 
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            threadId,
-            senderId: 'me',
-            text,
+        // Optimistic return or we could refetch
+        // Return a mock message object consistent with the one we just sent
+        return {
+            id: Date.now().toString(), // Temporary ID
+            senderId: 'me', // Assumed
+            text: text,
             timestamp: new Date().toISOString()
         };
-
-        saveMessage(newMessage);
-
-        // Update thread last message
-        const threads = getThreads();
-        const threadIndex = threads.findIndex(t => t.id === threadId);
-        if (threadIndex !== -1) {
-            threads[threadIndex] = {
-                ...threads[threadIndex],
-                lastMessage: text,
-                lastMessageAt: newMessage.timestamp
-            };
-            saveThreads(threads);
-        }
-
-        return newMessage;
     }
 };

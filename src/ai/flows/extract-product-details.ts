@@ -1,14 +1,10 @@
 'use server';
 /**
  * @fileOverview An AI agent that extracts product details from an image.
- *
- * - extractProductDetails - A function that handles the product detail extraction process.
- * - ExtractProductDetailsInput - The input type for the extractProductDetails function.
- * - ExtractProductDetailsOutput - The return type for the extractProductDetails function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { getAI } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const ExtractProductDetailsInputSchema = z.object({
   photoDataUri: z
@@ -26,14 +22,8 @@ const ExtractProductDetailsOutputSchema = z.object({
 export type ExtractProductDetailsOutput = z.infer<typeof ExtractProductDetailsOutputSchema>;
 
 export async function extractProductDetails(input: ExtractProductDetailsInput): Promise<ExtractProductDetailsOutput> {
-  return extractProductDetailsFlow(input);
-}
-
-const prompt = ai.definePrompt({
-  name: 'extractProductDetailsPrompt',
-  input: {schema: ExtractProductDetailsInputSchema},
-  output: {schema: ExtractProductDetailsOutputSchema},
-  prompt: `You are an expert in e-commerce product listings.
+  // Direct call using getAI() to avoid top-level init
+  const promptText = `You are an expert in e-commerce product listings.
 From the provided image, identify the product and create a compelling, yet concise, product name and description suitable for an online store.
 
 Analyze the following image:
@@ -41,17 +31,23 @@ Analyze the following image:
 Photo: {{media url=photoDataUri}}
 
 Respond in JSON format.
-`,
-});
+`;
+  // We manually construct the prompt with media logic if needed, or use generate() simplier
+  // Genkit prompts with handle bars are nice, but direct generate is safer here.
 
-const extractProductDetailsFlow = ai.defineFlow(
-  {
-    name: 'extractProductDetailsFlow',
-    inputSchema: ExtractProductDetailsInputSchema,
-    outputSchema: ExtractProductDetailsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+  // Extract data from input
+  const { photoDataUri } = input;
+
+  const result = await getAI().generate({
+    // We accept that we lose the prompt template features but gain build safety
+    // Actually we can pass the parts.
+    prompt: [
+      { text: "You are an expert in e-commerce product listings. Identify the product and create a compelling name and description." },
+      { media: { url: photoDataUri } }
+    ],
+    output: { schema: ExtractProductDetailsOutputSchema }
+  });
+
+  return result.output!;
+}
+

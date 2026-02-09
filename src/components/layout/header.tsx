@@ -2,9 +2,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,11 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Camera, Search, User, LogOut } from "lucide-react";
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import { useLanguage } from "@/components/i18n/LanguageContext";
 import { useState } from "react";
 
 export function Header() {
     const { user, signOut } = useAuth();
+    const { t } = useLanguage();
     const pathname = usePathname();
+    const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -30,28 +35,43 @@ export function Header() {
                 <div className="flex items-center gap-2">
                     <Link href="/" className="font-bold text-xl flex items-center gap-2">
                         <Camera className="h-6 w-6 text-primary" />
-                        <span className="hidden sm:inline-block">PickPic</span>
+                        <span className="hidden sm:inline-block">kechiki</span>
                     </Link>
                 </div>
 
-                {/* Desktop Nav */}
+                {/* Desktop Nav - Mode Toggle */}
+                <div className="hidden md:flex flex-1 justify-center">
+                    <Tabs
+                        value={pathname?.startsWith('/sell') ? 'sell' : 'shop'}
+                        onValueChange={(v) => router.push(v === 'sell' ? '/sell' : '/')}
+                        className="w-[200px]"
+                    >
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="shop">{t("nav.shop")}</TabsTrigger>
+                            <TabsTrigger value="sell">{t("nav.sell")}</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
+
+                {/* Desktop Nav - Links */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <Link href="/search" className={`transition-colors hover:text-foreground/80 ${pathname === '/search' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Marketplace
+                    <Link href="/tutorial" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
+                        {t("nav.how_it_works")}
+                        {pathname === '/tutorial' && (
+                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
+                        )}
                     </Link>
-                    <Link href="/sell" className={`transition-colors hover:text-foreground/80 ${pathname?.startsWith('/sell') ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Sell
-                    </Link>
-                    <Link href="/tutorial" className={`transition-colors hover:text-foreground/80 ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        How it Works
-                    </Link>
-                    <Link href="/support" className={`transition-colors hover:text-foreground/80 ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Support
+                    <Link href="/support" className={`group relative py-2 transition-colors hover:text-foreground ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
+                        {t("nav.support")}
+                        {pathname === '/support' && (
+                            <span className="absolute bottom-0 start-0 h-[2px] w-full bg-primary rounded-full" />
+                        )}
                     </Link>
                 </nav>
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-4">
+                    <LanguageToggle />
                     {/* Visual Search CTA (Mobile/Desktop) */}
                     <Link href="/search?mode=visual">
                         <Button variant="ghost" size="icon" title="Visual Search">
@@ -85,11 +105,11 @@ export function Header() {
                                     <Link href="/account/billing">Billing</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link href="/messages">Messages</Link>
+                                    <Link href="/account/messages">Messages</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>
-                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <LogOut className="me-2 h-4 w-4" />
                                     <span>Log out</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

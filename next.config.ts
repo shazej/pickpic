@@ -37,7 +37,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  output: 'standalone',
+  // output: 'standalone',
+  /*
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/app',
+        permanent: false,
+      },
+    ];
+  },
+  */
 };
 
 export default nextConfig;

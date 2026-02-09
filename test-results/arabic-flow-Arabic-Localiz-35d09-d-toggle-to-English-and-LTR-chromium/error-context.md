@@ -1,0 +1,50 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "kechiki" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]: kechiki
+        - navigation [ref=e11]:
+          - link "Chat" [ref=e12] [cursor=pointer]:
+            - /url: /
+            - img [ref=e13]
+            - text: Chat
+          - button "Tutorial" [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+            - text: Tutorial
+        - generic [ref=e19]:
+          - button "English" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e25]: English
+          - generic [ref=e26]:
+            - link "Log in" [ref=e27] [cursor=pointer]:
+              - /url: /login
+              - button "Log in" [ref=e28]
+            - link "Sign up" [ref=e29] [cursor=pointer]:
+              - /url: /register
+              - button "Sign up" [ref=e30]
+    - main [ref=e31]:
+      - generic [ref=e33]:
+        - button "English" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e39]: English
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - button [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+            - textbox "صف ما تريد شراءه أو بيعه..." [ref=e46]
+            - button "إرسال" [disabled]:
+              - img
+              - generic: إرسال
+          - paragraph [ref=e47]: ✨ مدعوم من ذكاء kechiki المرئي • Gemini 1.5 Flash
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e48]
+  - button "Open Next.js Dev Tools" [ref=e54] [cursor=pointer]:
+    - img [ref=e55]
+```

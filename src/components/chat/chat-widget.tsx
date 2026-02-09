@@ -47,13 +47,13 @@ export function ChatWidget() {
     return (
         <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end gap-4">
             {isOpen && (
-                <Card className="w-[350px] h-[500px] flex flex-col shadow-xl border-primary/20">
-                    <div className="p-3 border-b bg-primary text-primary-foreground flex justify-between items-center rounded-t-lg">
+                <Card className="w-[350px] h-[500px] flex flex-col shadow-lg border-border">
+                    <div className="p-3 border-b bg-card flex justify-between items-center rounded-t-lg">
                         <div className="flex items-center gap-2">
                             <Bot className="h-5 w-5" />
-                            <span className="font-semibold">PickPic Assistant</span>
+                            <span className="font-medium">kechiki Assistant</span>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-primary-foreground/20 text-primary-foreground" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-accent" onClick={() => setIsOpen(false)}>
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
@@ -62,10 +62,10 @@ export function ChatWidget() {
                         <div className="space-y-4">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={cn("flex gap-2", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
-                                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0", msg.role === 'user' ? "bg-muted" : "bg-primary/10")}>
+                                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0", msg.role === 'user' ? "bg-muted" : "bg-secondary")}>
                                         {msg.role === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
                                     </div>
-                                    <div className={cn("rounded-lg p-3 text-sm max-w-[80%]", msg.role === 'user' ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                                    <div className={cn("rounded-xl px-3 py-2 text-sm max-w-[80%]", msg.role === 'user' ? "bg-foreground/90 text-background" : "bg-transparent text-foreground")}>
                                         {msg.text}
                                     </div>
                                 </div>
@@ -76,16 +76,13 @@ export function ChatWidget() {
 
                     <div className="p-3 border-t bg-background rounded-b-lg">
                         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
-                            <Button type="button" variant="ghost" size="icon" className="shrink-0">
-                                <ImageIcon className="h-5 w-5" />
-                            </Button>
                             <Input
                                 placeholder="Ask anything..."
                                 value={inputValue}
                                 onChange={e => setInputValue(e.target.value)}
                                 className="flex-1"
                             />
-                            <Button type="submit" size="icon" className="shrink-0">
+                            <Button type="submit" size="icon" className="shrink-0 rounded-full">
                                 <Send className="h-4 w-4" />
                             </Button>
                         </form>

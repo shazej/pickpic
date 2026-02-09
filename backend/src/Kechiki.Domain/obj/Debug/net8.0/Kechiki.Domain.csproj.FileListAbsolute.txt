@@ -1,0 +1,13 @@
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\bin\Debug\net8.0\Kechiki.Domain.deps.json
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\bin\Debug\net8.0\Kechiki.Domain.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\bin\Debug\net8.0\Kechiki.Domain.pdb
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.AssemblyInfoInputs.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.AssemblyInfo.cs
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.csproj.CoreCompileInputs.cache
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.sourcelink.json
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\refint\Kechiki.Domain.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.pdb
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\ref\Kechiki.Domain.dll
+C:\inetpub\wwwroot\studioxo\backend\src\Kechiki.Domain\obj\Debug\net8.0\Kechiki.Domain.csproj.AssemblyReference.cache

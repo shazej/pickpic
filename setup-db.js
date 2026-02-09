@@ -8,7 +8,7 @@ require('dotenv').config({ path: '.env.local' });
 require('dotenv').config();
 
 // Direct connection string to bypass config parsing issues
-const config = "Server=162.55.212.193,14315;Database=master;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
+const config = "Server=162.55.212.193,1434;Database=master;User Id=sa;Password=V3r!fy#92uM@xTq1zR71;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False";
 
 async function run() {
     try {

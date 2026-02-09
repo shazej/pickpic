@@ -19,10 +19,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Share2, Heart, Clock, Eye, Video, Check, ChevronLeft, ChevronRight, MapPin, Sparkles, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
-import { SellerChatDialog } from '@/components/seller-chat-dialog';
+import { Phone, MessageCircle } from 'lucide-react';
 
 export default function ProductClient() {
   const params = useParams();
+
   const [product, setProduct] = useState<Product | null | undefined>(undefined);
   const [advertisementId, setAdvertisementId] = useState<number | null>(null);
   const [advertisementCount, setAdvertisementCount] = useState<number | null>(null);
@@ -224,14 +225,14 @@ export default function ProductClient() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <Button size="lg" className="w-full">
-                    Call
+                  <Button size="lg" className="w-full bg-green-600 hover:bg-green-700">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    WhatsApp
                   </Button>
-                  <SellerChatDialog sellerName={seller.name}>
-                    <Button size="lg" variant="outline" className="w-full">
-                      Chat
-                    </Button>
-                  </SellerChatDialog>
+                  <Button size="lg" variant="outline" className="w-full">
+                    <Phone className="mr-2 h-4 w-4" />
+                    Call Seller
+                  </Button>
                 </div>
               </div>
             </CardContent>

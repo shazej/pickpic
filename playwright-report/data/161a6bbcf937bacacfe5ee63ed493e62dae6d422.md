@@ -1,0 +1,63 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "kechiki" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]: kechiki
+        - navigation [ref=e11]:
+          - link "Chat" [ref=e12] [cursor=pointer]:
+            - /url: /
+            - img [ref=e13]
+            - text: Chat
+          - button "Tutorial" [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+            - text: Tutorial
+        - generic [ref=e19]:
+          - button "Toggle language EN" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e25]: Toggle language
+            - generic [ref=e26]: EN
+          - generic [ref=e27]:
+            - link "Log in" [ref=e28] [cursor=pointer]:
+              - /url: /login
+              - button "Log in" [ref=e29]
+            - link "Sign up" [ref=e30] [cursor=pointer]:
+              - /url: /register
+              - button "Sign up" [ref=e31]
+      - generic [ref=e33]:
+        - button [ref=e34] [cursor=pointer]:
+          - img [ref=e35]
+        - generic [ref=e38]:
+          - img [ref=e40]
+          - heading "Welcome to kechiki" [level=2] [ref=e42]
+          - paragraph [ref=e43]: Your AI-powered free marketplace. No fees, just easy buying and selling with the power of AI.
+        - generic [ref=e50]:
+          - button "Back" [disabled]:
+            - img
+            - text: Back
+          - button "Next" [ref=e52] [cursor=pointer]:
+            - text: Next
+            - img [ref=e53]
+    - main [ref=e55]:
+      - generic [ref=e57]:
+        - generic [ref=e62]:
+          - img [ref=e64]
+          - generic [ref=e68]: 👋 Hi! I'm your kechiki Assistant. I can help you find products using images, or help you create a listing if you're selling something. How can I assist you today?
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - button [ref=e71] [cursor=pointer]:
+              - img [ref=e72]
+            - textbox "Describe what you want to find or sell..." [ref=e73]
+            - button "Send" [disabled]:
+              - img
+              - generic: Send
+          - paragraph [ref=e74]: ✨ Powered by kechiki Visual Intelligence • Gemini 1.5 Flash
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e75]
+```

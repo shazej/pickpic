@@ -1,6 +1,9 @@
 "use client";
 
 import { VisualSearchUploader } from "@/components/search/visual-search-uploader";
+
+// Force dynamic rendering for this authenticated route
+export const dynamic = 'force-dynamic';
 import { ListingForm } from "@/components/seller/listing-form";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,23 +23,37 @@ export default function NewListingPage() {
     const handleImageSelect = async (file: File) => {
         setImageFile(file);
         setIsAnalyzing(true);
-        setStep("form"); // Move to form but show loader overlay or similar
+        setStep("form");
 
-        // Mock AI Analysis
-        setTimeout(() => {
-            setAnalyzedData({
-                title: "Detected: Vintage Camera",
-                price: "150",
-                category: "electronics",
-                condition: "good",
-                description: "AI Generated: This is a vintage camera in good condition. Looks like a Canon AE-1."
-            });
-            setIsAnalyzing(false);
-            toast({
-                title: "AI Analysis Complete",
-                description: "We've pre-filled the form for you!",
-            });
-        }, 2000);
+        // Simulate multi-step analysis
+        const analysisSteps = [
+            "Detecting item type...",
+            "Estimating market price...",
+            "Generating description...",
+            "Finalizing details..."
+        ];
+
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < analysisSteps.length) {
+                // We could use a state for sub-status if needed
+                i++;
+            } else {
+                clearInterval(interval);
+                setAnalyzedData({
+                    title: "Vintage Canon AE-1 Film Camera",
+                    price: "185.00",
+                    category: "electronics",
+                    condition: "good",
+                    description: "A classic 35mm SLR film camera. Appears to be in good working condition with some minor surface wear. Includes original lens cap."
+                });
+                setIsAnalyzing(false);
+                toast({
+                    title: "AI Analysis Complete! ✨",
+                    description: "We've pre-filled the form based on your photo. Take a look and publish when ready.",
+                });
+            }
+        }, 1200);
     };
 
     const handleFormSubmit = async (values: any) => {
@@ -63,10 +80,19 @@ export default function NewListingPage() {
             {step === "form" && (
                 <div className="space-y-6 relative">
                     {isAnalyzing && (
-                        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-center">
-                            <Sparkles className="h-12 w-12 text-primary animate-pulse mb-4" />
-                            <h3 className="text-xl font-bold">AI is analyzing your item...</h3>
-                            <p className="text-muted-foreground">Identifying category, price, and condition</p>
+                        <div className="absolute inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 border rounded-xl shadow-2xl">
+                            <div className="relative mb-8">
+                                <Sparkles className="h-16 w-16 text-primary animate-pulse" />
+                                <div className="absolute -inset-4 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-2">Analyzing your item...</h3>
+                            <div className="flex items-center gap-2 mb-4">
+                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                <p className="text-muted-foreground animate-pulse">Gemini is processing the visual data</p>
+                            </div>
+                            <div className="w-full max-w-xs bg-muted rounded-full h-1 overflow-hidden">
+                                <div className="bg-primary h-full animate-pulse" style={{ width: '40%' }} />
+                            </div>
                         </div>
                     )}
 

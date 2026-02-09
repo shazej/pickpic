@@ -1,19 +1,14 @@
-
-import { generate } from '@genkit-ai/ai'; // Or mock if not fully set up
-// import { gemini15Flash } from '@genkit-ai/google-genai'; // Using Gemini as default
-import { z } from 'zod';
+import { aiEngine } from '@/ai/engine/service';
+import { ChatRequest } from '@/ai/engine/types';
 import { PROMPTS } from './prompts';
 import {
-    SearchIntentSchema,
-    ExpandQuerySchema,
-    NormalizedAttributesSchema,
-    RetrievalPlanSchema,
-    RerankResultSchema,
-    VisualDescriptorSchema,
-    ZeroResultsSchema,
-    SafetyCheckSchema,
-    SqlPlanSchema
+    PickPicResponseSchema
 } from './schemas';
+import { recordAIUsage } from '@/lib/ai/usage';
+import { v4 as uuidv4 } from 'uuid';
+
+// ... existing code ...
+
 
 // --- Helper for Prompt Injection ---
 function fillPrompt(template: string, vars: Record<string, any>): string {
@@ -24,182 +19,199 @@ function fillPrompt(template: string, vars: Record<string, any>): string {
     return output;
 }
 
-// --- Genkit Flows ---
-
-// 1. Parse Search Intent
-export async function parseSearchIntent(query: string, lat?: number, lng?: number) {
-    const prompt = fillPrompt(PROMPTS.PARSE_SEARCH_INTENT, {
-        USER_QUERY: query,
-        LAT: lat || 'null',
-        LNG: lng || 'null'
+/**
+ * Buyer Chatbot Flow
+ */
+export async function runBuyerChat(params: {
+    product: any,
+    message: string,
+    history: any[],
+    imageCount: number,
+    sellerLocation?: string,
+    userId?: string
+}) {
+    const start = Date.now();
+    const requestId = uuidv4();
+    const prompt = fillPrompt(PROMPTS.BUYER_CHATBOT, {
+        TITLE: params.product.title,
+        DESCRIPTION: params.product.description || 'No description provided.',
+        ATTRIBUTES_JSON: JSON.stringify(params.product.attributes || {}),
+        IMAGES_COUNT: params.imageCount,
+        MESSAGE: params.message,
+        HISTORY: JSON.stringify(params.history),
+        SELLER_LOCATION: params.sellerLocation || 'Location not provided'
     });
 
-    // Mock implementation if Genkit env not ready, otherwise standard call:
-    /*
-    const response = await generate({
-        model: gemini15Flash,
-        prompt: prompt,
-        output: { schema: SearchIntentSchema }
-    });
-    return response.output();
-    */
+    try {
+        const aiRequest: ChatRequest = {
+            messages: [
+                { role: 'user', content: prompt }
+            ],
+            responseFormat: 'json'
+        };
 
-    // For this demo, since we might not have API keys configured in this environment:
-    console.log("[Genkit] Mocking Parse Intent for:", query);
-    return {
-        query_keywords: query.split(" "),
-        must_have: [],
-        nice_to_have: [],
-        category: null,
-        condition: null,
-        price_min: null,
-        price_max: null,
-        currency: 'USD',
-        brand: null,
-        color: null,
-        size: null,
-        material: null,
-        distance_km: null,
-        sort: 'relevance',
-        negatives: [],
-        rewrite_query: query
-    }; // Return mock adhering to schema
+        const result = await aiEngine.chat(aiRequest);
+        const latencyMs = Date.now() - start;
+        const mandatory = PickPicResponseSchema.parse(result.json || JSON.parse(result.text));
+
+        // Estimate tokens (1 token ~= 4 chars)
+        const promptChars = prompt.length;
+        const completionChars = result.text.length;
+        const promptTokens = Math.ceil(promptChars / 4);
+        const completionTokens = Math.ceil(completionChars / 4);
+
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro', // TODO: Get from engine config
+            promptTokens,
+            completionTokens,
+            totalTokens: promptTokens + completionTokens,
+            requestId,
+            latencyMs,
+            route: 'buyer-chat'
+        });
+
+        // Map back to legacy schema
+        return {
+            reply: mandatory.response_text,
+            citations: [],
+            suggested_questions: mandatory.clarifying_question ? [mandatory.clarifying_question] : [],
+            safety_notes: []
+        };
+    } catch (error) {
+        console.error("[AI Engine] Buyer Chat Error:", error);
+        // Log failure usage if possible, or just error
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro',
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            requestId,
+            latencyMs: Date.now() - start,
+            route: 'buyer-chat-failed'
+        });
+        throw error;
+    }
 }
 
-// 2. Expand Query
-export async function expandQuery(query: string, category: string | null = null) {
-    const prompt = fillPrompt(PROMPTS.EXPAND_QUERY, {
-        USER_QUERY: query,
-        CATEGORY_OR_NULL: category || 'null'
+/**
+ * Seller Chatbot Flow
+ */
+export async function runSellerChat(params: {
+    draft: any,
+    answer: string,
+    imageUrl?: string,
+    userId?: string
+}) {
+    const start = Date.now();
+    const requestId = uuidv4();
+    const prompt = fillPrompt(PROMPTS.SELLER_CHATBOT, {
+        DRAFT_JSON: JSON.stringify(params.draft),
+        ANSWER: params.answer
     });
-    // Mock
-    return {
-        expanded_terms: [query, query + "s"],
-        synonyms: [],
-        common_misspellings: [],
-        brand_normalizations: [],
-        negative_terms: []
-    };
-}
 
-// 3. Normalize Attributes
-export async function normalizeAttributes(title: string, description: string, attributes: any) {
-    const prompt = fillPrompt(PROMPTS.NORMALIZE_ATTRIBUTES, {
-        TITLE: title,
-        DESCRIPTION: description,
-        ATTRIBUTES_JSON: JSON.stringify(attributes)
-    });
-    // Mock
-    return {
-        normalized: {
-            category: "General",
-            sub_category: null,
-            brand: null,
-            model: null,
-            color: [],
-            size: null,
-            material: [],
-            condition: null,
-            tags: [],
-            key_features: [],
-            search_boost_terms: []
-        },
-        quality_warnings: []
-    };
-}
+    try {
+        const userContent: any[] = [{ text: prompt }];
 
-// 4. Retrieval Planner
-export async function planRetrieval(query: string, hasImage: boolean, filters: any, lat?: number, lng?: number) {
-    const prompt = fillPrompt(PROMPTS.RETRIEVAL_PLAN, {
-        USER_QUERY_OR_EMPTY: query || '',
-        TRUE_FALSE: hasImage,
-        FILTERS_JSON: JSON.stringify(filters),
-        LAT_LNG_OR_NULL: lat && lng ? `${lat},${lng}` : 'null'
-    });
-    // Mock
-    return {
-        mode: hasImage ? 'hybrid' : 'text_only',
-        steps: [{ name: 'db_search', description: 'Search database' }],
-        candidate_limits: { text_candidates: 50, image_candidates: 50, final_results: 20 },
-        ranking_strategy: 'hybrid_weighted',
-        hybrid_weights: { text: 0.7, image: 0.3, geo: 0, freshness: 0 },
-        explanation: "Standard retrieval plan."
-    };
-}
+        if (params.imageUrl) {
+            // ... strict image logic ...
+            try {
+                // Multimodal generation - supporting data URIs or fetching
+                let imageData = params.imageUrl;
+                if (!params.imageUrl.startsWith('data:')) {
+                    // Use a timeout and handle potential parse errors
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 2000);
+                    try {
+                        const imageResp = await fetch(params.imageUrl, { signal: controller.signal });
+                        if (imageResp.ok) {
+                            const imageBuffer = await imageResp.arrayBuffer();
+                            imageData = `data:image/jpeg;base64,${Buffer.from(imageBuffer).toString("base64")}`;
+                            userContent.push({ image_url: imageData });
+                        }
+                    } catch (err) {
+                        console.warn("[AI Engine] Could not fetch image, proceeding without it:", err);
+                        // Still include a text reference to the image if possible or just skip
+                    } finally {
+                        clearTimeout(timeout);
+                    }
+                } else {
+                    userContent.push({ image_url: imageData });
+                }
+            } catch (e) {
+                console.warn("[AI Engine] Image processing error, proceeding with text only:", e);
+            }
+        }
 
-// 5. Re-ranker
-export async function rerankCandidates(query: string, filters: any, candidates: any[]) {
-    const prompt = fillPrompt(PROMPTS.RERANKER, {
-        USER_QUERY: query,
-        FILTERS_JSON: JSON.stringify(filters),
-        CANDIDATES_JSON: JSON.stringify(candidates)
-    });
-    // Mock
-    return {
-        ranked: candidates.map(c => ({
-            product_id: c.id || c.product_id,
-            final_score: 1.0,
-            match_reasons: ['Exact match'],
-            mismatch_warnings: []
-        })),
-        did_apply_filters: true,
-        suggested_filters: { category: null, price_max: null, condition: null, distance_km: null }
-    };
-}
+        const aiRequest: ChatRequest = {
+            messages: [
+                { role: 'user', content: userContent }
+            ],
+            responseFormat: 'json'
+        };
 
-// 6. Visual Descriptor (Image Analysis)
-export async function getVisualDescriptor(imageUrl: string) {
-    // Ideally pass image bytes or URL to multimodal prompt
-    // Mock
-    return {
-        visual_category: "Unknown",
-        visual_keywords: ["object"],
-        likely_attributes: { color: [], material: [], pattern: null, style: null, shape: null },
-        avoid_terms: [],
-        confidence_notes: ["Mock analysis"]
-    };
-}
+        const result = await aiEngine.chat(aiRequest);
+        const latencyMs = Date.now() - start;
+        const mandatory = PickPicResponseSchema.parse(result.json || JSON.parse(result.text));
 
-// 7. Zero Results
-export async function zeroResultsRecovery(query: string, filters: any, count: number) {
-    const prompt = fillPrompt(PROMPTS.ZERO_RESULTS, {
-        USER_QUERY: query,
-        FILTERS_JSON: JSON.stringify(filters),
-        N: count
-    });
-    // Mock
-    return {
-        message: "No results found.",
-        relaxations: [],
-        alternative_queries: ["generic query"],
-        related_categories: []
-    };
-}
+        // Estimate tokens
+        const promptChars = prompt.length;
+        const completionChars = result.text.length;
+        const promptTokens = Math.ceil(promptChars / 4);
+        const completionTokens = Math.ceil(completionChars / 4);
 
-// 8. Safety Check
-export async function safetyCheck(query: string) {
-    const prompt = fillPrompt(PROMPTS.SAFETY_CHECK, {
-        USER_QUERY: query
-    });
-    // Mock
-    return {
-        allowed: true,
-        blocked_reason: null,
-        safe_rewrite: null,
-        category_flags: []
-    };
-}
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro-vision',
+            promptTokens,
+            completionTokens,
+            totalTokens: promptTokens + completionTokens,
+            requestId,
+            latencyMs,
+            route: 'seller-chat'
+        });
 
-// 9. SQL Plan
-export async function planSqlQuery(filters: any) {
-    const prompt = fillPrompt(PROMPTS.SQL_PLAN, {
-        FILTERS_JSON: JSON.stringify(filters)
-    });
-    // Mock
-    return {
-        where: [],
-        order_by: [{ field: 'created_at', direction: 'desc' }],
-        limit: 20,
-        offset: 0
-    };
+        // Map back to legacy schema
+        const missing = [];
+        if (!mandatory.listing_fields?.category) missing.push('category');
+        if (!mandatory.listing_fields?.brand) missing.push('brand');
+        if (!mandatory.listing_fields?.condition) missing.push('condition');
+        if (!mandatory.listing_fields?.price_suggestion) missing.push('price');
+
+        return {
+            updated_fields: {
+                title: mandatory.listing_fields?.brand ? `${mandatory.listing_fields.brand} ${mandatory.listing_fields.model || ''}` : undefined,
+                description: mandatory.response_text,
+                price: mandatory.listing_fields?.price_suggestion,
+                category: mandatory.listing_fields?.category,
+                condition: mandatory.listing_fields?.condition,
+                attributes: mandatory.listing_fields ? { ...mandatory.listing_fields } : undefined
+            },
+            next_question: mandatory.clarifying_question ? {
+                question_key: mandatory.intent === 'clarify' ? 'missing_info' : 'followup',
+                question_text: mandatory.clarifying_question,
+                suggestions: []
+            } : null,
+            progress: {
+                required_complete: mandatory.intent === 'list' && mandatory.confidence > 0.8,
+                missing: missing
+            },
+            feedback: mandatory.response_text,
+            suggestions: []
+        };
+    } catch (error) {
+        console.error("[AI Engine] Seller Chat Error:", error);
+        await recordAIUsage({
+            userId: params.userId,
+            model: 'gemini-pro-vision',
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            requestId,
+            latencyMs: Date.now() - start,
+            route: 'seller-chat-failed'
+        });
+        throw error;
+    }
 }

@@ -41,8 +41,14 @@ export const logger = {
         }
     },
     error: (message: string, meta?: any) => {
+        // Always log errors, regardless of level setting if it were dynamic, but here simple level check
         if (LOG_LEVELS[CURRENT_LEVEL] <= LOG_LEVELS.ERROR) {
             console.error(format('ERROR', message, meta));
         }
     },
 };
+
+// Ensure stdout is non-blocking for high volume in prod (Node specific)
+if (process.stdout._handle && process.stdout._handle.setBlocking) {
+    process.stdout._handle.setBlocking(false);
+}

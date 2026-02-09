@@ -1,23 +1,23 @@
 const sql = require('mssql');
 const bcrypt = require('bcryptjs');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env.production') });
 
 const config = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER,
-    database: process.env.DB_NAME,
+    user: 'sa',
+    password: 'PickPicStrongPass1!',
+    server: 'WIN-LE7OOSFFT8H',
+    port: 1433,
+    database: 'PickPicDB',
     options: {
-        encrypt: false,
+        encrypt: true,
         trustServerCertificate: true
-        // trustedConnection removed to use SQL Auth
     }
 };
 
 async function seed() {
     try {
+        console.log('Connecting to database...');
         const pool = await sql.connect(config);
+        console.log('Connected!');
 
         const sellerPass = await bcrypt.hash('SellerPass123!', 10);
         const adminPass = await bcrypt.hash('AdminSecret1!', 10);
@@ -39,50 +39,6 @@ async function seed() {
             BEGIN
                 INSERT INTO users (email, password_hash, full_name, is_verified)
                 VALUES ('${sellerEmail}', '${sellerPass}', 'Test Seller', 1);
-            END
-        `);
-
-        // Assign Roles
-        // Ensure roles exist (schema.sql inserts defaults, but just in case)
-        // Get User IDs
-        const adminUser = await pool.request().query(`SELECT id FROM users WHERE email = '${adminEmail}'`);
-        const sellerUser = await pool.request().query(`SELECT id FROM users WHERE email = '${sellerEmail}'`);
-
-        const adminId = adminUser.recordset[0].id;
-        const sellerId = sellerUser.recordset[0].id;
-
-        // Admin Role
-        await pool.request().query(`
-            IF NOT EXISTS (SELECT * FROM user_roles WHERE user_id = '${adminId}')
-            BEGIN
-                 DECLARE @rid INT = (SELECT id FROM roles WHERE name = 'admin');
-                 INSERT INTO user_roles (user_id, role_id) VALUES ('${adminId}', @rid);
-            END
-        `);
-
-        // Seller Role
-        await pool.request().query(`
-            IF NOT EXISTS (SELECT * FROM user_roles WHERE user_id = '${sellerId}')
-            BEGIN
-                 DECLARE @rid INT = (SELECT id FROM roles WHERE name = 'seller');
-                 INSERT INTO user_roles (user_id, role_id) VALUES ('${sellerId}', @rid);
-            END
-        `);
-
-        // Seller Profile
-        await pool.request().query(`
-            IF NOT EXISTS (SELECT * FROM sellers WHERE user_id = '${sellerId}')
-            BEGIN
-                INSERT INTO sellers (user_id, business_name, country_code, is_approved)
-                VALUES ('${sellerId}', 'Test Store', 'US', 1);
-            END
-        `);
-
-        // Categories
-        await pool.request().query(`
-            IF NOT EXISTS (SELECT * FROM categories WHERE slug = 'home-decor')
-            BEGIN
-                INSERT INTO categories (name, slug) VALUES ('Home Decor', 'home-decor');
             END
         `);
 

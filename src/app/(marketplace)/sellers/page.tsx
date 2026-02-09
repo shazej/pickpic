@@ -25,7 +25,7 @@ function SellersPageContent() {
 
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
-  
+
   const { location: buyerLocation } = useLocation();
 
   useEffect(() => {
@@ -37,53 +37,53 @@ function SellersPageContent() {
       setSellers(foundSellers);
     }
   }, [productName]);
-  
+
   const handleSellerSelect = (seller: Seller | null) => {
     setSelectedSeller(seller);
   };
 
   return (
     <div className="min-h-screen w-full bg-background font-body text-foreground">
-       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
         <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
-                <ArrowLeft />
-            </Link>
+          <Link href="/">
+            <ArrowLeft />
+          </Link>
         </Button>
         <div className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-primary" />
-          <span className="text-xl font-headline">Ecomm Now</span>
+          <span className="text-xl font-headline">kechiki</span>
         </div>
       </header>
 
       <main className="grid h-[calc(100vh-3.5rem)] md:grid-cols-2 lg:grid-cols-[480px_1fr]">
         <div className="flex flex-col overflow-y-auto border-r p-4 md:p-6 space-y-4">
-            {productName && (
+          {productName && (
             <div className="space-y-4 flex-grow min-h-0 flex flex-col">
-                <div className="flex-shrink-0">
-                    <div className="flex gap-4 items-start">
-                        <div>
-                            <h1 className="text-2xl font-semibold">Sellers for: <span className="text-primary font-bold">{productName}</span></h1>
-                            {confidence && <p className="text-sm text-muted-foreground">Confidence: {confidence}%</p>}
-                        </div>
-                    </div>
+              <div className="flex-shrink-0">
+                <div className="flex gap-4 items-start">
+                  <div>
+                    <h1 className="text-2xl font-semibold">Sellers for: <span className="text-primary font-bold">{productName}</span></h1>
+                    {confidence && <p className="text-sm text-muted-foreground">Confidence: {confidence}%</p>}
+                  </div>
                 </div>
-                <div className="overflow-y-auto pr-1 flex-grow">
-                <SellerList 
-                    sellers={sellers} 
-                    productName={productName} 
-                    onSellerSelect={handleSellerSelect}
+              </div>
+              <div className="overflow-y-auto pr-1 flex-grow">
+                <SellerList
+                  sellers={sellers}
+                  productName={productName}
+                  onSellerSelect={handleSellerSelect}
                 />
-                </div>
+              </div>
             </div>
-            )}
+          )}
         </div>
         <div className="hidden h-full w-full items-center justify-center bg-muted md:flex">
-            <MapView 
-              sellers={sellers}
-              buyerLocation={buyerLocation}
-              selectedSeller={selectedSeller}
-            />
+          <MapView
+            sellers={sellers}
+            buyerLocation={buyerLocation}
+            selectedSeller={selectedSeller}
+          />
         </div>
       </main>
     </div>
@@ -92,11 +92,11 @@ function SellersPageContent() {
 
 
 export default function SellersPage() {
-    return (
-        <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><p>Loading sellers...</p></div>}>
-            <SellersPageContent />
-        </Suspense>
-    )
+  return (
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><p>Loading sellers...</p></div>}>
+      <SellersPageContent />
+    </Suspense>
+  )
 }
 
-    
+

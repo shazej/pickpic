@@ -1,5 +1,5 @@
 
-# PickPic Frontend Architecture
+# Kechiki Frontend Architecture
 
 ## Directory Structure
 - `src/app/(marketplace)`: Core marketplace (Home, Search, Product Details)
@@ -25,6 +25,9 @@
 | `/sell/new` | Create Listing | Yes | Seller |
 | `/support` | Help Center | No | Any |
 | `/admin` | Admin Dashboard | Yes | Admin |
+| `/api/checkout` | Stripe Checkout | Yes | User |
+| `/api/webhooks/stripe` | Payment Webhooks | No | Stripe System |
+| `/api/ai/feedback` | AI Quality Feedback | Yes | User |
 
 ## Tech Stack
 - Next.js 15 (App Router)

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { SessionProvider, useSession, signIn, signOut as authSignOut } from "next-auth/react";
 
 interface User {
     id: string;
@@ -20,52 +21,41 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+function AuthProviderContent({ children }: { children: ReactNode }) {
+    const { data: session, status } = useSession();
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
-        checkSession();
-    }, []);
-
-    const checkSession = async () => {
-        try {
-            const res = await fetch('/api/auth/me');
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data.user);
+        if (status === "loading") {
+            setLoading(true);
+        } else {
+            if (session?.user) {
+                setUser({
+                    id: session.user.id as string,
+                    email: session.user.email as string,
+                    name: session.user.name as string,
+                    roles: (session.user as any).roles,
+                });
             } else {
                 setUser(null);
             }
-        } catch (error) {
-            console.error('Session check failed', error);
-            setUser(null);
-        } finally {
             setLoading(false);
         }
-    };
+    }, [session, status]);
 
     const login = async (email: string, password: string) => {
-        try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+        const result = await signIn("credentials", {
+            email,
+            password,
+            redirect: false,
+        });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || 'Login failed');
-            }
-
-            const data = await res.json();
-            setUser(data.user);
-            router.push('/');
-        } catch (error) {
-            console.error(error);
-            throw error;
+        if (result?.error) {
+            throw new Error(result.error);
         }
+        router.push('/');
     };
 
     const register = async (email: string, password: string, name?: string) => {
@@ -81,10 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error(errorData.error || 'Registration failed');
             }
 
-            const data = await res.json();
-            setUser(data.user); // Auto login
-            router.push('/');
-
+            // After register, sign in to get the session
+            await login(email, password);
         } catch (error) {
             console.error(error);
             throw error;
@@ -92,11 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signOut = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-        } catch (e) {
-            console.error(e);
-        }
+        await authSignOut({ redirect: false });
         setUser(null);
         router.push('/login');
     };
@@ -105,6 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider value={{ user, loading, login, register, signOut }}>
             {children}
         </AuthContext.Provider>
+    );
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+    return (
+        <SessionProvider>
+            <AuthProviderContent>
+                {children}
+            </AuthProviderContent>
+        </SessionProvider>
     );
 }
 

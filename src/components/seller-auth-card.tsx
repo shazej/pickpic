@@ -28,6 +28,8 @@ interface SellerAuthCardProps {
   isLogin?: boolean;
 }
 
+import { useLanguage } from "@/components/i18n/LanguageContext";
+
 export function SellerAuthCard({
   title,
   description,
@@ -43,6 +45,7 @@ export function SellerAuthCard({
   const [error, setError] = useState<string | null>(null);
   /* const router = useRouter(); // Handled by AuthContext */
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { login, register } = useAuth();
 
@@ -53,16 +56,16 @@ export function SellerAuthCard({
       if (isLogin) {
         await login(email, password);
         toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
+          title: t('auth.login_success'),
+          description: t('auth.redirecting'),
         });
         // Redirect handled in AuthContext or here if needed, but Context has default redirect.
         // For specific pages we might want to override.
       } else {
         await register(email, password);
         toast({
-          title: 'Account Created',
-          description: 'Welcome! Redirecting to your dashboard...',
+          title: t('auth.signup_success'),
+          description: t('auth.redirecting'),
         });
       }
     } catch (err) {
@@ -71,7 +74,7 @@ export function SellerAuthCard({
       setError(message);
       toast({
         variant: 'destructive',
-        title: isLogin ? 'Login Failed' : 'Sign Up Failed',
+        title: isLogin ? t('auth.login_failed') : t('auth.signup_failed'),
         description: message,
       });
     } finally {
@@ -97,7 +100,7 @@ export function SellerAuthCard({
           </Alert>
         )}
         <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('auth.email')}</Label>
           <Input
             id="email"
             type="email"
@@ -109,7 +112,7 @@ export function SellerAuthCard({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('auth.password')}</Label>
           <Input
             id="password"
             type="password"
