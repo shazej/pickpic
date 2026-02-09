@@ -53,3 +53,7 @@
 2026-02-06 05:55:13:   addIssue: [Function (anonymous)],
 2026-02-06 05:55:13:   addIssues: [Function (anonymous)]
 2026-02-06 05:55:13: }
+2026-02-09 04:16:47:  ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+2026-02-09 04:19:21:  ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+2026-02-09 04:48:06: (node:9688) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-02-09 04:48:06: (Use `node --trace-deprecation ...` to show where the warning was created)

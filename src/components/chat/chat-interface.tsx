@@ -478,6 +478,7 @@ export function ChatInterface({
             session_id: sessionId,
             message: text || undefined,
             image_url: imageUrl || undefined,
+            mode: appModeCtx?.mode || "buy", // Pass current mode (buy/sell)
             location: { country_code: "KW", language: locale },
           }),
         });
