@@ -5,8 +5,9 @@ module.exports = {
   apps: [
     {
       name: 'pickpic',
-      script: 'npm',
-      args: 'run start',
+      // Use Next.js binary directly
+      script: './node_modules/next/dist/bin/next',
+      args: 'start',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -24,7 +25,7 @@ module.exports = {
       out_file: './logs/out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
       kill_timeout: 5000,
-      wait_ready: true,
+      wait_ready: false,
       listen_timeout: 10000,
       max_restarts: 10,
       restart_delay: 4000,
