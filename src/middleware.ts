@@ -1,71 +1,79 @@
+// Next.js Middleware - JWT-based authentication
+// Checks auth cookies for protected routes
 
 import { NextRequest, NextResponse } from 'next/server';
-import { updateSession } from '@/lib/auth';
-import { SESSION_COOKIE_NAME } from '@/lib/auth';
-import { decrypt } from '@/lib/auth';
+import { jwtVerify } from 'jose';
 
-// Define protected routes and their required roles
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secret-key-change-in-production'
+);
+const COOKIE_NAME = 'auth_token';
+
+// Routes that require authentication
+const protectedRoutes = ['/account', '/sell', '/messages', '/admin'];
+
+// Routes that require specific roles (admin only - any logged-in user can sell)
 const roleRules = [
-    { prefix: '/sell', roles: ['seller', 'admin'] },
-    { prefix: '/admin', roles: ['admin'] },
+  { prefix: '/admin', roles: ['seller'] },
 ];
 
-const protectedRoutes = ['/account', '/sell', '/messages', '/admin'];
+// Auth pages - redirect to /account if already logged in
 const authRoutes = ['/login', '/register', '/forgot-password'];
 
+async function verifyJWT(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET, {
+      issuer: 'pickpic',
+      audience: 'pickpic-users',
+    });
+    return payload as { userId: string; email: string; role: string };
+  } catch {
+    return null;
+  }
+}
+
 export async function middleware(request: NextRequest) {
-    const path = request.nextUrl.pathname;
+  const path = request.nextUrl.pathname;
 
-    // Check if path matches any role rule
-    const requiredRoles = roleRules.find(r => path.startsWith(r.prefix))?.roles;
-    const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route));
-    const isAuthRoute = authRoutes.some(route => path.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route));
+  const isAuthRoute = authRoutes.some((route) => path.startsWith(route));
 
-    // Update Session Cookie Expiry if present
-    const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    let user: any = null;
-
-    if (sessionCookie) {
-        try {
-            const parsed = await decrypt(sessionCookie);
-            if (parsed && parsed.user) {
-                user = parsed.user;
-                await updateSession(request);
-            }
-        } catch (e) {
-            // Invalid session
-        }
-    }
-
-    // Redirect unauthenticated users from protected routes
-    if (isProtectedRoute && !user) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/login';
-        url.search // Keep query params if needed
-        return NextResponse.redirect(url);
-    }
-
-    // Role-based Access Control
-    if (requiredRoles && user) {
-        const hasRole = user.roles && user.roles.some((role: string) => requiredRoles.includes(role));
-        if (!hasRole) {
-            // Redirect to account or 403 page
-            const url = request.nextUrl.clone();
-            url.pathname = '/account';
-            return NextResponse.redirect(url);
-        }
-    }
-
-    // Redirect authenticated users from auth routes (login/register)
-    if (isAuthRoute && user) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/account';
-        return NextResponse.redirect(url);
-    }
-
+  // No auth check needed for non-protected, non-auth routes
+  if (!isProtectedRoute && !isAuthRoute) {
     return NextResponse.next();
+  }
+
+  // Get JWT from cookie
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const user = token ? await verifyJWT(token) : null;
+
+  // Redirect unauthenticated users from protected routes to login
+  if (isProtectedRoute && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  // Role-based access control
+  if (user) {
+    const requiredRoles = roleRules.find((r) => path.startsWith(r.prefix))?.roles;
+    if (requiredRoles && !requiredRoles.includes(user.role)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/account';
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (isAuthRoute && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/account';
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

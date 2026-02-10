@@ -1,81 +1,80 @@
-
+// Seller Profile API - Prisma-based
 import { NextResponse } from 'next/server';
-import { query, sql } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { prisma } from '@/lib/db/prisma';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function GET() {
-    try {
-        const session = await getSession();
-        if (!session || !session.user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const result = await query(`
-            SELECT * FROM marketplace.SellerProfiles WHERE user_id = @userId
-        `, [{ name: 'userId', value: session.user.id, type: sql.UniqueIdentifier }]);
-
-        if (result.recordset.length === 0) {
-            return NextResponse.json({ profile: null });
-        }
-
-        return NextResponse.json({ profile: result.recordset[0] });
-
-    } catch (error) {
-        console.error('Seller Profile API Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const seller = await prisma.seller.findUnique({
+      where: { userId: user.userId },
+      include: {
+        user: {
+          select: {
+            name: true,
+            nameAr: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+            countryCode: true,
+            regionId: true,
+          },
+        },
+      },
+    });
+
+    if (!seller) {
+      return NextResponse.json({ profile: null });
+    }
+
+    return NextResponse.json({
+      profile: {
+        userId: seller.userId,
+        businessName: seller.businessName,
+        bio: seller.bio,
+        bioAr: seller.bioAr,
+        phonePublic: seller.phonePublic,
+        whatsappNumber: seller.whatsappNumber,
+        rating: seller.rating,
+        totalReviews: seller.totalReviews,
+        totalSales: seller.totalSales,
+        isVerified: seller.isVerified,
+        user: seller.user,
+      },
+    });
+  } catch (error) {
+    console.error('Seller Profile API Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request) {
-    try {
-        const session = await getSession();
-        if (!session || !session.user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { storeName, bio, location } = await request.json();
-
-        // Upsert Profile
-        // Note: Using MERGE or basic IF/ELSE
-        await query(`
-            MERGE marketplace.SellerProfiles AS target
-            USING (SELECT @userId AS user_id) AS source
-            ON (target.user_id = source.user_id)
-            WHEN MATCHED THEN
-                UPDATE SET 
-                    store_name = @storeName,
-                    bio = @bio,
-                    location_precision = @location,
-                    updated_at = SYSDATETIME()
-            WHEN NOT MATCHED THEN
-                INSERT (user_id, store_name, bio, location_precision)
-                VALUES (@userId, @storeName, @bio, @location);
-        `, [
-            { name: 'userId', value: session.user.id, type: sql.UniqueIdentifier },
-            { name: 'storeName', value: storeName, type: sql.NVarChar },
-            { name: 'bio', value: bio || '', type: sql.NVarChar },
-            { name: 'location', value: location || '', type: sql.NVarChar }
-        ]);
-
-        // Ensure Seller Role
-        const roleResult = await query("SELECT id FROM auth.Roles WHERE name = 'seller'");
-        if (roleResult.recordset.length > 0) {
-            const roleId = roleResult.recordset[0].id;
-            await query(`
-                IF NOT EXISTS (SELECT 1 FROM auth.UserRoles WHERE user_id = @userId AND role_id = @roleId)
-                BEGIN
-                    INSERT INTO auth.UserRoles (user_id, role_id) VALUES (@userId, @roleId)
-                END
-            `, [
-                { name: 'userId', value: session.user.id, type: sql.UniqueIdentifier },
-                { name: 'roleId', value: roleId, type: sql.Int }
-            ]);
-        }
-
-        return NextResponse.json({ message: 'Profile updated' });
-
-    } catch (error) {
-        console.error('Seller Profile API Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { businessName, bio, bioAr, phonePublic, whatsappNumber } = await request.json();
+
+    const seller = await prisma.seller.upsert({
+      where: { userId: user.userId },
+      update: { businessName, bio, bioAr, phonePublic, whatsappNumber },
+      create: { userId: user.userId, businessName, bio, bioAr, phonePublic, whatsappNumber },
+    });
+
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { role: 'seller' },
+    });
+
+    return NextResponse.json({ message: 'Profile updated', profile: seller });
+  } catch (error) {
+    console.error('Seller Profile API Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }

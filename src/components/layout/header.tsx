@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
+import { useLanguage } from "@/context/language-context";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -14,13 +15,13 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Camera, Search, User, LogOut } from "lucide-react";
-import { useState } from "react";
+import { Camera, LogOut } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function Header() {
     const { user, signOut } = useAuth();
     const pathname = usePathname();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { t } = useLanguage();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -37,28 +38,22 @@ export function Header() {
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                     <Link href="/search" className={`transition-colors hover:text-foreground/80 ${pathname === '/search' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Marketplace
+                        {t("nav.marketplace")}
                     </Link>
                     <Link href="/sell" className={`transition-colors hover:text-foreground/80 ${pathname?.startsWith('/sell') ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Sell
+                        {t("nav.sell")}
                     </Link>
                     <Link href="/tutorial" className={`transition-colors hover:text-foreground/80 ${pathname === '/tutorial' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        How it Works
+                        {t("nav.howItWorks")}
                     </Link>
                     <Link href="/support" className={`transition-colors hover:text-foreground/80 ${pathname === '/support' ? 'text-foreground' : 'text-foreground/60'}`}>
-                        Support
+                        {t("nav.support")}
                     </Link>
                 </nav>
 
                 {/* Right Actions */}
-                <div className="flex items-center gap-4">
-                    {/* Visual Search CTA (Mobile/Desktop) */}
-                    <Link href="/search?mode=visual">
-                        <Button variant="ghost" size="icon" title="Visual Search">
-                            <Camera className="h-5 w-5" />
-                            <span className="sr-only">Visual Search</span>
-                        </Button>
-                    </Link>
+                <div className="flex items-center gap-2">
+                    <LanguageSwitcher />
 
                     {user ? (
                         <DropdownMenu>
@@ -79,28 +74,28 @@ export function Header() {
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    <Link href="/account">Account Settings</Link>
+                                    <Link href="/account">{t("nav.account")}</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link href="/account/billing">Billing</Link>
+                                    <Link href="/account/billing">{t("nav.billing")}</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link href="/messages">Messages</Link>
+                                    <Link href="/messages">{t("nav.messages")}</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => signOut()}>
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    <span>Log out</span>
+                                    <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                                    <span>{t("nav.logout")}</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
                         <div className="flex items-center gap-2">
                             <Link href="/login">
-                                <Button variant="ghost" size="sm">Log in</Button>
+                                <Button variant="ghost" size="sm">{t("nav.login")}</Button>
                             </Link>
                             <Link href="/register">
-                                <Button size="sm">Sign up</Button>
+                                <Button size="sm">{t("nav.signup")}</Button>
                             </Link>
                         </div>
                     )}
