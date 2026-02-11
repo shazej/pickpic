@@ -4,7 +4,7 @@
 **Project:** PickPic - AI-Powered Chat-to-Buy/Sell Marketplace
 **Version:** 1.0 (MVP)
 **Target Market:** Kuwait
-**Last Updated:** February 6, 2026
+**Last Updated:** February 11, 2026
 
 ---
 
@@ -16,8 +16,9 @@
 | 2 | Core Backend APIs | ✅ Complete | 100% |
 | 3 | Chat Interface UI | ✅ Complete | 100% |
 | 4 | Seller Flow & Product Details | ✅ Complete | 100% |
-| 5 | Localization & Polish | ⏳ Pending | 0% |
-| 6 | Testing & Deployment | ⏳ Pending | 0% |
+| 5 | AI Conversational Chat + Streaming | ✅ Complete | 100% |
+| 6 | Localization & Polish | 🔄 In Progress | 60% |
+| 7 | Testing & Deployment | ⏳ Pending | 0% |
 
 **Legend:** ✅ Complete | 🔄 In Progress | ⏳ Pending | ❌ Blocked
 
@@ -39,8 +40,6 @@
 | Health check API | `src/app/api/health/route.ts` | Tests all 4 services (DB, Qdrant, S3, OpenAI) |
 | Package.json | `package.json` | Prisma, OpenAI, S3, Qdrant, jose deps |
 | Environment template | `env.example` | All required variables documented |
-| npm dependencies installed | `node_modules/` | All packages installed |
-| Prisma client generated | `.prisma/client` | Types available |
 
 ### Remaining Tasks ⏳
 
@@ -76,23 +75,7 @@
 | Geo Countries API | `src/app/api/geo/countries/route.ts` GET | Active countries |
 | Geo Regions API | `src/app/api/geo/regions/route.ts` GET | Regions by country |
 | AI Listing Analysis API | `src/app/api/ai/analyze-listing-image/route.ts` POST | GPT-4o Vision → listing suggestions |
-| Middleware (JWT) | `src/middleware.ts` | JWT-based route protection |
 | Content moderation | `src/lib/ai/openai.ts` | moderateContent() |
-| Image analysis | `src/lib/ai/openai.ts` | analyzeImageForListing(), analyzeImageForSearch() |
-| Voice transcription | `src/lib/ai/openai.ts` | transcribeAudio() |
-| Qdrant indexing | In product create | Auto-indexes on creation |
-
-### Migrated Legacy Routes (Now Prisma-based)
-
-| Route | Status | Notes |
-|-------|--------|-------|
-| `/api/reviews/product` | ✅ Migrated | JWT auth, placeholder (no Review model in V1) |
-| `/api/metrics` | ✅ Migrated | Prisma-based analytics |
-| `/api/favorites/[id]` | ✅ Migrated | JWT auth, placeholder (no Favorite model in V1) |
-| `/api/seller/profile` | ✅ Migrated | Full Prisma CRUD with upsert |
-| `/api/seller/listings` | ✅ Migrated | Full Prisma query with images, filters |
-| `/api/ai/find-similar-products` | ✅ Migrated | Prisma + Qdrant vector search |
-| `/api/chat/threads` | V1 stub | P2P messaging not in V1 scope |
 
 ---
 
@@ -102,14 +85,14 @@
 
 | Task | File(s) | Notes |
 |------|---------|-------|
-| Chat Widget (floating) | `src/components/chat/chat-widget.tsx` | Wired to `/api/chat`, product cards with Call/WhatsApp |
+| Full-page chat interface | `src/components/chat/chat-interface.tsx` | Replaced floating widget with full-page chat |
 | Voice Button | `src/components/chat/voice-button.tsx` | Push-to-talk → Whisper → `/api/chat/voice` |
-| Product cards in chat | In `chat-widget.tsx` | Shows image, title, price, seller, location |
+| Product cards in chat | In `chat-interface.tsx` | Shows image, title, price, seller, location |
 | Call Seller button | In `ProductCard` component | `tel:` link with seller phone |
 | WhatsApp button | In `ProductCard` component | Deep link with pre-filled message |
-| Image search in chat | In `chat-widget.tsx` | File input → base64 → `/api/chat` with image_url |
-| Session management | In `chat-widget.tsx` | Creates/resumes sessions via API |
-| Chat in marketplace layout | `src/app/(marketplace)/layout.tsx` | ChatWidget included globally |
+| Image search in chat | In `chat-interface.tsx` | File input → S3 upload → `/api/chat` |
+| Session management | In `chat-interface.tsx` | Creates/resumes sessions via API |
+| Chat sidebar (history) | In `app-mode-context.tsx` | Lists past conversations, click to reload |
 
 ---
 
@@ -119,26 +102,114 @@
 
 | Task | File(s) | Notes |
 |------|---------|-------|
-| **Seller Listing: Upload** | `src/app/(seller)/sell/new/page.tsx` | 3-step flow: Upload → Form → Preview |
+| Seller Listing: Upload | `src/app/(seller)/sell/new/page.tsx` | 3-step: Upload → Form → Preview |
 | S3 presigned upload | In sell/new page | Client → presigned URL → PUT to S3 |
-| AI image analysis | `/api/ai/analyze-listing-image` + sell/new | GPT-4o Vision → auto-fill title, description, category, price |
-| Multi-image upload (up to 8) | In sell/new page | Additional images with S3 upload per image |
-| Image preview gallery | In sell/new page | Thumbnails with upload progress, main badge |
-| **Listing Preview** | `src/components/seller/listing-preview.tsx` | Shows full preview before publish |
-| **Listing Form** | `src/components/seller/listing-form.tsx` | React Hook Form + Zod validation |
-| Publish to API | In sell/new page | POST `/api/products` with imageUrls, AI moderation |
+| AI image analysis | `/api/ai/analyze-listing-image` | GPT-4o Vision → auto-fill title, description, category, price |
+| Listing Preview | `src/components/seller/listing-preview.tsx` | Full preview before publish |
+| Listing Form | `src/components/seller/listing-form.tsx` | React Hook Form + Zod validation |
 | Content moderation | In `/api/products` POST | AI checks for prohibited items |
-| **Seller Dashboard** | `src/app/(marketplace)/seller/dashboard/products/page.tsx` | Fetches from `/api/seller/listings` |
-| Edit product | In dashboard products | Dialog with title/price → PUT `/api/products/[id]` |
-| Delete product | In dashboard products | DELETE `/api/products/[id]` with Qdrant cleanup |
-| Mark as Sold | In dashboard products | PUT status to 'sold' |
-| Product views/contacts | In dashboard products | Shows viewCount, contactCount from API |
-| **Product Detail Page** | `src/app/(marketplace)/p/[productId]/page.tsx` | Fetches from `/api/products/[id]` (was hardcoded mock) |
-| Call Seller (product page) | In product detail page | `tel:` link with seller's public phone |
-| WhatsApp Seller (product page) | In product detail page | Deep link with pre-filled message |
-| Seller verification badge | In product detail page | Blue checkmark for verified sellers |
-| Negotiable badge | In product detail page | Green badge when isNegotiable is true |
-| Image gallery | In product detail page | Multiple images with thumbnails |
+| Seller Dashboard | `src/app/(marketplace)/seller/dashboard/products/page.tsx` | Edit/delete/mark sold |
+| Product Detail Page | `src/app/(marketplace)/p/[productId]/page.tsx` | Full product with images, seller |
+
+---
+
+## Sprint 5: AI Conversational Chat + Streaming — 100% ✅
+
+### Completed February 9-11, 2026
+
+| Task | File(s) | Notes |
+|------|---------|-------|
+| **OpenAI Tool Calling** | `src/lib/ai/tools.ts`, `src/app/api/chat/route.ts` | 5 tools: search_products, ask_clarification, create_listing, analyze_image_for_search, analyze_image_for_listing |
+| **Conversational AI** | `src/lib/ai/openai.ts` | System prompt with clarification limits, language matching |
+| **Clarification Enforcement** | `src/app/api/chat/route.ts` | Max 2 clarifications, then force search (prompt + code enforcement) |
+| **Unified Mode** | `src/components/chat/chat-interface.tsx` | Removed buy/sell toggle; AI detects intent from image+text |
+| **Intent Picker** | `chat-interface.tsx` | When image uploaded, shows "Find similar" / "Sell this item" buttons |
+| **SSE Streaming Response** | `src/app/api/chat/route.ts` | Server-Sent Events with ReadableStream, token-by-token text |
+| **Streaming Client** | `chat-interface.tsx` | SSE reader with progressive text rendering |
+| **Status Events** | `route.ts` → `chat-interface.tsx` | "Thinking...", "Searching products...", "Analyzing image..." |
+| **Inline Skeleton** | `chat-interface.tsx` | Spinner + status text inside assistant message bubble |
+| **3-Card Limit + See More** | `chat-interface.tsx` | Max 3 product cards inline, "See all N results" button |
+| **Products Overlay** | `chat-interface.tsx` | Full overlay covering chat area with all results, closeable |
+| **executeCreateListing** | `route.ts` | Real product creation: seller profile, DB, images, Qdrant indexing |
+| **Sell Flow Draft Card** | `chat-interface.tsx` `ListingDraftCard` | Image gallery, edit mode, inline price input, publish validation |
+| **Quick Price Entry** | `chat-interface.tsx` | Inline price input with confirm/cancel buttons, no pre-fill |
+| **Publish Validation** | `chat-interface.tsx` | Disabled until price is set, "Set price to publish" text |
+| **Draft Persistence Fix** | `chat-interface.tsx` | `skipNextReload` ref prevents session reload from wiping draft |
+| **Buy Flow Fix** | `route.ts` | `imageAnalysis` only set by `analyze_image_for_listing`, not search |
+
+### SSE Event Protocol
+
+```
+Client → POST /api/chat (JSON body)
+Server → SSE stream with events:
+
+event: status    → { text: "Thinking..." }           // Tool execution feedback
+event: delta     → { content: "word " }               // Streaming text tokens
+event: products  → { products: [...], count: N }      // Search results (appear immediately)
+event: analysis  → { image_analysis: {...} }           // Listing analysis (sell flow)
+event: done      → { session_id, message_id }          // Final event, triggers draft creation
+```
+
+### Key Architecture Decisions
+
+- **All OpenAI calls use `stream: true`** — text deltas forwarded to client in real-time
+- **Tool calls accumulated from stream chunks** via `toolCallChunks` Map by index
+- **Products sent via SSE event** before final text, so cards appear while AI writes response
+- **Draft card price always starts at 0** — user must explicitly set price before publishing
+- **Clarification limit**: prompt says "MAX 1-2" + code tracks `clarificationCount` and forces search at 2
+
+---
+
+## Sprint 6: Localization & Polish — 60%
+
+### Completed Tasks ✅
+
+| Task | Notes |
+|------|-------|
+| Arabic translations (basic) | Common UI strings in Arabic |
+| RTL layout support | CSS direction support |
+| Language context | `useLanguage()` hook for locale switching |
+| AI language matching | AI responds in user's language (Arabic/English) |
+| Chat sidebar with history | Past conversations listed and loadable |
+
+### Remaining Tasks ⏳
+
+| Task | Notes |
+|------|-------|
+| Complete Arabic translations | All strings including error messages |
+| Location selector component | Country/region picker UI |
+| UI polish and responsive fixes | Mobile optimization |
+| Dark mode | Theme switching |
+
+---
+
+## Core Feature Flows (V1 — Current Implementation)
+
+### Buyer: Chat → AI Search → Products → Contact Seller
+```
+1. User opens chat (full-page, homepage)
+2. Types text / records voice / uploads image
+3. If image uploaded: Intent picker shown ("Find similar" / "Sell this item")
+4. "Find similar" → AI calls analyze_image_for_search → search_products
+5. Text query → AI decides: search_products OR ask_clarification (max 2)
+6. SSE stream: "Thinking..." → "Searching..." → product cards appear → AI text streams
+7. Max 3 cards inline, "See all N results" opens overlay
+8. Each card: image, title, price, seller, location
+9. Click card → ProductDetailDialog with Call/WhatsApp buttons
+```
+
+### Seller: Chat → Upload → AI Analysis → Draft → Price → Publish
+```
+1. User uploads image in chat
+2. Intent picker: clicks "Sell this item"
+3. AI calls analyze_image_for_listing → SSE analysis event
+4. Draft card appears: images, AI-generated title/description/category
+5. Price shows inline input (empty, user must enter)
+6. User enters price → confirms with tick button
+7. "Publish Listing" button enables → POST /api/products
+8. Product created in DB + indexed in Qdrant
+9. User can also click "Edit" for full form editing
+```
 
 ---
 
@@ -153,11 +224,10 @@ src/app/api/
 │   └── me/route.ts          ✅ GET  - Current user
 │
 ├── chat/
-│   ├── route.ts             ✅ POST - AI search (text/voice/image)
+│   ├── route.ts             ✅ POST - AI chat with SSE streaming + tool calling
 │   ├── voice/route.ts       ✅ POST - Voice transcription
 │   ├── sessions/route.ts    ✅ GET  - Chat sessions list
-│   ├── sessions/[id]/route.ts ✅ GET - Session messages
-│   └── threads/             ⚠️ V1 stub (P2P not in scope)
+│   └── sessions/[id]/route.ts ✅ GET - Session messages
 │
 ├── products/
 │   ├── route.ts             ✅ GET/POST - List/Create
@@ -172,46 +242,13 @@ src/app/api/
 │   └── regions/route.ts     ✅ GET  - Regions by country
 │
 ├── ai/
-│   ├── analyze-listing-image/route.ts ✅ POST - AI image analysis for listings
-│   └── find-similar-products/route.ts ✅ POST - Qdrant vector search
+│   ├── analyze-listing-image/route.ts ✅ POST - AI image analysis
+│   └── find-similar-products/route.ts ✅ POST - Vector search
 │
 ├── health/route.ts          ✅ GET  - Health check
-├── reviews/product/route.ts ✅ JWT auth (placeholder)
-├── metrics/route.ts         ✅ Prisma analytics
-├── favorites/[id]/route.ts  ✅ JWT auth (placeholder)
 └── seller/
     ├── profile/route.ts     ✅ Prisma CRUD
     └── listings/route.ts    ✅ Prisma query with images
-```
-
----
-
-## Core Feature Flows (V1)
-
-### Buyer: Chat → Products → Contact Seller
-```
-1. User opens ChatWidget (floating button, bottom-right)
-2. Types text / records voice / uploads image
-3. Voice → Whisper transcription → text
-4. Image → GPT-4o Vision → JSON → text-embedding-3-small → Qdrant
-5. Text → chatWithProducts() → search query → embedding → Qdrant
-6. Results displayed as ProductCards (image, title, price, seller, location)
-7. Each card has: Call button (tel:), WhatsApp button (wa.me deep link)
-8. Clicking card navigates to /p/[id] product detail page
-9. Product page shows full details + Call/WhatsApp/Message buttons
-```
-
-### Seller: Upload → AI Analysis → Preview → Publish
-```
-1. Seller navigates to /sell/new
-2. Uploads product photo via drag-and-drop
-3. Image uploaded to S3 via presigned URL
-4. AI analyzes image (GPT-4o Vision) → auto-fills title, description, category, price
-5. Seller reviews/edits pre-filled form, adds more images (up to 8)
-6. Clicks "Create Listing" → preview step shows full listing
-7. Clicks "Publish" → POST /api/products (AI moderation check)
-8. Product created in DB + indexed in Qdrant for search
-9. Seller manages listings in /seller/dashboard/products (edit/delete/mark sold)
 ```
 
 ---
@@ -220,15 +257,15 @@ src/app/api/
 
 ```
 src/lib/
-├── ai/openai.ts             ✅ OpenAI service (chat, voice, vision, embeddings, moderation)
+├── ai/
+│   ├── openai.ts            ✅ OpenAI service (chat, voice, vision, embeddings, moderation)
+│   └── tools.ts             ✅ Tool definitions for OpenAI function calling (5 tools)
 ├── auth/jwt.ts              ✅ JWT utilities (generate, verify, cookies, guards)
 ├── db/prisma.ts             ✅ Prisma client singleton
 ├── qdrant/client.ts         ✅ Qdrant vector DB client
-├── s3/client.ts             ✅ AWS S3 client (presign, upload, delete, move)
-├── auth.ts                  ⚠️ Legacy compatibility shim → redirects to auth/jwt.ts
-└── db.ts                    ⚠️ Legacy compatibility shim → logs warning
+└── s3/client.ts             ✅ AWS S3 client (presign, upload, delete, CDN URL)
 
-src/middleware.ts             ✅ JWT-based route protection (was using old session system)
+src/middleware.ts             ✅ JWT-based route protection
 
 prisma/
 ├── schema.prisma            ✅ 15 models, enums, indexes
@@ -242,7 +279,7 @@ prisma/
 ```
 src/components/
 ├── chat/
-│   ├── chat-widget.tsx      ✅ Floating AI search with voice, image, product cards
+│   ├── chat-interface.tsx   ✅ Full-page AI chat with streaming, products, draft cards, overlay
 │   └── voice-button.tsx     ✅ Push-to-talk recording → Whisper transcription
 ├── seller/
 │   ├── listing-form.tsx     ✅ React Hook Form + Zod validation
@@ -250,26 +287,8 @@ src/components/
 ├── product/
 │   ├── product-gallery.tsx  ✅ Image gallery with thumbnails
 │   └── message-seller-button.tsx ✅ Creates message thread
-├── search/
-│   └── visual-search-uploader.tsx ✅ Drag-and-drop image upload
 └── ui/                      ✅ shadcn/ui components (40+ components)
 ```
-
----
-
-## Legacy Code Cleanup
-
-| Old File/Dir | Action | Notes |
-|-------------|--------|-------|
-| `src/ai/genkit.ts` | Removed | Replaced by `src/lib/ai/openai.ts` |
-| `src/ai/dev.ts` | Removed | Dev script for old Genkit flows |
-| `src/ai/flows/*.ts` (6 flows) | Replaced with stubs | 3 flows still imported by components |
-| `src/lib/firebase.ts` | Removed | Firebase auth no longer used |
-| `src/lib/auth.ts` | Shimmed | Redirects getSession() to JWT getCurrentUser() |
-| `src/lib/db.ts` | Shimmed | Returns empty results, logs migration warning |
-| Old middleware (session-based) | Rewritten | Now uses JWT verification directly |
-| Upload API (local disk) | Rewritten | Now uses S3 via `@/lib/s3/client` |
-| Chat threads (MSSQL) | Stubbed | P2P messaging not in V1 |
 
 ---
 
@@ -278,12 +297,13 @@ src/components/
 | Decision | Choice | Status |
 |----------|--------|--------|
 | ORM | Prisma | ✅ Implemented |
-| Database | PostgreSQL | ✅ Schema ready, needs `db push` |
+| Database | PostgreSQL | ✅ Schema ready |
 | Vector DB | Qdrant | ✅ Client ready |
-| Storage | AWS S3 (me-south-1) | ✅ Client ready |
-| AI Provider | OpenAI (GPT-4o, Whisper) | ✅ Service ready |
-| Auth | JWT (jose library) | ✅ Implemented + middleware |
+| Storage | AWS S3 (eu-north-1) | ✅ CORS configured |
+| AI Provider | OpenAI (GPT-4o, Whisper) | ✅ With tool calling |
+| Auth | JWT (jose library) | ✅ Implemented |
 | Image Search | Vision → JSON → Text Embedding | ✅ Implemented |
+| Chat API | SSE Streaming + Tool Calling | ✅ Implemented |
 | Messaging | Direct call to seller (no P2P chat) | Per V1 spec |
 
 ---
@@ -295,7 +315,7 @@ DATABASE_URL          - PostgreSQL connection string
 OPENAI_API_KEY        - OpenAI API key
 QDRANT_URL            - Qdrant vector DB URL
 QDRANT_API_KEY        - Qdrant API key (optional)
-AWS_REGION            - AWS region (me-south-1)
+AWS_REGION            - AWS region (eu-north-1)
 AWS_ACCESS_KEY_ID     - AWS access key
 AWS_SECRET_ACCESS_KEY - AWS secret key
 S3_BUCKET_NAME        - S3 bucket name
@@ -309,41 +329,12 @@ NODE_ENV              - Environment (development/production)
 
 ## Next Steps
 
-1. **DB Setup:** Run `prisma db push` + `prisma db seed` (needs PostgreSQL connectivity)
-2. **Sprint 5:** Arabic localization + RTL support
-3. **Sprint 6:** E2E testing + production deployment
-4. **Post-V1:** Add Favorite/Review Prisma models, P2P messaging
+1. **Complete Arabic translations** — all strings including error messages
+2. **UI polish** — mobile responsiveness, dark mode
+3. **E2E testing** — chat flow, seller flow, auth flow
+4. **Production deployment** — PM2 + NGINX on Windows Server
+5. **Post-V1** — Favorites, Reviews, P2P messaging
 
 ---
 
-## Commands Reference
-
-```bash
-# Install dependencies
-npm install
-
-# Generate Prisma client
-npx prisma generate
-
-# Push schema to database (dev)
-npx prisma db push
-
-# Seed database
-npx prisma db seed
-
-# Open Prisma Studio
-npx prisma studio
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Type check
-npm run typecheck
-```
-
----
-
-*Last Updated: February 6, 2026*
+*Last Updated: February 11, 2026*

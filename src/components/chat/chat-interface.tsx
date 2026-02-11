@@ -2,7 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +26,19 @@ import {
   Camera,
   MapPin,
   Tag,
+  Check,
+  Pencil,
+  Plus,
+  ShoppingBag,
+  Store,
+  LogIn,
+  X,
+  ChevronRight,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { LogIn } from "lucide-react";
 import { VoiceButton } from "./voice-button";
 import { useLanguage } from "@/context/language-context";
 import { useAppMode } from "@/context/app-mode-context";
@@ -46,15 +61,45 @@ export interface ChatProduct {
   location?: { region?: string; region_ar?: string };
 }
 
+export interface ListingDraft {
+  images: { previewUrl: string; s3Url?: string }[];
+  title: string;
+  description: string;
+  category: string;
+  condition: string;
+  price: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
   image?: string;
   products?: ChatProduct[];
+  draft?: ListingDraft;
+  published?: { id: string; title: string };
+  intentPicker?: { imageUrl: string; previewUrl: string };
 }
 
 const MESSAGES_STORAGE_PREFIX = "pickpic_messages_";
+
+const CATEGORIES = [
+  "vehicles",
+  "electronics",
+  "property",
+  "fashion",
+  "furniture",
+  "services",
+  "other",
+] as const;
+
+const CONDITIONS = [
+  "new",
+  "like_new",
+  "good",
+  "fair",
+  "poor",
+] as const;
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -332,6 +377,271 @@ function ProductCard({
 }
 
 // ============================================
+// Listing Draft Card (Sell Flow)
+// ============================================
+
+function ListingDraftCard({
+  draft,
+  onUpdate,
+  onPublish,
+  onAddImage,
+  isPublishing,
+  t,
+}: {
+  draft: ListingDraft;
+  onUpdate: (draft: ListingDraft) => void;
+  onPublish: () => void;
+  onAddImage: (file: File) => void;
+  isPublishing: boolean;
+  t: (key: TranslationKey) => string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [values, setValues] = useState(draft);
+  const addImageRef = useRef<HTMLInputElement>(null);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInput, setPriceInput] = useState("");
+
+  useEffect(() => {
+    setValues(draft);
+  }, [draft]);
+
+  const handleSave = () => {
+    onUpdate(values);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="rounded-xl border bg-card p-4 space-y-3 shadow-sm">
+        {/* Images */}
+        <div className="flex gap-2 flex-wrap">
+          {values.images.map((img, i) => (
+            <div key={img.previewUrl} className="w-20 h-20 relative rounded-lg overflow-hidden border">
+              <Image src={img.previewUrl} alt="" fill className="object-cover" />
+              {i === 0 && (
+                <span className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground text-[9px] text-center py-0.5">
+                  Cover
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <Input
+          value={values.title}
+          onChange={(e) => setValues({ ...values, title: e.target.value })}
+          placeholder={t("form.titlePlaceholder" as TranslationKey)}
+          className="font-medium"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">
+              {t("form.price" as TranslationKey)} (KWD)
+            </label>
+            <Input
+              type="number"
+              value={values.price}
+              onChange={(e) => setValues({ ...values, price: e.target.value })}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">
+              {t("form.category" as TranslationKey)}
+            </label>
+            <Select value={values.category} onValueChange={(v) => setValues({ ...values, category: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {t(`category.${c}` as TranslationKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">
+            {t("form.condition" as TranslationKey)}
+          </label>
+          <Select value={values.condition} onValueChange={(v) => setValues({ ...values, condition: v })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CONDITIONS.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {t(`condition.${c}` as TranslationKey)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Textarea
+          value={values.description}
+          onChange={(e) => setValues({ ...values, description: e.target.value })}
+          placeholder={t("form.descriptionPlaceholder" as TranslationKey)}
+          rows={3}
+        />
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave}>
+            {t("dashboard.save" as TranslationKey)}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            {t("dashboard.cancel" as TranslationKey)}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
+      {/* Image gallery */}
+      {draft.images.length > 0 && (
+        <div className="flex gap-1 p-2 bg-muted/30">
+          {draft.images.map((img, i) => (
+            <div key={img.previewUrl} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+              <Image src={img.previewUrl} alt="" fill className="object-cover" />
+              {!img.s3Url && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+          ))}
+          {draft.images.length < 8 && (
+            <button
+              onClick={() => addImageRef.current?.click()}
+              className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="text-[10px] mt-0.5">Add</span>
+            </button>
+          )}
+          <input
+            ref={addImageRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onAddImage(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
+      )}
+
+      <div className="p-4 space-y-3">
+        <div className="flex justify-between items-start">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-base">{draft.title}</h3>
+            {editingPrice || (!draft.price || Number(draft.price) <= 0) ? (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Input
+                  type="number"
+                  value={priceInput}
+                  onChange={(e) => setPriceInput(e.target.value)}
+                  placeholder="Enter price (KWD)"
+                  className="h-8 w-32 text-sm"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && priceInput && Number(priceInput) > 0) {
+                      onUpdate({ ...draft, price: priceInput });
+                      setEditingPrice(false);
+                    } else if (e.key === "Escape") {
+                      setPriceInput(draft.price && Number(draft.price) > 0 ? String(draft.price) : "");
+                      setEditingPrice(false);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (priceInput && Number(priceInput) > 0) {
+                      onUpdate({ ...draft, price: priceInput });
+                      setEditingPrice(false);
+                    }
+                  }}
+                  disabled={!priceInput || Number(priceInput) <= 0}
+                  className="h-8 w-8 flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setPriceInput(draft.price && Number(draft.price) > 0 ? String(draft.price) : "");
+                    setEditingPrice(false);
+                  }}
+                  className="h-8 w-8 flex items-center justify-center rounded-md border hover:bg-muted transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <p
+                className="text-lg font-bold text-primary mt-0.5 cursor-pointer hover:underline"
+                onClick={() => {
+                  setPriceInput(String(draft.price));
+                  setEditingPrice(true);
+                }}
+              >
+                KWD {Number(draft.price).toLocaleString()}
+              </p>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="shrink-0 text-muted-foreground"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil className="h-3.5 w-3.5 ltr:mr-1 rtl:ml-1" />
+            {t("preview.edit" as TranslationKey)}
+          </Button>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <span className="text-xs bg-muted px-2.5 py-1 rounded-full">
+            {t(`category.${draft.category}` as TranslationKey)}
+          </span>
+          <span className="text-xs bg-muted px-2.5 py-1 rounded-full">
+            {t(`condition.${draft.condition}` as TranslationKey)}
+          </span>
+        </div>
+
+        {draft.description && (
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {draft.description}
+          </p>
+        )}
+
+        <Button
+          onClick={onPublish}
+          disabled={isPublishing || !draft.price || Number(draft.price) <= 0}
+          className="w-full"
+          size="lg"
+        >
+          {isPublishing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" />
+              {t("preview.publishing" as TranslationKey)}
+            </>
+          ) : !draft.price || Number(draft.price) <= 0 ? (
+            "Set price to publish"
+          ) : (
+            t("preview.publish" as TranslationKey)
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // Chat Interface
 // ============================================
 
@@ -368,9 +678,14 @@ export function ChatInterface({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ChatProduct | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
+  const [overlayProducts, setOverlayProducts] = useState<ChatProduct[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  // Flag to skip message reload when we just created a session (prevents draft card from disappearing)
+  const skipNextReload = useRef(false);
 
   // Current chat ID for persistence (this is the server session ID for logged-in users)
   const currentChatId = appModeCtx?.currentChatId;
@@ -381,6 +696,13 @@ export function ChatInterface({
       setMessages([]);
       setSessionId(null);
       setIsLoading(false);
+      return;
+    }
+
+    // Skip reload if we just created this session (draft card would be wiped)
+    if (skipNextReload.current) {
+      skipNextReload.current = false;
+      setSessionId(currentChatId);
       return;
     }
 
@@ -479,38 +801,43 @@ export function ChatInterface({
     return public_url;
   }, []);
 
-  const sendMessage = useCallback(
-    async (text: string, file?: File | null) => {
-      if (!text && !file) return;
+  // SSE event parser helper
+  const parseSSEEvents = useCallback((chunk: string): Array<{ event: string; data: string }> => {
+    const events: Array<{ event: string; data: string }> = [];
+    const lines = chunk.split("\n");
+    let currentEvent = "";
+    let currentData = "";
 
-      // Show user message with local preview
-      const localPreview = file ? URL.createObjectURL(file) : undefined;
-      const userMsgId = Date.now().toString();
-      const userMsg: ChatMessage = {
-        id: userMsgId,
-        role: "user",
-        text: text || t("chat.imageSearch"),
-        image: localPreview,
-      };
-      setMessages((prev) => [...prev, userMsg]);
-      setInputValue("");
-      setImagePreview(null);
-      setImageFile(null);
+    for (const line of lines) {
+      if (line.startsWith("event: ")) {
+        currentEvent = line.slice(7);
+      } else if (line.startsWith("data: ")) {
+        currentData = line.slice(6);
+      } else if (line === "" && currentEvent && currentData) {
+        events.push({ event: currentEvent, data: currentData });
+        currentEvent = "";
+        currentData = "";
+      }
+    }
+    return events;
+  }, []);
+
+  // Core function: send a text message with SSE streaming response
+  const sendMessageToAPI = useCallback(
+    async (text: string, imageUrl?: string, userMsgId?: string) => {
       setIsLoading(true);
+      setStreamingStatus(null);
+
+      // Create assistant message immediately (empty, will be filled by stream)
+      const aiMsgId = (Date.now() + 1).toString();
+      const aiMsg: ChatMessage = {
+        id: aiMsgId,
+        role: "assistant",
+        text: "",
+      };
+      setMessages((prev) => [...prev, aiMsg]);
 
       try {
-        // Upload image to S3 if present
-        let imageUrl: string | undefined;
-        if (file) {
-          imageUrl = await uploadImageToS3(file);
-          // Replace blob URL with S3 URL for persistence
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === userMsgId ? { ...m, image: imageUrl } : m
-            )
-          );
-        }
-
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -522,39 +849,431 @@ export function ChatInterface({
           }),
         });
 
-        const data = await res.json();
-
-        // If this is a new session, update the session ID and refresh sidebar
-        if (data.session_id && data.session_id !== sessionId) {
-          setSessionId(data.session_id);
-          // For logged-in users: tell the sidebar to select this new chat
-          if (authUser && appModeCtx) {
-            appModeCtx.refreshChats();
-            appModeCtx.selectChat(data.session_id);
-          }
+        if (!res.ok || !res.body) {
+          throw new Error("Failed to connect to chat API");
         }
 
-        const aiMsg: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          text: data.message?.content || t("chat.found"),
-          products: data.message?.products || [],
-        };
-        setMessages((prev) => [...prev, aiMsg]);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let receivedAnalysis: Record<string, unknown> | null = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse complete SSE events from buffer
+          const lastDoubleNewline = buffer.lastIndexOf("\n\n");
+          if (lastDoubleNewline === -1) continue;
+
+          const completePart = buffer.slice(0, lastDoubleNewline + 2);
+          buffer = buffer.slice(lastDoubleNewline + 2);
+
+          const events = parseSSEEvents(completePart);
+
+          for (const evt of events) {
+            try {
+              const parsed = JSON.parse(evt.data);
+
+              switch (evt.event) {
+                case "status":
+                  setStreamingStatus(parsed.text);
+                  break;
+
+                case "delta":
+                  setStreamingStatus(null);
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === aiMsgId
+                        ? { ...m, text: m.text + parsed.content }
+                        : m
+                    )
+                  );
+                  break;
+
+                case "products":
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === aiMsgId
+                        ? { ...m, products: parsed.products as ChatProduct[] }
+                        : m
+                    )
+                  );
+                  break;
+
+                case "analysis":
+                  // Store analysis for draft creation after text is done
+                  receivedAnalysis = parsed.image_analysis;
+                  break;
+
+                case "done": {
+                  setStreamingStatus(null);
+                  const newSessionId = parsed.session_id;
+
+                  if (newSessionId && newSessionId !== sessionId) {
+                    setSessionId(newSessionId);
+                    if (authUser && appModeCtx) {
+                      appModeCtx.refreshChats();
+                      skipNextReload.current = true;
+                      appModeCtx.selectChat(newSessionId);
+                    }
+                  }
+
+                  // If we received an analysis (sell flow), create the draft
+                  if (receivedAnalysis && imageUrl) {
+                    const imgAnalysis = receivedAnalysis as Record<string, unknown>;
+                    const suggestedPrice = imgAnalysis.suggested_price
+                      ? typeof imgAnalysis.suggested_price === "object"
+                        ? String(
+                            Math.round(
+                              ((imgAnalysis.suggested_price as { min: number; max: number }).min +
+                                (imgAnalysis.suggested_price as { min: number; max: number }).max) /
+                                2
+                            )
+                          )
+                        : String(imgAnalysis.suggested_price)
+                      : "0";
+
+                    const previewUrl =
+                      messages.find((m) => m.id === userMsgId)?.image || imageUrl;
+
+                    const draft: ListingDraft = {
+                      images: [{ previewUrl, s3Url: imageUrl }],
+                      title: (imgAnalysis.title as string) || "Untitled",
+                      description: (imgAnalysis.description as string) || "",
+                      category: (imgAnalysis.category as string) || "other",
+                      condition: "good",
+                      price: "0",
+                    };
+
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === aiMsgId ? { ...m, draft } : m
+                      )
+                    );
+                  }
+                  break;
+                }
+              }
+            } catch {
+              // Skip malformed events
+            }
+          }
+        }
       } catch {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === aiMsgId
+              ? { ...m, text: m.text || t("chat.error") }
+              : m
+          )
+        );
+      } finally {
+        setIsLoading(false);
+        setStreamingStatus(null);
+      }
+    },
+    [sessionId, locale, t, authUser, appModeCtx, messages, parseSSEEvents]
+  );
+
+  // Main send handler: text + optional file
+  const sendMessage = useCallback(
+    async (text: string, file?: File | null) => {
+      if (!text && !file) return;
+
+      const localPreview = file ? URL.createObjectURL(file) : undefined;
+      const userMsgId = Date.now().toString();
+
+      // If image only (no text) → show intent picker
+      if (file && !text.trim()) {
+        const userMsg: ChatMessage = {
+          id: userMsgId,
+          role: "user",
+          text: locale === "ar" ? "صورة مرفقة" : "Image attached",
+          image: localPreview,
+        };
+        setMessages((prev) => [...prev, userMsg]);
+        setInputValue("");
+        setImagePreview(null);
+        setImageFile(null);
+        setIsLoading(true);
+
+        try {
+          // Upload image to S3 first
+          const imageUrl = await uploadImageToS3(file);
+          // Replace blob URL with S3 URL
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === userMsgId ? { ...m, image: imageUrl } : m
+            )
+          );
+
+          // Show intent picker
+          const pickerMsg: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            text:
+              locale === "ar"
+                ? "ماذا تريد أن تفعل بهذه الصورة؟"
+                : "What would you like to do with this image?",
+            intentPicker: { imageUrl, previewUrl: localPreview || imageUrl },
+          };
+          setMessages((prev) => [...prev, pickerMsg]);
+        } catch {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: "assistant",
+              text: t("chat.error"),
+            },
+          ]);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Text message (with or without image)
+      const userMsg: ChatMessage = {
+        id: userMsgId,
+        role: "user",
+        text: text,
+        image: localPreview,
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setInputValue("");
+      setImagePreview(null);
+      setImageFile(null);
+
+      let imageUrl: string | undefined;
+      if (file) {
+        setIsLoading(true);
+        try {
+          imageUrl = await uploadImageToS3(file);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === userMsgId ? { ...m, image: imageUrl } : m
+            )
+          );
+        } catch {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: "assistant",
+              text: t("chat.error"),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      await sendMessageToAPI(text, imageUrl, userMsgId);
+    },
+    [uploadImageToS3, locale, t, sendMessageToAPI]
+  );
+
+  // Intent picker: user chose "Buy / Find similar"
+  const handleIntentBuy = useCallback(
+    (imageUrl: string, pickerMsgId: string) => {
+      // Remove the intent picker from the message
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === pickerMsgId ? { ...m, intentPicker: undefined } : m
+        )
+      );
+      const buyText =
+        locale === "ar"
+          ? "أريد البحث عن منتجات مشابهة لهذه الصورة"
+          : "I want to find products similar to this image";
+      // Add user choice as a message
+      const choiceMsg: ChatMessage = {
+        id: Date.now().toString(),
+        role: "user",
+        text: buyText,
+      };
+      setMessages((prev) => [...prev, choiceMsg]);
+      sendMessageToAPI(buyText, imageUrl);
+    },
+    [locale, sendMessageToAPI]
+  );
+
+  // Intent picker: user chose "Sell this item"
+  const handleIntentSell = useCallback(
+    (imageUrl: string, previewUrl: string, pickerMsgId: string) => {
+      // Remove the intent picker from the message
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === pickerMsgId ? { ...m, intentPicker: undefined } : m
+        )
+      );
+      const sellText =
+        locale === "ar"
+          ? "أريد بيع هذا المنتج"
+          : "I want to sell this item";
+      const choiceMsg: ChatMessage = {
+        id: Date.now().toString(),
+        role: "user",
+        text: sellText,
+      };
+      setMessages((prev) => [...prev, choiceMsg]);
+
+      // Find the user msg ID that has this image
+      const userMsgId = messages.find(
+        (m) => m.role === "user" && (m.image === imageUrl || m.image === previewUrl)
+      )?.id;
+
+      sendMessageToAPI(sellText, imageUrl, userMsgId);
+    },
+    [locale, sendMessageToAPI, messages]
+  );
+
+  // Publish a listing draft
+  const handlePublish = useCallback(
+    async (draft: ListingDraft) => {
+      if (!authUser) {
         setMessages((prev) => [
           ...prev,
           {
-            id: (Date.now() + 1).toString(),
+            id: Date.now().toString(),
             role: "assistant",
-            text: t("chat.error"),
+            text:
+              locale === "ar"
+                ? "يرجى تسجيل الدخول لنشر الإعلان"
+                : "Please log in to publish your listing",
+          },
+        ]);
+        return;
+      }
+
+      const imageUrls = draft.images
+        .map((img) => img.s3Url)
+        .filter(Boolean) as string[];
+      if (imageUrls.length === 0) return;
+
+      setIsPublishing(true);
+
+      try {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: draft.title,
+            description: draft.description,
+            price: parseFloat(draft.price),
+            categorySlug: draft.category,
+            condition: draft.condition.replace("-", "_") || "good",
+            imageUrls,
+            currency: "KWD",
+            isNegotiable: true,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to create listing");
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            text:
+              locale === "ar"
+                ? "تم نشر إعلانك بنجاح!"
+                : "Your listing has been published successfully!",
+            published: { id: data.product.id, title: data.product.title },
+          },
+        ]);
+
+        // Update sidebar title
+        if (appModeCtx) {
+          appModeCtx.updateChatTitle(data.product.title || draft.title);
+        }
+      } catch (error) {
+        const msg =
+          error instanceof Error ? error.message : "Something went wrong";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            text: `${locale === "ar" ? "فشل النشر" : "Publishing failed"}: ${msg}`,
           },
         ]);
       } finally {
-        setIsLoading(false);
+        setIsPublishing(false);
       }
     },
-    [sessionId, uploadImageToS3, locale, t, authUser, appModeCtx]
+    [authUser, locale, appModeCtx]
+  );
+
+  // Add additional image to a listing draft
+  const handleAddImageToDraft = useCallback(
+    async (file: File, msgId: string) => {
+      const previewUrl = URL.createObjectURL(file);
+
+      // Optimistically add preview
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === msgId && m.draft) {
+            return {
+              ...m,
+              draft: {
+                ...m.draft,
+                images: [...m.draft.images, { previewUrl }],
+              },
+            };
+          }
+          return m;
+        })
+      );
+
+      try {
+        const s3Url = await uploadImageToS3(file);
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id === msgId && m.draft) {
+              return {
+                ...m,
+                draft: {
+                  ...m.draft,
+                  images: m.draft.images.map((img) =>
+                    img.previewUrl === previewUrl ? { ...img, s3Url } : img
+                  ),
+                },
+              };
+            }
+            return m;
+          })
+        );
+      } catch {
+        // Remove failed image
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id === msgId && m.draft) {
+              return {
+                ...m,
+                draft: {
+                  ...m.draft,
+                  images: m.draft.images.filter(
+                    (img) => img.previewUrl !== previewUrl
+                  ),
+                },
+              };
+            }
+            return m;
+          })
+        );
+      }
+    },
+    [uploadImageToS3]
   );
 
   const handleSend = () => {
@@ -589,7 +1308,7 @@ export function ChatInterface({
   const showWelcome = messages.length === 0 && !messagesLoading;
 
   return (
-    <div className={cn("flex flex-col", className)}>
+    <div className={cn("flex flex-col relative", className)}>
       {/* Messages area */}
       <ScrollArea className={cn("flex-1", isWidget ? "p-3" : "p-4 md:p-6")}>
         <div
@@ -713,9 +1432,61 @@ export function ChatInterface({
                       className="rounded-md mb-2"
                     />
                   )}
-                  {msg.text}
+                  {/* Skeleton typing indicator for empty streaming assistant messages */}
+                  {msg.role === "assistant" && !msg.text && !msg.intentPicker && isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">
+                        {streamingStatus || (locale === "ar" ? "جاري التفكير..." : "Thinking...")}
+                      </span>
+                    </div>
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               </div>
+              {/* Intent Picker (buy or sell?) */}
+              {msg.intentPicker && (
+                <div
+                  className={cn(
+                    "mt-3 space-y-2",
+                    isWidget ? "ml-9" : "ml-10"
+                  )}
+                >
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-2"
+                      onClick={() =>
+                        handleIntentBuy(msg.intentPicker!.imageUrl, msg.id)
+                      }
+                      disabled={isLoading}
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                      {locale === "ar" ? "البحث عن مشابه" : "Find similar"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-2"
+                      onClick={() =>
+                        handleIntentSell(
+                          msg.intentPicker!.imageUrl,
+                          msg.intentPicker!.previewUrl,
+                          msg.id
+                        )
+                      }
+                      disabled={isLoading}
+                    >
+                      <Store className="h-4 w-4" />
+                      {locale === "ar" ? "بيع هذا المنتج" : "Sell this item"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Product cards (buy flow) — max 3 inline */}
               {msg.products && msg.products.length > 0 && (
                 <div
                   className={cn(
@@ -723,7 +1494,7 @@ export function ChatInterface({
                     isWidget ? "ml-9" : "ml-10"
                   )}
                 >
-                  {msg.products.slice(0, isWidget ? 3 : 5).map((p) => (
+                  {msg.products.slice(0, 3).map((p) => (
                     <ProductCard
                       key={p.id}
                       product={p}
@@ -732,28 +1503,77 @@ export function ChatInterface({
                       onViewDetails={() => setSelectedProduct(p)}
                     />
                   ))}
+                  {msg.products.length > 3 && (
+                    <button
+                      onClick={() => setOverlayProducts(msg.products!)}
+                      className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                    >
+                      {locale === "ar"
+                        ? `عرض جميع النتائج (${msg.products.length})`
+                        : `See all ${msg.products.length} results`}
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Listing Draft Card (sell flow) */}
+              {msg.draft && (
+                <div
+                  className={cn(
+                    "mt-3",
+                    isWidget ? "ml-9" : "ml-10"
+                  )}
+                >
+                  <ListingDraftCard
+                    draft={msg.draft}
+                    onUpdate={(updated) => {
+                      setMessages((prev) =>
+                        prev.map((m) =>
+                          m.id === msg.id ? { ...m, draft: updated } : m
+                        )
+                      );
+                    }}
+                    onPublish={() => handlePublish(msg.draft!)}
+                    onAddImage={(file) => handleAddImageToDraft(file, msg.id)}
+                    isPublishing={isPublishing}
+                    t={t}
+                  />
+                </div>
+              )}
+
+              {/* Published success (sell flow) */}
+              {msg.published && (
+                <div
+                  className={cn(
+                    "mt-3",
+                    isWidget ? "ml-9" : "ml-10"
+                  )}
+                >
+                  <div className="rounded-xl border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30 p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center shrink-0">
+                      <Check className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-green-800 dark:text-green-200">
+                        {locale === "ar"
+                          ? "تم نشر إعلانك!"
+                          : "Listing published!"}
+                      </p>
+                      <Link
+                        href={`/p/${msg.published.id}`}
+                        className="text-sm text-green-600 hover:underline"
+                      >
+                        {msg.published.title} &rarr;
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           ))}
 
-          {isLoading && (
-            <div className="flex gap-2.5">
-              <div
-                className={cn(
-                  "rounded-full flex items-center justify-center bg-primary/10 shrink-0",
-                  isWidget ? "h-7 w-7" : "h-8 w-8"
-                )}
-              >
-                <Bot
-                  className={cn(isWidget ? "h-3.5 w-3.5" : "h-4 w-4")}
-                />
-              </div>
-              <div className="rounded-lg p-3 bg-muted">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            </div>
-          )}
+          {/* No separate loading indicator needed — skeleton is inline in the streaming message bubble */}
 
           <div ref={scrollRef} />
         </div>
@@ -862,6 +1682,41 @@ export function ChatInterface({
           </form>
         </div>
       </div>
+
+      {/* Products Overlay — covers chat area when "See more" is clicked */}
+      {overlayProducts && (
+        <div className="absolute inset-0 z-20 bg-background flex flex-col">
+          {/* Overlay header */}
+          <div className="flex items-center justify-between border-b px-4 py-3">
+            <h3 className="font-semibold text-base">
+              {locale === "ar"
+                ? `${overlayProducts.length} نتيجة`
+                : `${overlayProducts.length} results`}
+            </h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOverlayProducts(null)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          {/* Overlay body — scrollable list of all products */}
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-2 max-w-2xl mx-auto">
+              {overlayProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  locale={locale}
+                  t={t}
+                  onViewDetails={() => setSelectedProduct(p)}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
 
       {/* Product Detail Dialog */}
       <ProductDetailDialog

@@ -1,5 +1,5 @@
-// POST /api/chat - Core AI search endpoint with OpenAI tool calling
-// Enables conversational multi-turn interactions with intelligent tool selection
+// POST /api/chat - Core AI chat endpoint with OpenAI tool calling + SSE streaming
+// Streams: status events during tool execution, text deltas for AI response, product/analysis data
 
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
@@ -7,7 +7,6 @@ import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import {
   getTextEmbedding,
-  chatWithProducts,
   processImageForSearch,
   analyzeImageForListing,
   generateSystemPrompt,
@@ -19,13 +18,18 @@ import {
   type AnalyzeImageParams,
   type AskClarificationParams,
 } from '@/lib/ai/tools';
-import { searchProducts } from '@/lib/qdrant/client';
+import { searchProducts, indexProduct } from '@/lib/qdrant/client';
 import { getPresignedReadUrl, getKeyFromUrl, CDN_URL } from '@/lib/s3/client';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// SSE helper: format an event for the stream
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,256 +97,380 @@ export async function POST(request: NextRequest) {
     const conversationHistory = await prisma.chatMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: 'asc' },
-      take: 20, // Last 20 messages for context
+      take: 20,
     });
 
     // ============================
-    // BUILD MESSAGES FOR OPENAI TOOL CALLING
+    // RESOLVE IMAGE URL
     // ============================
+    let resolvedImageUrl = image_url || null;
+    if (!resolvedImageUrl) {
+      const lastImageMsg = [...conversationHistory]
+        .reverse()
+        .find((msg) => msg.hasImage && msg.imageUrl);
+      if (lastImageMsg) {
+        resolvedImageUrl = lastImageMsg.imageUrl;
+      }
+    }
+
+    // ============================
+    // BUILD MESSAGES FOR OPENAI
+    // ============================
+    let userContent = userQuery;
+    if (image_url) {
+      userContent = userQuery
+        ? `${userQuery}\n[User uploaded an image: ${image_url}]`
+        : `[User uploaded an image: ${image_url}]`;
+    }
+
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       {
         role: 'system',
         content: generateSystemPrompt(countryCode, language),
       },
-      ...conversationHistory.map((msg) => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      })),
+      ...conversationHistory.map((msg) => {
+        if (msg.hasImage && msg.imageUrl) {
+          return {
+            role: msg.role as 'user' | 'assistant',
+            content: `${msg.content}\n[Image: ${msg.imageUrl}]`,
+          };
+        }
+        return {
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        };
+      }),
       {
         role: 'user',
-        content: userQuery || (image_url ? '[Image uploaded]' : ''),
+        content: userContent || '[Empty message]',
       },
     ];
 
     // ============================
-    // TOOL CALLING LOOP
+    // SSE STREAMING RESPONSE
     // ============================
-    let assistantResponse = '';
-    let products: Array<Record<string, unknown>> = [];
-    let imageAnalysis = null;
-    let searchQuery = userQuery;
-    const maxIterations = 5; // Prevent infinite loops
-    let iterations = 0;
-    let clarificationCount = 0; // Track clarifications to enforce max
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          let products: Array<Record<string, unknown>> = [];
+          let imageAnalysis = null;
+          let searchQuery = userQuery;
+          const maxIterations = 5;
+          let iterations = 0;
+          let clarificationCount = 0;
+          let assistantResponse = '';
 
-    while (iterations < maxIterations) {
-      iterations++;
+          // Send initial thinking status
+          controller.enqueue(encoder.encode(sseEvent('status', {
+            text: language === 'ar' ? 'جاري التفكير...' : 'Thinking...',
+          })));
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-        tools: getToolDefinitions(),
-        tool_choice: 'auto',
-        temperature: 0.7,
-      });
+          // ============================
+          // FULLY STREAMING TOOL CALLING LOOP
+          // Every OpenAI call uses stream:true so text arrives token-by-token
+          // ============================
 
-      const choice = completion.choices[0];
+          while (iterations < maxIterations) {
+            iterations++;
 
-      // Check if AI wants to call tools
-      if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
-        // Add assistant's tool call message to conversation
-        messages.push(choice.message);
+            const streamCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages,
+              tools: getToolDefinitions(),
+              tool_choice: 'auto',
+              temperature: 0.7,
+              stream: true,
+            });
 
-        // Execute each tool call
-        for (const toolCall of choice.message.tool_calls) {
-          const toolName = toolCall.function.name;
-          const toolArgs = JSON.parse(toolCall.function.arguments);
+            // Accumulate streamed response: could be tool calls OR text
+            const toolCallChunks = new Map<number, { id: string; name: string; arguments: string }>();
+            let hasToolCalls = false;
+            let responseContent = '';
 
-          // Track clarifications and enforce limit
-          if (toolName === 'ask_clarification') {
-            clarificationCount++;
+            for await (const chunk of streamCompletion) {
+              const delta = chunk.choices[0]?.delta;
+              if (!delta) continue;
 
-            // If we've asked 2+ clarifications, override with search instead
-            if (clarificationCount >= 2) {
-              console.log('Max clarifications reached, forcing search instead');
-              // Override: search with whatever info we have
-              const forcedSearchArgs: SearchProductsParams = {
-                search_query: userQuery || 'products',
-              };
-              const searchResult = await executeSearchProducts(
-                forcedSearchArgs,
-                countryCode,
-                regionId
-              );
-              products = searchResult.products;
-              searchQuery = forcedSearchArgs.search_query;
+              // Accumulate tool call chunks
+              if (delta.tool_calls) {
+                hasToolCalls = true;
+                for (const tc of delta.tool_calls) {
+                  const existing = toolCallChunks.get(tc.index) || { id: '', name: '', arguments: '' };
+                  if (tc.id) existing.id = tc.id;
+                  if (tc.function?.name) existing.name = tc.function.name;
+                  if (tc.function?.arguments) existing.arguments += tc.function.arguments;
+                  toolCallChunks.set(tc.index, existing);
+                }
+              }
 
-              // Add a message to explain we're searching
+              // Stream text content directly to client (real-time, token by token)
+              if (delta.content) {
+                // Clear any status on first text token
+                if (!responseContent) {
+                  controller.enqueue(encoder.encode(sseEvent('status', { text: '' })));
+                }
+                responseContent += delta.content;
+                controller.enqueue(encoder.encode(sseEvent('delta', { content: delta.content })));
+              }
+            }
+
+            if (hasToolCalls) {
+              // AI wants to call tools — build message and execute them
+              const toolCallsArray = Array.from(toolCallChunks.values());
+
               messages.push({
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({
-                  clarification: 'Understood. Let me search for what you described.',
-                  forced_search: true,
-                }),
+                role: 'assistant',
+                content: responseContent || null,
+                tool_calls: toolCallsArray.map((tc) => ({
+                  id: tc.id,
+                  type: 'function' as const,
+                  function: { name: tc.name, arguments: tc.arguments },
+                })),
               });
-              continue; // Skip the normal tool execution
-            }
-          }
 
-          let toolResult: unknown;
+              for (const tc of toolCallsArray) {
+                const toolName = tc.name;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                let toolArgs: any;
+                try {
+                  toolArgs = JSON.parse(tc.arguments);
+                } catch {
+                  toolArgs = {};
+                }
 
-          try {
-            switch (toolName) {
-              case 'search_products':
-                const searchResult = await executeSearchProducts(
-                  toolArgs as SearchProductsParams,
-                  countryCode,
-                  regionId
-                );
-                products = searchResult.products;
-                searchQuery = toolArgs.search_query;
-                toolResult = searchResult;
-                break;
-
-              case 'create_listing':
-                toolResult = await executeCreateListing(
-                  toolArgs as CreateListingParams,
-                  user
-                );
-                break;
-
-              case 'ask_clarification':
-                toolResult = {
-                  clarification: (toolArgs as AskClarificationParams).question,
+                // Send status event to client
+                const statusMessages: Record<string, string> = {
+                  search_products: language === 'ar' ? 'جاري البحث عن المنتجات...' : 'Searching products...',
+                  analyze_image_for_search: language === 'ar' ? 'جاري تحليل الصورة...' : 'Analyzing image...',
+                  analyze_image_for_listing: language === 'ar' ? 'جاري تحليل الصورة للإعلان...' : 'Analyzing image for listing...',
+                  create_listing: language === 'ar' ? 'جاري إنشاء الإعلان...' : 'Creating listing...',
+                  ask_clarification: '',
                 };
-                break;
+                const statusText = statusMessages[toolName];
+                if (statusText) {
+                  controller.enqueue(encoder.encode(sseEvent('status', { text: statusText })));
+                }
 
-              case 'analyze_image_for_search':
-                if (image_url) {
-                  // Get presigned URL for OpenAI
-                  let imageUrlForAI = image_url;
-                  const s3Key = getKeyFromUrl(image_url);
-                  if (s3Key) {
-                    imageUrlForAI = await getPresignedReadUrl(s3Key);
+                // Track clarifications and enforce limit
+                if (toolName === 'ask_clarification') {
+                  clarificationCount++;
+
+                  if (clarificationCount >= 2) {
+                    console.log('Max clarifications reached, forcing search instead');
+                    const forcedSearchArgs: SearchProductsParams = {
+                      search_query: userQuery || 'products',
+                    };
+                    controller.enqueue(encoder.encode(sseEvent('status', {
+                      text: language === 'ar' ? 'جاري البحث عن المنتجات...' : 'Searching products...',
+                    })));
+                    const searchResult = await executeSearchProducts(
+                      forcedSearchArgs,
+                      countryCode,
+                      regionId
+                    );
+                    products = searchResult.products;
+                    searchQuery = forcedSearchArgs.search_query;
+
+                    controller.enqueue(encoder.encode(sseEvent('products', {
+                      products,
+                      count: products.length,
+                    })));
+
+                    messages.push({
+                      role: 'tool',
+                      tool_call_id: tc.id,
+                      content: JSON.stringify({
+                        clarification: 'Understood. Let me search for what you described.',
+                        forced_search: true,
+                      }),
+                    });
+                    continue;
                   }
+                }
 
-                  const imageResult = await processImageForSearch(
-                    imageUrlForAI,
-                    countryCode,
-                    language
-                  );
-                  imageAnalysis = imageResult.analysis;
+                let toolResult: unknown;
+
+                try {
+                  switch (toolName) {
+                    case 'search_products': {
+                      const searchResult = await executeSearchProducts(
+                        toolArgs as SearchProductsParams,
+                        countryCode,
+                        regionId
+                      );
+                      products = searchResult.products;
+                      searchQuery = (toolArgs as SearchProductsParams).search_query;
+                      toolResult = searchResult;
+
+                      controller.enqueue(encoder.encode(sseEvent('products', {
+                        products,
+                        count: products.length,
+                      })));
+                      break;
+                    }
+
+                    case 'create_listing':
+                      toolResult = await executeCreateListing(
+                        toolArgs as CreateListingParams,
+                        user
+                      );
+                      break;
+
+                    case 'ask_clarification':
+                      toolResult = {
+                        clarification: (toolArgs as AskClarificationParams).question,
+                      };
+                      break;
+
+                    case 'analyze_image_for_search':
+                      if (resolvedImageUrl) {
+                        let imageUrlForAI = resolvedImageUrl;
+                        const s3Key = getKeyFromUrl(resolvedImageUrl);
+                        if (s3Key) {
+                          imageUrlForAI = await getPresignedReadUrl(s3Key);
+                        }
+
+                        const imageResult = await processImageForSearch(
+                          imageUrlForAI,
+                          countryCode,
+                          language
+                        );
+                        toolResult = {
+                          analysis: imageResult.analysis,
+                          search_text:
+                            language === 'ar'
+                              ? imageResult.analysis.search_text_ar
+                              : imageResult.analysis.search_text,
+                        };
+                      } else {
+                        toolResult = { error: 'No image provided' };
+                      }
+                      break;
+
+                    case 'analyze_image_for_listing':
+                      if (resolvedImageUrl) {
+                        let imageUrlForAI = resolvedImageUrl;
+                        const s3Key = getKeyFromUrl(resolvedImageUrl);
+                        if (s3Key) {
+                          imageUrlForAI = await getPresignedReadUrl(s3Key);
+                        }
+
+                        const listingAnalysis = await analyzeImageForListing(
+                          imageUrlForAI,
+                          countryCode
+                        );
+                        imageAnalysis = listingAnalysis;
+                        toolResult = listingAnalysis;
+
+                        controller.enqueue(encoder.encode(sseEvent('analysis', {
+                          image_analysis: imageAnalysis,
+                        })));
+                      } else {
+                        toolResult = { error: 'No image provided' };
+                      }
+                      break;
+
+                    default:
+                      toolResult = { error: 'Unknown tool' };
+                  }
+                } catch (error) {
+                  console.error(`Tool execution error for ${toolName}:`, error);
                   toolResult = {
-                    analysis: imageResult.analysis,
-                    search_text:
-                      language === 'ar'
-                        ? imageResult.analysis.search_text_ar
-                        : imageResult.analysis.search_text,
+                    error: 'Tool execution failed',
+                    message: error instanceof Error ? error.message : 'Unknown error',
                   };
-                } else {
-                  toolResult = { error: 'No image provided' };
                 }
-                break;
 
-              case 'analyze_image_for_listing':
-                if (image_url) {
-                  // Get presigned URL for OpenAI
-                  let imageUrlForAI = image_url;
-                  const s3Key = getKeyFromUrl(image_url);
-                  if (s3Key) {
-                    imageUrlForAI = await getPresignedReadUrl(s3Key);
-                  }
-
-                  const listingAnalysis = await analyzeImageForListing(
-                    imageUrlForAI,
-                    countryCode
-                  );
-                  imageAnalysis = listingAnalysis;
-                  toolResult = listingAnalysis;
-                } else {
-                  toolResult = { error: 'No image provided' };
-                }
-                break;
-
-              default:
-                toolResult = { error: 'Unknown tool' };
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: tc.id,
+                  content: JSON.stringify(toolResult),
+                });
+              }
+            } else {
+              // AI responded with pure text (no tools) — already streamed via deltas above
+              assistantResponse = responseContent;
+              break;
             }
-          } catch (error) {
-            console.error(`Tool execution error for ${toolName}:`, error);
-            toolResult = {
-              error: 'Tool execution failed',
-              message: error instanceof Error ? error.message : 'Unknown error',
-            };
           }
 
-          // Add tool result to conversation
-          messages.push({
-            role: 'tool',
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(toolResult),
+          // Safety check: if we hit max iterations without a response
+          if (iterations >= maxIterations && !assistantResponse) {
+            assistantResponse =
+              language === 'ar'
+                ? 'عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى.'
+                : 'Sorry, there was an error processing your request. Please try again.';
+            controller.enqueue(encoder.encode(sseEvent('delta', { content: assistantResponse })));
+          }
+
+          const latencyMs = Date.now() - startTime;
+
+          // ============================
+          // SAVE MESSAGES TO DB
+          // ============================
+          await prisma.chatMessage.create({
+            data: {
+              sessionId,
+              role: 'user',
+              content: userQuery || '[Image search]',
+              hasImage: !!image_url,
+              imageUrl: image_url || null,
+              hasVoice: !!voice_transcript,
+              voiceTranscript: voice_transcript || null,
+            },
           });
+
+          const productIds = products.map((p) => p.id as string);
+          const assistantMessage = await prisma.chatMessage.create({
+            data: {
+              sessionId,
+              role: 'assistant',
+              content: assistantResponse,
+              productIds: productIds,
+            },
+          });
+
+          // Log search for analytics
+          if (products.length > 0) {
+            await prisma.searchLog.create({
+              data: {
+                sessionId,
+                userId: user?.userId || null,
+                queryText: searchQuery || userQuery,
+                queryType: image_url ? 'image' : voice_transcript ? 'voice' : 'text',
+                filters: { country_code: countryCode } as object,
+                resultCount: products.length,
+                latencyMs,
+                countryCode,
+              },
+            }).catch(() => {});
+          }
+
+          // Send final done event with IDs
+          controller.enqueue(encoder.encode(sseEvent('done', {
+            session_id: sessionId,
+            message_id: assistantMessage.id,
+          })));
+
+          controller.close();
+        } catch (error) {
+          console.error('Chat streaming error:', error);
+          const errorMsg = language === 'ar'
+            ? 'عذراً، حدث خطأ في معالجة طلبك.'
+            : 'Sorry, an error occurred processing your request.';
+          controller.enqueue(encoder.encode(sseEvent('delta', { content: errorMsg })));
+          controller.enqueue(encoder.encode(sseEvent('done', { session_id: sessionId, error: true })));
+          controller.close();
         }
-      } else {
-        // AI responded with text - conversation complete
-        assistantResponse = choice.message.content || '';
-        break;
-      }
-    }
-
-    // Safety check: if we hit max iterations, generate a fallback response
-    if (iterations >= maxIterations && !assistantResponse) {
-      assistantResponse =
-        language === 'ar'
-          ? 'عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى.'
-          : 'Sorry, there was an error processing your request. Please try again.';
-    }
-
-    const latencyMs = Date.now() - startTime;
-
-    // ============================
-    // SAVE MESSAGES TO DB
-    // ============================
-    // Save user message
-    await prisma.chatMessage.create({
-      data: {
-        sessionId,
-        role: 'user',
-        content: userQuery || '[Image search]',
-        hasImage: !!image_url,
-        imageUrl: image_url || null,
-        hasVoice: !!voice_transcript,
-        voiceTranscript: voice_transcript || null,
       },
     });
 
-    // Save assistant message
-    const productIds = products.map((p) => p.id as string);
-    const assistantMessage = await prisma.chatMessage.create({
-      data: {
-        sessionId,
-        role: 'assistant',
-        content: assistantResponse,
-        productIds: productIds,
-      },
-    });
-
-    // Log search for analytics (only if products were actually searched)
-    if (products.length > 0) {
-      await prisma.searchLog.create({
-        data: {
-          sessionId,
-          userId: user?.userId || null,
-          queryText: searchQuery || userQuery,
-          queryType: image_url ? 'image' : voice_transcript ? 'voice' : 'text',
-          filters: { country_code: countryCode } as object,
-          resultCount: products.length,
-          latencyMs,
-          countryCode,
-        },
-      }).catch(() => {
-        // Non-critical, don't fail the response
-      });
-    }
-
-    return NextResponse.json({
-      session_id: sessionId,
-      message: {
-        id: assistantMessage.id,
-        role: 'assistant',
-        content: assistantResponse,
-        image_analysis: imageAnalysis,
-        products,
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
   } catch (error) {
@@ -491,22 +619,119 @@ async function executeCreateListing(
   }
 
   try {
-    // TODO: Implement full listing creation logic
-    // This should integrate with the existing POST /api/products logic
-    // For now, return a placeholder response
+    // 1. Get or auto-create seller profile
+    let seller = await prisma.seller.findUnique({
+      where: { userId: user.userId },
+      include: { user: { select: { countryCode: true, phone: true } } },
+    });
+
+    if (!seller) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.userId },
+        select: { countryCode: true, phone: true, name: true },
+      });
+
+      seller = await prisma.seller.create({
+        data: {
+          userId: user.userId,
+          phonePublic: dbUser?.phone || '',
+          businessName: dbUser?.name || undefined,
+        },
+        include: { user: { select: { countryCode: true, phone: true } } },
+      });
+
+      await prisma.user.update({
+        where: { id: user.userId },
+        data: { role: 'seller' },
+      });
+    }
+
+    const countryCode = seller.user.countryCode;
+
+    // 2. Resolve category
+    let categoryId: number | null = null;
+    if (args.category) {
+      const category = await prisma.category.findUnique({
+        where: { slug: args.category },
+      });
+      if (category) categoryId = category.id;
+    }
+
+    // 3. Create product with images in transaction
+    const product = await prisma.$transaction(async (tx) => {
+      const newProduct = await tx.product.create({
+        data: {
+          sellerId: user.userId,
+          title: args.title,
+          description: args.description || null,
+          price: args.price,
+          currency: countryCode === 'KW' ? 'KWD' : 'SAR',
+          isNegotiable: true,
+          condition: args.condition || 'good',
+          categoryId,
+          countryCode,
+        },
+      });
+
+      // Create product images
+      if (args.image_urls && args.image_urls.length > 0) {
+        await tx.productImage.createMany({
+          data: args.image_urls.map((url, index) => ({
+            productId: newProduct.id,
+            url,
+            s3Key: url.split('/').slice(-2).join('/'),
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        });
+      }
+
+      return newProduct;
+    });
+
+    // 4. Index in Qdrant (async, don't block response)
+    (async () => {
+      try {
+        const fullProduct = await prisma.product.findUnique({
+          where: { id: product.id },
+          include: {
+            category: { select: { slug: true } },
+          },
+        });
+        if (!fullProduct) return;
+
+        const searchText = `${fullProduct.title} ${fullProduct.description || ''}`.trim();
+        const embedding = await getTextEmbedding(searchText);
+
+        await indexProduct(product.id, embedding, {
+          product_id: product.id,
+          seller_id: fullProduct.sellerId,
+          title: fullProduct.title,
+          title_ar: fullProduct.titleAr || undefined,
+          description: fullProduct.description || undefined,
+          price: Number(fullProduct.price),
+          currency: fullProduct.currency,
+          category_slug: fullProduct.category?.slug || 'other',
+          country_code: countryCode,
+          region_id: fullProduct.regionId || undefined,
+          status: fullProduct.status,
+          created_at: fullProduct.createdAt.toISOString(),
+        });
+
+        await prisma.product.update({
+          where: { id: product.id },
+          data: { qdrantPointId: product.id },
+        });
+      } catch (err) {
+        console.error('Failed to index product in Qdrant:', err);
+      }
+    })();
 
     return {
-      success: false,
-      message:
-        'Listing creation via tool calling is not yet fully implemented. Please use the listing creation UI for now.',
+      success: true,
+      product_id: product.id,
+      message: `Listing created successfully! Product ID: ${product.id}`,
     };
-
-    // Future implementation:
-    // 1. Find or create seller profile
-    // 2. Create product with all details
-    // 3. Link images
-    // 4. Generate Qdrant vector embedding
-    // 5. Return product ID
   } catch (error) {
     console.error('Create listing error:', error);
     return {

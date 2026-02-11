@@ -1,8 +1,8 @@
 # Technical Implementation Plan - PickPic V1
 ## AI-Powered Chat-to-Buy/Sell Marketplace
 
-**Version:** 1.2
-**Date:** February 2026
+**Version:** 1.3
+**Date:** February 11, 2026
 **Target:** Kuwait Launch
 **ORM:** Prisma (type-safe database access)
 
@@ -737,17 +737,18 @@ src/app/api/
 
 ### 5.2 Key API Contracts
 
-#### Chat API (Core Feature)
+#### Chat API (Core Feature — SSE Streaming + Tool Calling)
 
 ```typescript
 // POST /api/chat
 // Unified endpoint for text, voice, and image search
+// Returns Server-Sent Events (SSE) stream, NOT JSON
 
-// Request
+// Request (JSON body)
 {
   session_id?: string,        // Existing session or null for new
   message?: string,           // User's text message
-  image_url?: string,         // If user uploaded an image (for image search)
+  image_url?: string,         // If user uploaded an image
   voice_transcript?: string,  // If voice was transcribed client-side
   location: {
     country_code: "KW",
@@ -756,131 +757,86 @@ src/app/api/
   }
 }
 
-// Response
-{
-  session_id: "uuid",
-  message: {
-    id: "uuid",
-    role: "assistant",
-    content: "I found 5 Mercedes GLE listings for you:",
-    content_ar: "وجدت 5 إعلانات لمرسيدس GLE:",
+// Response: SSE stream (Content-Type: text/event-stream)
+// Events sent progressively:
 
-    // Image analysis (only if image was uploaded)
-    image_analysis?: {
-      category: "vehicles",
-      brand: "Mercedes",
-      model: "GLE 350",
-      color: "white",
-      estimated_price: { min: 5000, max: 7000, currency: "KWD" }
-    },
+event: status
+data: { "text": "Thinking..." }
 
-    products: [
-      {
-        id: "uuid",
-        title: "2023 Mercedes GLE 350",
-        title_ar: "مرسيدس GLE 350 2023",
-        price: 18500,
-        currency: "KWD",
-        image_url: "https://...",
-        seller: {
-          name: "Ahmed Motors",
-          phone: "+965-xxxx-xxxx",
-          whatsapp: "+965-xxxx-xxxx"
-        },
-        location: {
-          region: "Kuwait City",
-          region_ar: "مدينة الكويت"
-        },
-        similarity_score: 0.92  // From Qdrant
-      },
-      // ... more products
-    ]
-  }
-}
+event: status
+data: { "text": "Searching products..." }
+
+event: products
+data: { "products": [...], "count": 5 }
+
+event: delta
+data: { "content": "I found " }
+
+event: delta
+data: { "content": "5 listings " }
+
+event: delta
+data: { "content": "for you:" }
+
+event: done
+data: { "session_id": "uuid", "message_id": "uuid" }
 ```
 
-#### Chat API Implementation
+**Key Implementation Details:**
+- Uses OpenAI function calling with 5 tools (search_products, ask_clarification, create_listing, analyze_image_for_search, analyze_image_for_listing)
+- ALL OpenAI calls use `stream: true` — text deltas forwarded to client token-by-token
+- Tool call arguments accumulated from stream chunks via `toolCallChunks` Map
+- Products/analysis sent as separate SSE events before final text streams
+- Clarification limit: max 2 before forcing search (prompt + code enforcement)
+- Messages saved to DB after stream completes
 
 ```typescript
-// File: src/app/api/chat/route.ts
+// File: src/app/api/chat/route.ts (simplified)
 
-import { processImageForSearch } from '@/lib/ai/openai';
-import { searchProducts } from '@/lib/qdrant/client';
-import { getTextEmbedding, chatWithProducts } from '@/lib/ai/openai';
-import { getProductsByIds } from '@/lib/db/products';
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
 
 export async function POST(req: Request) {
-  const { session_id, message, image_url, voice_transcript, location } = await req.json();
+  const body = await req.json();
+  const encoder = new TextEncoder();
 
-  let embedding: number[];
-  let filters: Record<string, any> = {
-    country_code: location.country_code,
-  };
-  let imageAnalysis = null;
-  let searchQuery = message || voice_transcript || '';
+  const stream = new ReadableStream({
+    async start(controller) {
+      // Send "Thinking..." status
+      controller.enqueue(encoder.encode(sseEvent('status', { text: 'Thinking...' })));
 
-  // ============================
-  // HANDLE IMAGE SEARCH
-  // ============================
-  if (image_url) {
-    // Image → GPT-4o Vision → JSON → Text → Embedding
-    const imageResult = await processImageForSearch(
-      image_url,
-      location.country_code,
-      location.language || 'ar'
-    );
+      // Tool calling loop (max 5 iterations)
+      while (iterations < maxIterations) {
+        const streamCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages,
+          tools: getToolDefinitions(),
+          stream: true,
+        });
 
-    embedding = imageResult.embedding;
-    filters = { ...filters, ...imageResult.filters };
-    imageAnalysis = imageResult.analysis;
-    searchQuery = imageResult.analysis.search_text;
-  }
-  // ============================
-  // HANDLE TEXT/VOICE SEARCH
-  // ============================
-  else {
-    embedding = await getTextEmbedding(searchQuery);
-  }
+        // Accumulate tool calls from chunks, forward text deltas
+        for await (const chunk of streamCompletion) {
+          if (chunk.choices[0]?.delta?.content) {
+            controller.enqueue(encoder.encode(sseEvent('delta', {
+              content: chunk.choices[0].delta.content
+            })));
+          }
+          // ... accumulate tool_calls chunks
+        }
 
-  // ============================
-  // SEARCH QDRANT
-  // ============================
-  const searchResults = await searchProducts(embedding, filters, 10);
+        // If tool calls: execute tools, send status/products/analysis events
+        // If text only: break (already streamed)
+      }
 
-  // ============================
-  // GET FULL PRODUCT DETAILS
-  // ============================
-  const productIds = searchResults.map(r => r.payload.product_id);
-  const products = await getProductsByIds(productIds);
-
-  // Attach similarity scores
-  const productsWithScores = products.map(p => ({
-    ...p,
-    similarity_score: searchResults.find(r => r.payload.product_id === p.id)?.score || 0,
-  }));
-
-  // ============================
-  // GENERATE AI RESPONSE
-  // ============================
-  const aiResponse = await chatWithProducts(
-    [{ role: 'user', content: searchQuery }],
-    {
-      country_code: location.country_code,
-      language: location.language || 'ar',
-      available_categories: ['vehicles', 'electronics', 'property', 'fashion', 'furniture'],
-      products_found: products.length,
+      // Save to DB, send done event
+      controller.enqueue(encoder.encode(sseEvent('done', { session_id, message_id })));
+      controller.close();
     }
-  );
+  });
 
-  return Response.json({
-    session_id: session_id || crypto.randomUUID(),
-    message: {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: aiResponse.response,
-      image_analysis: imageAnalysis,
-      products: productsWithScores,
-    },
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/event-stream' }
   });
 }
 ```
@@ -954,54 +910,32 @@ export async function POST(req: Request) {
 
 ```
 src/components/
-├── ai-chat/
-│   ├── ChatInterface.tsx       # Main chat container
-│   ├── ChatHeader.tsx          # App header with location selector
-│   ├── ChatMessages.tsx        # Message list container
-│   ├── MessageBubble.tsx       # Individual message (user/AI)
-│   ├── ProductCarousel.tsx     # Horizontal product cards in AI response
-│   ├── ProductCard.tsx         # Single product card with call button
-│   ├── ChatInput.tsx           # Text input with attachments
-│   ├── VoiceButton.tsx         # Push-to-talk voice recording
-│   ├── ImageUpload.tsx         # Camera/gallery image picker
-│   ├── WelcomeScreen.tsx       # Initial prompts and suggestions
-│   └── TypingIndicator.tsx     # AI thinking animation
+├── chat/
+│   ├── chat-interface.tsx       # Full-page chat with SSE streaming, product cards,
+│   │                            # draft cards, products overlay, intent picker
+│   │                            # Sub-components defined inline:
+│   │                            #   - ProductCard (buy flow results)
+│   │                            #   - ProductDetailDialog (full product view)
+│   │                            #   - ListingDraftCard (sell flow: preview, edit, price, publish)
+│   │                            #   - Products overlay (all results grid)
+│   └── voice-button.tsx         # Push-to-talk voice recording → Whisper
 │
 ├── product/
-│   ├── ProductDetail.tsx       # Full product view (modal/page)
-│   ├── ProductGallery.tsx      # Image carousel
-│   ├── SellerInfo.tsx          # Seller card with call buttons
-│   └── ShareButton.tsx         # Share product link
+│   ├── product-gallery.tsx      # Image carousel with thumbnails
+│   └── message-seller-button.tsx # Creates message thread
 │
 ├── seller/
-│   ├── ListingForm.tsx         # Create/edit product form
-│   ├── ImageUploader.tsx       # Multi-image upload with S3
-│   ├── AIAssistant.tsx         # AI-powered field suggestions
-│   ├── MyListings.tsx          # Seller's product list
-│   └── SellerDashboard.tsx     # Stats and overview
+│   ├── listing-form.tsx         # React Hook Form + Zod validation
+│   └── listing-preview.tsx      # Full listing preview before publish
 │
-├── auth/
-│   ├── LoginForm.tsx           # Email + password login
-│   ├── RegisterForm.tsx        # New user registration
-│   └── AuthProvider.tsx        # Auth context
+├── ui/                          # shadcn/ui components (40+)
+│   ├── button.tsx, input.tsx, dialog.tsx, select.tsx,
+│   ├── scroll-area.tsx, textarea.tsx, skeleton.tsx, etc.
+│   └── ...
 │
-├── location/
-│   ├── LocationSelector.tsx    # Country/region picker
-│   ├── LocationDetector.tsx    # Auto-detect location
-│   └── FlagIcon.tsx            # Country flag display
-│
-├── ui/                         # shadcn/ui components
-│   ├── button.tsx
-│   ├── input.tsx
-│   ├── dialog.tsx
-│   ├── sheet.tsx
-│   ├── skeleton.tsx
-│   └── ... (existing components)
-│
-└── layout/
-    ├── Header.tsx              # Simplified header
-    ├── BottomNav.tsx           # Mobile bottom navigation
-    └── RTLProvider.tsx         # RTL/LTR context
+└── context/
+    ├── language-context.tsx      # AR/EN locale switching
+    └── app-mode-context.tsx      # Chat sidebar, session management
 ```
 
 ### 6.2 Key Component Specifications

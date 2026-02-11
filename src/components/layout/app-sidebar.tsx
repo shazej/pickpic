@@ -34,8 +34,7 @@ function ChatHistoryItem({
   onDelete: () => void;
 }) {
   return (
-    <button
-      onClick={onSelect}
+    <div
       className={cn(
         "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left group transition-colors",
         isActive
@@ -43,18 +42,22 @@ function ChatHistoryItem({
           : "text-gray-300 hover:bg-white/5"
       )}
     >
-      <MessageSquare className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-      <span className="truncate flex-1">{chat.title}</span>
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
+        type="button"
+        onClick={onSelect}
+        className="flex items-center gap-2 flex-1 min-w-0 text-left"
+      >
+        <MessageSquare className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+        <span className="truncate flex-1">{chat.title}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
         className="opacity-0 group-hover:opacity-100 shrink-0 p-0.5 rounded hover:bg-white/10"
       >
         <Trash2 className="h-3 w-3 text-gray-500 hover:text-red-400" />
       </button>
-    </button>
+    </div>
   );
 }
 
