@@ -45,10 +45,18 @@ const translations = {
   "chat.error": { en: "Sorry, something went wrong. Please try again.", ar: ".عذراً، حدث خطأ. يرجى المحاولة مرة أخرى" },
   "chat.aiSearch": { en: "PickPic AI Search", ar: "بحث بيك بيك الذكي" },
 
-  // Chat suggestions
-  "chat.suggest.car": { en: "I need a car", ar: "أحتاج سيارة" },
-  "chat.suggest.phone": { en: "iPhone 15 Pro", ar: "آيفون 15 برو" },
-  "chat.suggest.apartment": { en: "Apartment in Salmiya", ar: "شقة في السالمية" },
+  // Chat mode buttons (replace old suggestion chips)
+  "chat.mode.buy": { en: "Buy", ar: "شراء" },
+  "chat.mode.sell": { en: "Sell", ar: "بيع" },
+  "chat.mode.uploadPhoto": { en: "Upload a photo", ar: "تحميل صورة" },
+  "chat.mode.describeItem": { en: "Describe your item", ar: "صف منتجك" },
+  "chat.sellDescribePrompt": { en: "I want to sell: ", ar: "أريد بيع: " },
+
+  // Seller profile required modal
+  "seller.profileRequired": { en: "Complete your seller profile", ar: "أكمل ملف البائع الخاص بك" },
+  "seller.profileRequiredDesc": { en: "You need to set up your seller profile before creating listings. It only takes a minute!", ar: "!تحتاج إلى إعداد ملف البائع الخاص بك قبل إنشاء الإعلانات. يستغرق ذلك دقيقة فقط" },
+  "seller.goToProfile": { en: "Complete Profile", ar: "إكمال الملف الشخصي" },
+  "seller.dismiss": { en: "Not now", ar: "ليس الآن" },
 
   // ========================
   // Product Card & Contact
@@ -203,6 +211,17 @@ const translations = {
   "settings.sellerInfo": { en: "Seller Stats", ar: "إحصائيات البائع" },
   "settings.totalSales": { en: "Total Sales", ar: "إجمالي المبيعات" },
   "settings.rating": { en: "Rating", ar: "التقييم" },
+  "settings.sellerProfile": { en: "Seller Profile", ar: "ملف البائع" },
+  "settings.sellerProfileDesc": { en: "Your public info shown on listings", ar: "معلوماتك العامة المعروضة في الإعلانات" },
+  "settings.nationalId": { en: "Civil / National ID", ar: "الرقم المدني" },
+  "settings.businessName": { en: "Business Name (optional)", ar: "اسم النشاط التجاري (اختياري)" },
+  "settings.publicPhone": { en: "Public Phone", ar: "رقم الهاتف العام" },
+  "settings.whatsapp": { en: "WhatsApp Number", ar: "رقم الواتساب" },
+  "settings.sellerDashboard": { en: "Seller Dashboard", ar: "لوحة تحكم البائع" },
+  "settings.sellerDashboardDesc": { en: "View your listings, analytics, and more", ar: "عرض إعلاناتك وإحصائياتك والمزيد" },
+  "settings.profileComplete": { en: "Profile complete — ready to sell", ar: "الملف مكتمل — جاهز للبيع" },
+  "settings.profileIncomplete": { en: "Complete your profile to start listing", ar: "أكمل ملفك للبدء في نشر الإعلانات" },
+  "settings.sellerSaved": { en: "Seller profile saved!", ar: "تم حفظ ملف البائع!" },
 
   // ========================
   // My Listings Panel

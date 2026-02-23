@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { deleteProductFromIndex } from '@/lib/qdrant/client';
+import { deleteProductFromIndex, indexProduct, textToSparseVector } from '@/lib/qdrant/client';
+import { getTextEmbedding } from '@/lib/ai/openai';
 
 // GET: Get product details
 export async function GET(
@@ -162,16 +163,45 @@ export async function PUT(
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: validatedData,
-      select: {
-        id: true,
-        title: true,
-        price: true,
-        status: true,
-        updatedAt: true,
+      include: {
+        category: { select: { slug: true } },
       },
     });
 
-    return NextResponse.json({ product: updatedProduct });
+    // Reindex in Qdrant async (don't block response)
+    (async () => {
+      try {
+        const searchText = `${updatedProduct.title} ${updatedProduct.description || ''}`.trim();
+        const embedding = await getTextEmbedding(searchText);
+        const sparseVector = textToSparseVector(searchText);
+        await indexProduct(updatedProduct.id, embedding, sparseVector, {
+          product_id: updatedProduct.id,
+          seller_id: updatedProduct.sellerId,
+          title: updatedProduct.title,
+          title_ar: updatedProduct.titleAr || undefined,
+          description: updatedProduct.description || undefined,
+          price: Number(updatedProduct.price),
+          currency: updatedProduct.currency,
+          category_slug: updatedProduct.category?.slug || 'other',
+          country_code: updatedProduct.countryCode,
+          region_id: updatedProduct.regionId || undefined,
+          status: updatedProduct.status,
+          created_at: updatedProduct.createdAt.toISOString(),
+        });
+      } catch (err) {
+        console.error('Failed to reindex product in Qdrant:', err);
+      }
+    })();
+
+    return NextResponse.json({
+      product: {
+        id: updatedProduct.id,
+        title: updatedProduct.title,
+        price: updatedProduct.price,
+        status: updatedProduct.status,
+        updatedAt: updatedProduct.updatedAt,
+      },
+    });
   } catch (error) {
     console.error('Product PUT error:', error);
 

@@ -82,6 +82,7 @@ model User {
   name              String    @db.VarChar(100)
   nameAr            String?   @map("name_ar") @db.VarChar(100)
   phone             String?   @db.VarChar(20)
+  nationalId        String?   @map("national_id") @db.VarChar(20)
   avatarUrl         String?   @map("avatar_url") @db.VarChar(512)
   role              UserRole  @default(buyer)
   countryCode       String    @default("KW") @map("country_code") @db.Char(2)
@@ -121,9 +122,10 @@ model Seller {
   rating         Decimal  @default(0.00) @db.Decimal(3, 2)
   totalReviews   Int      @default(0) @map("total_reviews")
   totalSales     Int      @default(0) @map("total_sales")
-  isVerified     Boolean  @default(false) @map("is_verified")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isVerified         Boolean  @default(false) @map("is_verified")
+  isProfileComplete  Boolean  @default(false) @map("is_profile_complete")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -10,6 +10,7 @@ import {
   processImageForSearch,
   analyzeImageForListing,
   generateSystemPrompt,
+  translateProductFields,
 } from '@/lib/ai/openai';
 import {
   getToolDefinitions,
@@ -18,7 +19,7 @@ import {
   type AnalyzeImageParams,
   type AskClarificationParams,
 } from '@/lib/ai/tools';
-import { searchProducts, indexProduct } from '@/lib/qdrant/client';
+import { searchProducts, indexProduct, textToSparseVector } from '@/lib/qdrant/client';
 import { getPresignedReadUrl, getKeyFromUrl, CDN_URL } from '@/lib/s3/client';
 
 // Initialize OpenAI client
@@ -43,11 +44,14 @@ export async function POST(request: NextRequest) {
     } = body;
 
     const countryCode = location?.country_code || 'KW';
-    const language = location?.language || 'ar';
     const regionId = location?.region_id;
 
     // Determine the search query from text, voice, or image
     const userQuery = message || voice_transcript || '';
+
+    // Detect message language purely from content (ignores UI language toggle)
+    const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(userQuery);
+    const language = hasArabic ? 'ar' : 'en';
 
     if (!userQuery && !image_url) {
       return NextResponse.json(
@@ -303,19 +307,99 @@ export async function POST(request: NextRequest) {
                       searchQuery = (toolArgs as SearchProductsParams).search_query;
                       toolResult = searchResult;
 
+                      // Translate missing fields based on user language
+                      if (products.length > 0) {
+                        const targetLang = language === 'ar' ? 'ar' : 'en';
+                        const fieldKey = targetLang === 'ar' ? 'title_ar' : 'title';
+                        const needsTranslation = products.filter(
+                          (p: Record<string, unknown>) => targetLang === 'ar' ? !p.title_ar : !p.title
+                        );
+                        if (needsTranslation.length > 0) {
+                          try {
+                            const translations = await translateProductFields(
+                              needsTranslation.map((p: Record<string, unknown>) => ({
+                                title: (targetLang === 'ar' ? p.title : p.title_ar) as string,
+                                description: (targetLang === 'ar' ? p.description : p.description_ar) as string | null,
+                              })),
+                              targetLang
+                            );
+                            needsTranslation.forEach((p: Record<string, unknown>, i: number) => {
+                              if (translations[i]) {
+                                if (targetLang === 'ar') {
+                                  p.title_ar = translations[i].title;
+                                  p.description_ar = translations[i].description;
+                                } else {
+                                  p.title = translations[i].title;
+                                  p.description = translations[i].description;
+                                }
+                              }
+                            });
+                          } catch (e) {
+                            console.error('Product translation failed:', e);
+                          }
+                        }
+                      }
+
                       controller.enqueue(encoder.encode(sseEvent('products', {
                         products,
                         count: products.length,
+                        language,
                       })));
                       break;
                     }
 
-                    case 'create_listing':
-                      toolResult = await executeCreateListing(
-                        toolArgs as CreateListingParams,
-                        user
-                      );
+                    case 'create_listing': {
+                      // Gate: unauthenticated → show login prompt immediately
+                      if (!user) {
+                        controller.enqueue(encoder.encode(sseEvent('login_required', {})));
+                        toolResult = { success: false, message: 'A login dialog has been shown to the user. Tell them to log in using the dialog to create their listing.' };
+                        break;
+                      }
+                      // Check seller profile before showing draft
+                      const sellerCheck = await prisma.seller.findUnique({
+                        where: { userId: user.userId },
+                      });
+                      if (!sellerCheck || !sellerCheck.isProfileComplete) {
+                        controller.enqueue(encoder.encode(sseEvent('seller_action_required', {
+                          action: 'complete_profile',
+                        })));
+                        toolResult = { success: false, error: 'seller_profile_incomplete', message: 'Please complete your seller profile before listing.' };
+                        break;
+                      }
+                      // Emit a draft for the user to review, edit, and publish
+                      const listingArgs = toolArgs as CreateListingParams;
+
+                      // Ensure both EN and AR fields exist — translate if missing
+                      let draftTitle = listingArgs.title;
+                      let draftTitleAr = listingArgs.title_ar;
+                      let draftDesc = listingArgs.description;
+                      let draftDescAr = listingArgs.description_ar;
+                      try {
+                        if (draftTitle && !draftTitleAr) {
+                          const [t] = await translateProductFields([{ title: draftTitle, description: draftDesc }], 'ar');
+                          if (t) { draftTitleAr = t.title; draftDescAr = draftDescAr || t.description; }
+                        } else if (draftTitleAr && !draftTitle) {
+                          const [t] = await translateProductFields([{ title: draftTitleAr, description: draftDescAr }], 'en');
+                          if (t) { draftTitle = t.title; draftDesc = draftDesc || t.description; }
+                        }
+                      } catch (e) {
+                        console.error('Draft translation failed:', e);
+                      }
+
+                      controller.enqueue(encoder.encode(sseEvent('listing_draft', {
+                        title: draftTitle,
+                        title_ar: draftTitleAr,
+                        description: draftDesc,
+                        description_ar: draftDescAr,
+                        price: listingArgs.price,
+                        category: listingArgs.category,
+                        condition: listingArgs.condition || 'good',
+                        image_urls: listingArgs.image_urls || [],
+                        language,
+                      })));
+                      toolResult = { success: true, message: 'A listing draft has been created and shown to the user for review. They can edit details, add photos, and publish when ready.' };
                       break;
+                    }
 
                     case 'ask_clarification':
                       toolResult = {
@@ -422,11 +506,16 @@ export async function POST(request: NextRequest) {
           });
 
           const productIds = products.map((p) => p.id as string);
+          // Ensure assistant message is never blank in the DB
+          const contentToSave = assistantResponse ||
+            (products.length > 0
+              ? (language === 'ar' ? 'إليك النتائج.' : 'Here are the results.')
+              : (language === 'ar' ? 'تم معالجة طلبك.' : 'Done.'));
           const assistantMessage = await prisma.chatMessage.create({
             data: {
               sessionId,
               role: 'assistant',
-              content: assistantResponse,
+              content: contentToSave,
               productIds: productIds,
             },
           });
@@ -494,8 +583,9 @@ async function executeSearchProducts(
   countryCode: string,
   regionId?: number
 ): Promise<{ products: Array<Record<string, unknown>>; count: number }> {
-  // Generate embedding from search query
+  // Generate dense embedding + sparse BM25 vector from search query
   const embedding = await getTextEmbedding(args.search_query);
+  const sparseVector = textToSparseVector(args.search_query);
 
   // Build filters
   const filters: Record<string, unknown> = { country_code: countryCode };
@@ -504,9 +594,10 @@ async function executeSearchProducts(
   if (args.max_price) filters.max_price = args.max_price;
   if (regionId || args.region_id) filters.region_id = args.region_id || regionId;
 
-  // Search Qdrant vector DB
+  // Hybrid search: dense (semantic) + sparse (BM25 keyword) via RRF fusion
   const searchResults = await searchProducts(
     embedding,
+    sparseVector,
     filters as {
       country_code: string;
       category_slug?: string;
@@ -550,26 +641,11 @@ async function executeSearchProducts(
     },
   });
 
-  // Attach similarity scores and boost title matches
-  const queryLower = args.search_query.toLowerCase();
-  const queryTerms = queryLower.split(/\s+/).filter((w) => w.length > 2);
-
-  const products = dbProducts
-    .map((p) => {
-      const baseScore =
-        searchResults.find((r) => r.payload.product_id === p.id)?.score || 0;
-
-      // Boost score for title matches
-      const titleLower = p.title.toLowerCase();
-      let boost = 0;
-      if (titleLower.includes(queryLower)) {
-        boost = 0.15;
-      } else {
-        const matchCount = queryTerms.filter((term) => titleLower.includes(term)).length;
-        if (queryTerms.length > 0) {
-          boost = (matchCount / queryTerms.length) * 0.1;
-        }
-      }
+  // Map products preserving RRF ranking order from Qdrant
+  const allProducts = searchResults
+    .map((sr) => {
+      const p = dbProducts.find((db) => db.id === sr.payload.product_id);
+      if (!p) return null;
 
       return {
         id: p.id,
@@ -591,10 +667,26 @@ async function executeSearchProducts(
           whatsapp: p.seller.whatsappNumber,
         },
         location: p.region ? { region: p.region.name, region_ar: p.region.nameAr } : null,
-        similarity_score: Math.min(baseScore + boost, 1.0),
+        similarity_score: sr.score,
       };
     })
-    .sort((a, b) => (b.similarity_score as number) - (a.similarity_score as number));
+    .filter((p): p is NonNullable<typeof p> => p !== null);
+
+  // Filter out results with zero keyword overlap in title
+  // Fallback to all results if filter removes everything (handles vague queries like "car")
+  const queryLower = args.search_query.toLowerCase();
+  const queryTerms = queryLower.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 2);
+
+  let products = allProducts;
+  if (queryTerms.length >= 1) {
+    const filtered = allProducts.filter((p) => {
+      const titleText = `${p.title} ${p.title_ar || ''}`.toLowerCase();
+      return queryTerms.some((term) => titleText.includes(term));
+    });
+    if (filtered.length > 0) {
+      products = filtered;
+    }
+  }
 
   return {
     products,
@@ -619,31 +711,18 @@ async function executeCreateListing(
   }
 
   try {
-    // 1. Get or auto-create seller profile
-    let seller = await prisma.seller.findUnique({
+    // 1. Get seller profile — no auto-create; sellers must complete profile first
+    const seller = await prisma.seller.findUnique({
       where: { userId: user.userId },
-      include: { user: { select: { countryCode: true, phone: true } } },
+      include: { user: { select: { countryCode: true } } },
     });
 
-    if (!seller) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.userId },
-        select: { countryCode: true, phone: true, name: true },
-      });
-
-      seller = await prisma.seller.create({
-        data: {
-          userId: user.userId,
-          phonePublic: dbUser?.phone || '',
-          businessName: dbUser?.name || undefined,
-        },
-        include: { user: { select: { countryCode: true, phone: true } } },
-      });
-
-      await prisma.user.update({
-        where: { id: user.userId },
-        data: { role: 'seller' },
-      });
+    if (!seller || !seller.isProfileComplete) {
+      return {
+        success: false,
+        error: 'seller_profile_incomplete',
+        message: 'Please complete your seller profile before creating a listing.',
+      };
     }
 
     const countryCode = seller.user.countryCode;
@@ -663,7 +742,9 @@ async function executeCreateListing(
         data: {
           sellerId: user.userId,
           title: args.title,
+          titleAr: args.title_ar || null,
           description: args.description || null,
+          descriptionAr: args.description_ar || null,
           price: args.price,
           currency: countryCode === 'KW' ? 'KWD' : 'SAR',
           isNegotiable: true,
@@ -702,8 +783,9 @@ async function executeCreateListing(
 
         const searchText = `${fullProduct.title} ${fullProduct.description || ''}`.trim();
         const embedding = await getTextEmbedding(searchText);
+        const sparseVector = textToSparseVector(searchText);
 
-        await indexProduct(product.id, embedding, {
+        await indexProduct(product.id, embedding, sparseVector, {
           product_id: product.id,
           seller_id: fullProduct.sellerId,
           title: fullProduct.title,

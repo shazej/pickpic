@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth, getCurrentUser } from '@/lib/auth/jwt';
 import { getTextEmbedding, analyzeImageForListing, moderateContent } from '@/lib/ai/openai';
-import { indexProduct } from '@/lib/qdrant/client';
+import { indexProduct, textToSparseVector } from '@/lib/qdrant/client';
 
 // GET: List products with filters
 export async function GET(request: NextRequest) {
@@ -157,7 +157,7 @@ const createProductSchema = z.object({
   isNegotiable: z.boolean().default(true),
   condition: z.enum(['new', 'like_new', 'good', 'fair', 'poor']).default('good'),
   regionId: z.number().optional(),
-  imageUrls: z.array(z.string().url()).min(1, 'At least one image is required'),
+  imageUrls: z.array(z.string().url()).default([]),
   // Optional: auto-filled by AI
   categorySlug: z.string().optional(),
 });
@@ -170,6 +170,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createProductSchema.parse(body);
+
+    // Text-only categories don't require images; physical products do
+    const isDescriptionBased = ['property', 'services', 'jobs', 'other'].includes(
+      validatedData.categorySlug || ''
+    );
+    if (validatedData.imageUrls.length === 0 && !isDescriptionBased) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: [{ message: 'At least one image is required for physical products' }] },
+        { status: 400 }
+      );
+    }
 
     // Get or auto-create seller profile
     let seller = await prisma.seller.findUnique({
@@ -262,16 +273,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create product images
-      await tx.productImage.createMany({
-        data: validatedData.imageUrls.map((url, index) => ({
-          productId: newProduct.id,
-          url,
-          s3Key: url.split('/').slice(-2).join('/'), // Extract key from URL
-          isPrimary: index === 0,
-          sortOrder: index,
-        })),
-      });
+      // Create product images (only if provided)
+      if (validatedData.imageUrls.length > 0) {
+        await tx.productImage.createMany({
+          data: validatedData.imageUrls.map((url, index) => ({
+            productId: newProduct.id,
+            url,
+            s3Key: url.split('/').slice(-2).join('/'), // Extract key from URL
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        });
+      }
 
       return newProduct;
     });
@@ -342,12 +355,13 @@ async function indexProductInQdrant(
 
   if (!product) return;
 
-  // Generate embedding from title + description
+  // Generate dense embedding + sparse BM25 vector
   const searchText = `${product.title} ${product.description || ''}`.trim();
   const embedding = await getTextEmbedding(searchText);
+  const sparseVector = textToSparseVector(searchText);
 
-  // Index in Qdrant
-  await indexProduct(productId, embedding, {
+  // Index in Qdrant with hybrid vectors
+  await indexProduct(productId, embedding, sparseVector, {
     product_id: productId,
     seller_id: product.sellerId,
     title: product.title,

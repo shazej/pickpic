@@ -1,5 +1,6 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -64,7 +66,9 @@ export interface ChatProduct {
 export interface ListingDraft {
   images: { previewUrl: string; s3Url?: string }[];
   title: string;
+  titleAr?: string;
   description: string;
+  descriptionAr?: string;
   category: string;
   condition: string;
   price: string;
@@ -79,6 +83,7 @@ export interface ChatMessage {
   draft?: ListingDraft;
   published?: { id: string; title: string };
   intentPicker?: { imageUrl: string; previewUrl: string };
+  contentLanguage?: string;
 }
 
 const MESSAGES_STORAGE_PREFIX = "pickpic_messages_";
@@ -387,6 +392,7 @@ function ListingDraftCard({
   onAddImage,
   isPublishing,
   t,
+  locale,
 }: {
   draft: ListingDraft;
   onUpdate: (draft: ListingDraft) => void;
@@ -394,12 +400,17 @@ function ListingDraftCard({
   onAddImage: (file: File) => void;
   isPublishing: boolean;
   t: (key: TranslationKey) => string;
+  locale: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [values, setValues] = useState(draft);
   const addImageRef = useRef<HTMLInputElement>(null);
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceInput, setPriceInput] = useState("");
+
+  // Language-aware display fields
+  const displayTitle = locale === "ar" && draft.titleAr ? draft.titleAr : draft.title;
+  const displayDescription = locale === "ar" && draft.descriptionAr ? draft.descriptionAr : draft.description;
 
   useEffect(() => {
     setValues(draft);
@@ -428,8 +439,12 @@ function ListingDraftCard({
         </div>
 
         <Input
-          value={values.title}
-          onChange={(e) => setValues({ ...values, title: e.target.value })}
+          value={locale === "ar" && values.titleAr ? values.titleAr : values.title}
+          onChange={(e) =>
+            locale === "ar"
+              ? setValues({ ...values, titleAr: e.target.value })
+              : setValues({ ...values, title: e.target.value })
+          }
           placeholder={t("form.titlePlaceholder" as TranslationKey)}
           className="font-medium"
         />
@@ -481,8 +496,12 @@ function ListingDraftCard({
           </Select>
         </div>
         <Textarea
-          value={values.description}
-          onChange={(e) => setValues({ ...values, description: e.target.value })}
+          value={locale === "ar" && values.descriptionAr ? values.descriptionAr : values.description}
+          onChange={(e) =>
+            locale === "ar"
+              ? setValues({ ...values, descriptionAr: e.target.value })
+              : setValues({ ...values, description: e.target.value })
+          }
           placeholder={t("form.descriptionPlaceholder" as TranslationKey)}
           rows={3}
         />
@@ -500,46 +519,51 @@ function ListingDraftCard({
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
-      {/* Image gallery */}
-      {draft.images.length > 0 && (
-        <div className="flex gap-1 p-2 bg-muted/30">
-          {draft.images.map((img, i) => (
-            <div key={img.previewUrl} className="relative w-24 h-24 rounded-lg overflow-hidden border">
-              <Image src={img.previewUrl} alt="" fill className="object-cover" />
-              {!img.s3Url && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 text-white animate-spin" />
-                </div>
-              )}
-            </div>
-          ))}
-          {draft.images.length < 8 && (
-            <button
-              onClick={() => addImageRef.current?.click()}
-              className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="text-[10px] mt-0.5">Add</span>
-            </button>
-          )}
-          <input
-            ref={addImageRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onAddImage(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
-      )}
+      {/* Image gallery — always visible so user can add photos */}
+      <div className="flex gap-1 p-2 bg-muted/30 flex-wrap">
+        {draft.images.map((img, i) => (
+          <div key={img.previewUrl} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+            <Image src={img.previewUrl} alt="" fill className="object-cover" />
+            {i === 0 && draft.images.length > 0 && (
+              <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[9px] text-center py-0.5">
+                Cover
+              </span>
+            )}
+            {!img.s3Url && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <Loader2 className="h-4 w-4 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+        ))}
+        {draft.images.length < 8 && (
+          <button
+            onClick={() => addImageRef.current?.click()}
+            className="w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="text-[10px] mt-1">
+              {draft.images.length === 0 ? "Add Photo" : "Add"}
+            </span>
+          </button>
+        )}
+        <input
+          ref={addImageRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onAddImage(file);
+            e.target.value = "";
+          }}
+        />
+      </div>
 
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-start">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base">{draft.title}</h3>
+            <h3 className="font-semibold text-base">{displayTitle}</h3>
             {editingPrice || (!draft.price || Number(draft.price) <= 0) ? (
               <div className="flex items-center gap-1.5 mt-1">
                 <Input
@@ -613,9 +637,9 @@ function ListingDraftCard({
           </span>
         </div>
 
-        {draft.description && (
+        {displayDescription && (
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {draft.description}
+            {displayDescription}
           </p>
         )}
 
@@ -681,11 +705,17 @@ export function ChatInterface({
   const [isPublishing, setIsPublishing] = useState(false);
   const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
   const [overlayProducts, setOverlayProducts] = useState<ChatProduct[] | null>(null);
+  const [productContentLanguage, setProductContentLanguage] = useState<string | null>(null);
+  const [showSellOptions, setShowSellOptions] = useState(false);
+  const [showSellerProfileModal, setShowSellerProfileModal] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   // Flag to skip message reload when we just created a session (prevents draft card from disappearing)
   const skipNextReload = useRef(false);
+  // AbortController for the active SSE stream — cancelled on unmount or new message
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   // Current chat ID for persistence (this is the server session ID for logged-in users)
   const currentChatId = appModeCtx?.currentChatId;
@@ -770,6 +800,13 @@ export function ChatInterface({
     }
   }, [messages]);
 
+  // Abort any active SSE stream on component unmount
+  useEffect(() => {
+    return () => {
+      streamAbortRef.current?.abort();
+    };
+  }, []);
+
   // Upload image to S3 first, then return the public URL
   const uploadImageToS3 = useCallback(async (file: File): Promise<string> => {
     const presignRes = await fetch("/api/upload/presign", {
@@ -838,6 +875,11 @@ export function ChatInterface({
       setMessages((prev) => [...prev, aiMsg]);
 
       try {
+        // Abort any previous stream before starting a new one
+        streamAbortRef.current?.abort();
+        const abortController = new AbortController();
+        streamAbortRef.current = abortController;
+
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -847,6 +889,7 @@ export function ChatInterface({
             image_url: imageUrl || undefined,
             location: { country_code: "KW", language: locale },
           }),
+          signal: abortController.signal,
         });
 
         if (!res.ok || !res.body) {
@@ -897,7 +940,7 @@ export function ChatInterface({
                   setMessages((prev) =>
                     prev.map((m) =>
                       m.id === aiMsgId
-                        ? { ...m, products: parsed.products as ChatProduct[] }
+                        ? { ...m, products: parsed.products as ChatProduct[], contentLanguage: parsed.language as string }
                         : m
                     )
                   );
@@ -906,6 +949,38 @@ export function ChatInterface({
                 case "analysis":
                   // Store analysis for draft creation after text is done
                   receivedAnalysis = parsed.image_analysis;
+                  break;
+
+                case "login_required":
+                  setShowLoginPrompt(true);
+                  break;
+
+                case "listing_draft": {
+                  const textDraft: ListingDraft = {
+                    images: (parsed.image_urls || []).map((url: string) => ({
+                      previewUrl: url,
+                      s3Url: url,
+                    })),
+                    title: (parsed.title as string) || "Untitled",
+                    titleAr: (parsed.title_ar as string) || undefined,
+                    description: (parsed.description as string) || "",
+                    descriptionAr: (parsed.description_ar as string) || undefined,
+                    category: (parsed.category as string) || "other",
+                    condition: (parsed.condition as string) || "good",
+                    price: String(parsed.price || 0),
+                  };
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === aiMsgId ? { ...m, draft: textDraft, contentLanguage: parsed.language as string } : m
+                    )
+                  );
+                  break;
+                }
+
+                case "seller_action_required":
+                  if (parsed.action === "complete_profile") {
+                    setShowSellerProfileModal(true);
+                  }
                   break;
 
                 case "done": {
@@ -962,7 +1037,9 @@ export function ChatInterface({
             }
           }
         }
-      } catch {
+      } catch (err) {
+        // Ignore AbortError — triggered by unmount or new message starting
+        if (err instanceof Error && err.name === "AbortError") return;
         setMessages((prev) =>
           prev.map((m) =>
             m.id === aiMsgId
@@ -1134,7 +1211,7 @@ export function ChatInterface({
 
   // Publish a listing draft
   const handlePublish = useCallback(
-    async (draft: ListingDraft) => {
+    async (draft: ListingDraft, msgId: string) => {
       if (!authUser) {
         setMessages((prev) => [
           ...prev,
@@ -1153,7 +1230,22 @@ export function ChatInterface({
       const imageUrls = draft.images
         .map((img) => img.s3Url)
         .filter(Boolean) as string[];
-      if (imageUrls.length === 0) return;
+      // Physical products require at least one image; text-only categories (property, services, jobs, other) do not
+      const isDescriptionBased = ["property", "services", "jobs", "other"].includes(draft.category || "");
+      if (imageUrls.length === 0 && !isDescriptionBased) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            text:
+              locale === "ar"
+                ? "يرجى إضافة صورة واحدة على الأقل قبل نشر الإعلان"
+                : "Please add at least one photo before publishing your listing",
+          },
+        ]);
+        return;
+      }
 
       setIsPublishing(true);
 
@@ -1163,7 +1255,9 @@ export function ChatInterface({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: draft.title,
+            titleAr: draft.titleAr || undefined,
             description: draft.description,
+            descriptionAr: draft.descriptionAr || undefined,
             price: parseFloat(draft.price),
             categorySlug: draft.category,
             condition: draft.condition.replace("-", "_") || "good",
@@ -1179,18 +1273,20 @@ export function ChatInterface({
           throw new Error(data.error || "Failed to create listing");
         }
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            role: "assistant",
-            text:
-              locale === "ar"
-                ? "تم نشر إعلانك بنجاح!"
-                : "Your listing has been published successfully!",
-            published: { id: data.product.id, title: data.product.title },
-          },
-        ]);
+        // Clear the draft card and append published confirmation
+        setMessages((prev) =>
+          prev
+            .map((m) => (m.id === msgId ? { ...m, draft: undefined } : m))
+            .concat({
+              id: Date.now().toString(),
+              role: "assistant",
+              text:
+                locale === "ar"
+                  ? "تم نشر إعلانك بنجاح!"
+                  : "Your listing has been published successfully!",
+              published: { id: data.product.id, title: data.product.title },
+            })
+        );
 
         // Update sidebar title
         if (appModeCtx) {
@@ -1362,28 +1458,61 @@ export function ChatInterface({
                 {t("chat.subtitle")}
               </p>
 
-              <div
-                className={cn(
-                  "grid gap-2 w-full mt-6",
-                  isWidget
-                    ? "grid-cols-1 max-w-[260px]"
-                    : "grid-cols-1 sm:grid-cols-3 max-w-lg"
-                )}
-              >
-                {[
-                  { icon: "🚗", text: t("chat.suggest.car") },
-                  { icon: "📱", text: t("chat.suggest.phone") },
-                  { icon: "🏠", text: t("chat.suggest.apartment") },
-                ].map((s) => (
+              <div className="w-full mt-6 max-w-xs space-y-3">
+                {/* Buy / Sell intent buttons */}
+                <div className="grid grid-cols-2 gap-3">
                   <button
-                    key={s.text}
-                    onClick={() => handleSuggestion(s.text)}
-                    className="flex items-center gap-2 rounded-lg border px-4 py-3 text-sm hover:bg-muted/50 transition-colors text-left"
+                    data-testid="buy-suggestion"
+                    onClick={() => {
+                      setShowSellOptions(false);
+                      inputRef?.current?.focus?.();
+                    }}
+                    className="flex flex-col items-center gap-2 rounded-xl border-2 px-4 py-4 text-sm font-medium hover:bg-primary/5 hover:border-primary/40 transition-colors"
                   >
-                    <span>{s.icon}</span>
-                    <span>{s.text}</span>
+                    <ShoppingBag className="h-6 w-6 text-primary" />
+                    <span>{t("chat.mode.buy")}</span>
                   </button>
-                ))}
+                  <button
+                    data-testid="sell-suggestion"
+                    onClick={() => setShowSellOptions((v) => !v)}
+                    className="flex flex-col items-center gap-2 rounded-xl border-2 px-4 py-4 text-sm font-medium hover:bg-primary/5 hover:border-primary/40 transition-colors"
+                  >
+                    <Store className="h-6 w-6 text-primary" />
+                    <span>{t("chat.mode.sell")}</span>
+                  </button>
+                </div>
+
+                {/* Sell sub-options */}
+                <AnimatePresence>
+                  {showSellOptions && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="grid grid-cols-2 gap-2 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors"
+                      >
+                        <ImageIcon className="h-4 w-4 shrink-0" />
+                        <span>{t("chat.mode.uploadPhoto")}</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setInputValue(t("chat.sellDescribePrompt"));
+                          setShowSellOptions(false);
+                          inputRef?.current?.focus?.();
+                        }}
+                        className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors"
+                      >
+                        <Pencil className="h-4 w-4 shrink-0" />
+                        <span>{t("chat.mode.describeItem")}</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           )}
@@ -1436,10 +1565,36 @@ export function ChatInterface({
                   {msg.role === "assistant" && !msg.text && !msg.intentPicker && isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {streamingStatus || (locale === "ar" ? "جاري التفكير..." : "Thinking...")}
-                      </span>
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={streamingStatus || "thinking"}
+                          className="text-muted-foreground"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          {streamingStatus || (locale === "ar" ? "جاري التفكير..." : "Thinking...")}
+                        </motion.span>
+                      </AnimatePresence>
                     </div>
+                  ) : msg.role === "assistant" ? (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        ul: ({ children }) => <ul className="list-disc list-inside mb-2 last:mb-0">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal list-inside mb-2 last:mb-0">{children}</ol>,
+                        li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                        h1: ({ children }) => <h1 className="text-base font-bold mb-1">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-sm font-bold mb-1">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+                        a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">{children}</a>,
+                        code: ({ children }) => <code className="bg-background/50 rounded px-1 py-0.5 text-xs">{children}</code>,
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
                   ) : (
                     msg.text
                   )}
@@ -1494,18 +1649,24 @@ export function ChatInterface({
                     isWidget ? "ml-9" : "ml-10"
                   )}
                 >
-                  {msg.products.slice(0, 3).map((p) => (
-                    <ProductCard
+                  {msg.products.slice(0, 3).map((p, i) => (
+                    <motion.div
                       key={p.id}
-                      product={p}
-                      locale={locale}
-                      t={t}
-                      onViewDetails={() => setSelectedProduct(p)}
-                    />
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.25, ease: "easeOut" }}
+                    >
+                      <ProductCard
+                        product={p}
+                        locale={msg.contentLanguage || locale}
+                        t={t}
+                        onViewDetails={() => { setSelectedProduct(p); setProductContentLanguage(msg.contentLanguage || null); }}
+                      />
+                    </motion.div>
                   ))}
                   {msg.products.length > 3 && (
                     <button
-                      onClick={() => setOverlayProducts(msg.products!)}
+                      onClick={() => { setOverlayProducts(msg.products!); setProductContentLanguage(msg.contentLanguage || null); }}
                       className="w-full flex items-center justify-center gap-2 rounded-lg border border-dashed py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
                     >
                       {locale === "ar"
@@ -1519,11 +1680,14 @@ export function ChatInterface({
 
               {/* Listing Draft Card (sell flow) */}
               {msg.draft && (
-                <div
+                <motion.div
                   className={cn(
                     "mt-3",
                     isWidget ? "ml-9" : "ml-10"
                   )}
+                  initial={{ opacity: 0, scale: 0.97, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                 >
                   <ListingDraftCard
                     draft={msg.draft}
@@ -1534,12 +1698,13 @@ export function ChatInterface({
                         )
                       );
                     }}
-                    onPublish={() => handlePublish(msg.draft!)}
+                    onPublish={() => handlePublish(msg.draft!, msg.id)}
                     onAddImage={(file) => handleAddImageToDraft(file, msg.id)}
                     isPublishing={isPublishing}
                     t={t}
+                    locale={msg.contentLanguage || locale}
                   />
-                </div>
+                </motion.div>
               )}
 
               {/* Published success (sell flow) */}
@@ -1657,6 +1822,7 @@ export function ChatInterface({
 
             {/* Text input */}
             <Input
+              ref={inputRef}
               placeholder={t("chat.placeholder")}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -1708,7 +1874,7 @@ export function ChatInterface({
                 <ProductCard
                   key={p.id}
                   product={p}
-                  locale={locale}
+                  locale={productContentLanguage || locale}
                   t={t}
                   onViewDetails={() => setSelectedProduct(p)}
                 />
@@ -1725,11 +1891,38 @@ export function ChatInterface({
         onOpenChange={(open) => {
           if (!open) setSelectedProduct(null);
         }}
-        locale={locale}
+        locale={productContentLanguage || locale}
         t={t}
       />
 
-      {/* Login Required Dialog - shown when unauthenticated user tries to upload image */}
+      {/* Seller Profile Required Dialog */}
+      <Dialog open={showSellerProfileModal} onOpenChange={setShowSellerProfileModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogTitle className="flex items-center gap-2">
+            <Store className="h-5 w-5" />
+            {t("seller.profileRequired" as TranslationKey)}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {t("seller.profileRequiredDesc" as TranslationKey)}
+          </p>
+          <div className="flex gap-3 mt-2">
+            <Button
+              className="flex-1"
+              onClick={() => {
+                setShowSellerProfileModal(false);
+                appModeCtx?.setCurrentView("settings");
+              }}
+            >
+              {t("seller.goToProfile" as TranslationKey)}
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setShowSellerProfileModal(false)}>
+              {t("seller.dismiss" as TranslationKey)}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Login Required Dialog - shown when unauthenticated user tries to upload image or sell */}
       <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
         <DialogContent className="sm:max-w-sm">
           <DialogTitle className="flex items-center gap-2">
@@ -1738,8 +1931,8 @@ export function ChatInterface({
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
             {locale === "ar"
-              ? "يرجى تسجيل الدخول أو إنشاء حساب لتتمكن من رفع الصور والبحث بها."
-              : "Please log in or create an account to upload images and search with them."}
+              ? "يرجى تسجيل الدخول أو إنشاء حساب للمتابعة."
+              : "Please log in or create an account to continue."}
           </p>
           <div className="flex gap-3 mt-2">
             <Button asChild className="flex-1">

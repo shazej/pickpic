@@ -15,7 +15,7 @@ const openai = new OpenAI({
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries = 3,
-  baseDelay = 1000
+  baseDelay = 1000,
 ): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -64,7 +64,7 @@ interface TranscriptionResult {
 // Transcribe audio using Whisper
 export async function transcribeAudio(
   audioBuffer: Buffer,
-  languageHint?: string
+  languageHint?: string,
 ): Promise<TranscriptionResult> {
   return withRetry(async () => {
     const file = new File([audioBuffer], "audio.webm", { type: "audio/webm" });
@@ -113,7 +113,7 @@ interface ChatResponse {
  */
 export function generateSystemPrompt(
   countryCode: string,
-  language: string
+  language: string,
 ): string {
   const countryName = countryCode === "KW" ? "Kuwait" : "Saudi Arabia";
   const languageName = language === "ar" ? "Arabic" : "English";
@@ -128,30 +128,46 @@ Your role:
 1. Help users find and buy products QUICKLY and efficiently
 2. Help users create listings to sell their products
 3. Detect user intent (buying vs selling) from their message and use appropriate tools
-4. Ask clarifying questions SPARINGLY (max 1-2 questions total)
+4. Ask clarifying questions SPARINGLY (max 1 question total, then search)
 
 Available categories: vehicles, electronics, property, fashion, furniture, services, jobs, other
 
 BUYING - Tool usage rules:
-- LIMIT clarifications: Ask MAX 1-2 clarifying questions, then ALWAYS search
+- LIMIT clarifications: Ask MAX 1 clarifying question, then ALWAYS search with whatever info you have
 - Use search_products when: user wants to buy/find anything with ANY product details
 - Use analyze_image_for_search when: user uploads image to find similar items to buy
 - If user provides a brand name (Mercedes, iPhone, etc.), search RIGHT AWAY
-- After 2 clarifications or short answers, SEARCH IMMEDIATELY
+- After 1 clarification, SEARCH IMMEDIATELY with whatever info you have — never ask a second question
+
+SEARCH QUALITY rules:
+- Only call search_products when user has a CLEAR product intent — not for greetings or vague chitchat
+- If search returns 0 results, tell the user honestly and suggest a broader search term
+- Do not describe search results in your text — products are shown as cards automatically
 
 SELLING - Tool usage rules:
+- Physical products (electronics, vehicles, fashion, furniture): REQUIRE an image — ask user to upload
+- Non-physical (property, services, spare_parts): can create listing from TEXT ALONE — do NOT ask for image
 - Use analyze_image_for_listing when: user uploads a product photo to sell
-- Use create_listing when: all required info collected (title, price, category, image)
-- Use ask_clarification to gather: missing price, category, condition
+- Use create_listing when all required info is collected: title, price, category
+- Use ask_clarification to gather: missing price, condition (only if needed)
+
+BILINGUAL LISTING rule (CRITICAL):
+- When calling create_listing, ALWAYS provide BOTH English AND Arabic fields:
+  - title (English) + title_ar (Arabic)
+  - description (English) + description_ar (Arabic)
+- If user writes in Arabic, make Arabic the primary; still generate English
+- If user writes in English, still generate the Arabic translation
 
 BUYING Examples:
-- "I need a car" → Ask 1 question (budget/type?), then search
+- "I need a car" → Ask 1 question MAX (budget/type?), then search no matter what
 - "mercedes" → SEARCH immediately
 - "I need a phone under 300" → SEARCH immediately
 
 SELLING Examples:
-- "I want to sell my phone" → Ask them to upload a photo
+- "I want to sell my phone" → Ask them to upload a photo (physical product)
 - [Image uploaded] + "sell this" → Use analyze_image_for_listing
+- "I want to sell my apartment 3BR 800 KWD Salmiya" → create_listing immediately (property, no image needed)
+- "I offer graphic design services 50 KWD/hour" → create_listing (category: services, no image needed)
 
 IMPORTANT - How to respond after searching:
 - Products are AUTOMATICALLY displayed as interactive cards below your message (with images, prices, seller info, call/WhatsApp buttons)
@@ -165,13 +181,51 @@ IMPORTANT - How to respond after searching:
 }
 
 // ============================================
+// BATCH TRANSLATION FOR MISSING FIELDS
+// ============================================
+
+/**
+ * Translate product titles and descriptions to the target language.
+ * Uses gpt-4o-mini for speed and cost efficiency.
+ * Returns an array of translated {title, description} in the same order.
+ */
+export async function translateProductFields(
+  items: Array<{ title: string; description?: string | null }>,
+  targetLanguage: "ar" | "en",
+): Promise<Array<{ title: string; description: string }>> {
+  if (items.length === 0) return [];
+
+  const langName = targetLanguage === "ar" ? "Arabic" : "English";
+  const input = items.map((p) => ({
+    title: p.title,
+    description: p.description || "",
+  }));
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `Translate the following product titles and descriptions to ${langName}. Return ONLY a JSON object with a "translations" array containing objects with "title" and "description" fields, in the same order as the input.`,
+      },
+      { role: "user", content: JSON.stringify(input) },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.3,
+  });
+
+  const result = JSON.parse(response.choices[0].message.content || "{}");
+  return result.translations || [];
+}
+
+// ============================================
 // CHAT FUNCTIONS (LEGACY - FOR JSON MODE)
 // ============================================
 
 // Chat with AI for product search
 export async function chatWithProducts(
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>,
-  context: ChatContext
+  context: ChatContext,
 ): Promise<ChatResponse> {
   const countryName = context.country_code === "KW" ? "Kuwait" : "Saudi Arabia";
   const languageName = context.language === "ar" ? "Arabic" : "English";
@@ -261,7 +315,7 @@ export interface ImageAnalysis {
 // Analyze image and extract structured JSON for search
 export async function analyzeImageForSearch(
   imageUrl: string,
-  countryCode: string = "KW"
+  countryCode: string = "KW",
 ): Promise<ImageAnalysis> {
   const countryName = countryCode === "KW" ? "Kuwait" : "Saudi Arabia";
 
@@ -325,7 +379,7 @@ Always respond with valid JSON.`,
 export async function processImageForSearch(
   imageUrl: string,
   countryCode: string,
-  language: string = "ar"
+  language: string = "ar",
 ): Promise<{
   analysis: ImageAnalysis;
   embedding: number[];
@@ -372,13 +426,11 @@ interface ListingAnalysis {
 // Analyze image for seller listing creation
 export async function analyzeImageForListing(
   imageUrl: string,
-  countryCode: string = "KW"
+  countryCode: string = "KW",
 ): Promise<ListingAnalysis> {
   const countryName = countryCode === "KW" ? "Kuwait" : "Saudi Arabia";
   const currency = countryCode === "KW" ? "KWD" : "SAR";
-  const model = "gpt-5.2";
-
-  //if model=gpt-5.2 then donot pass max_tokens in request
+  const model = "gpt-4o";
 
   return withRetry(async () => {
     const response = await openai.chat.completions.create({
@@ -443,7 +495,7 @@ export async function moderateContent(
   title: string,
   description: string,
   imageUrls: string[],
-  countryCode: string
+  countryCode: string,
 ): Promise<ModerationResult> {
   const countryName = countryCode === "KW" ? "Kuwait" : "Saudi Arabia";
 

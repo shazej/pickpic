@@ -6,6 +6,7 @@ import { hash } from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { generateToken, setAuthCookie } from '@/lib/auth/jwt';
+import { aiLimiter, getIp } from '@/lib/rate-limiter';
 
 // Validation schema
 const registerSchema = z.object({
@@ -23,6 +24,12 @@ const registerSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 20 attempts per hour per IP
+    const ip = getIp(request);
+    await aiLimiter.consume(ip, 1).catch(() => {
+      throw Object.assign(new Error('Too many requests'), { isRateLimit: true });
+    });
+
     const body = await request.json();
     const validatedData = registerSchema.parse(body);
 
@@ -99,6 +106,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof Error && (error as { isRateLimit?: boolean }).isRateLimit) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    }
+
     console.error('Registration error:', error);
 
     if (error instanceof z.ZodError) {

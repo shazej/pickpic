@@ -2288,6 +2288,14 @@ DEFAULT_LANGUAGE=ar
 | No error handling in AI calls | OpenAI service | Added retry with exponential backoff |
 | Switched from raw `pg` to Prisma ORM | DB client | Type-safe queries, auto connection pooling |
 | Removed MSSQL and Genkit dependencies | package.json | Clean slate for PostgreSQL + OpenAI |
+| **`gpt-5.2` invalid model** | `src/lib/ai/openai.ts` analyzeImageForListing() | Changed to `"gpt-4o"` — sell flow was broken |
+| **JWT fallback secret** | `src/lib/auth/jwt.ts` | Removed fallback; throws if JWT_SECRET not set (≥32 chars) |
+| **Empty assistant message saved** | `src/app/api/chat/route.ts` | Added fallback content when assistantResponse is empty |
+| **SSE reader not cancelled on unmount** | `chat-interface.tsx` | Added AbortController + cleanup useEffect |
+| **Anonymous session open access** | `src/app/api/chat/sessions/[id]/route.ts` | Added sessionToken header check for anonymous sessions |
+| **Product update missing Qdrant reindex** | `src/app/api/products/[id]/route.ts` | Added async reindex after DB update |
+| **No rate limiting on auth endpoints** | login/register routes | Wired existing `aiLimiter` (20 req/hr/IP) |
+| **No input validation on seller profile PUT** | `src/app/api/seller/profile/route.ts` | Added Zod schema `updateSellerSchema` |
 
 ---
 
@@ -2303,5 +2311,5 @@ DEFAULT_LANGUAGE=ar
 
 ---
 
-*Document Version: 1.2*
-*Last Updated: February 2026*
+*Document Version: 1.4*
+*Last Updated: February 21, 2026*

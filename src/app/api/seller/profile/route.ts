@@ -1,7 +1,17 @@
 // Seller Profile API - Prisma-based
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/jwt';
+
+const updateSellerSchema = z.object({
+  businessName: z.string().max(100).optional(),
+  bio: z.string().max(500).optional(),
+  bioAr: z.string().max(500).optional(),
+  phonePublic: z.string().regex(/^[\d+\-\s()]*$/).max(20).optional(),
+  whatsappNumber: z.string().regex(/^[\d+\-\s()]*$/).max(20).optional(),
+  nationalId: z.string().max(20).optional(),
+});
 
 export async function GET() {
   try {
@@ -19,6 +29,7 @@ export async function GET() {
             nameAr: true,
             email: true,
             phone: true,
+            nationalId: true,
             avatarUrl: true,
             countryCode: true,
             regionId: true,
@@ -43,6 +54,7 @@ export async function GET() {
         totalReviews: seller.totalReviews,
         totalSales: seller.totalSales,
         isVerified: seller.isVerified,
+        isProfileComplete: seller.isProfileComplete,
         user: seller.user,
       },
     });
@@ -59,12 +71,38 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { businessName, bio, bioAr, phonePublic, whatsappNumber } = await request.json();
+    const body = await request.json();
+    const { businessName, bio, bioAr, phonePublic, whatsappNumber, nationalId } = updateSellerSchema.parse(body);
+
+    // Fetch user's name to check profile completeness
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { name: true },
+    });
+
+    // Profile is complete when phone is set and user has a name
+    const isProfileComplete = !!(phonePublic?.trim() && dbUser?.name?.trim());
+
+    // Save nationalId to User model (separate update)
+    if (nationalId !== undefined) {
+      await prisma.user.update({
+        where: { id: user.userId },
+        data: { nationalId },
+      });
+    }
 
     const seller = await prisma.seller.upsert({
       where: { userId: user.userId },
-      update: { businessName, bio, bioAr, phonePublic, whatsappNumber },
-      create: { userId: user.userId, businessName, bio, bioAr, phonePublic, whatsappNumber },
+      update: { businessName, bio, bioAr, phonePublic, whatsappNumber, isProfileComplete },
+      create: {
+        userId: user.userId,
+        businessName,
+        bio,
+        bioAr,
+        phonePublic: phonePublic ?? '',
+        whatsappNumber,
+        isProfileComplete,
+      },
     });
 
     await prisma.user.update({
@@ -72,8 +110,11 @@ export async function PUT(request: Request) {
       data: { role: 'seller' },
     });
 
-    return NextResponse.json({ message: 'Profile updated', profile: seller });
+    return NextResponse.json({ message: 'Profile updated', profile: { ...seller, isProfileComplete } });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+    }
     console.error('Seller Profile API Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

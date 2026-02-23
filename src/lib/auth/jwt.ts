@@ -4,9 +4,11 @@
 import { SignJWT, jwtVerify, JWTPayload } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-super-secret-key-change-in-production'
-);
+const jwtSecretValue = process.env.JWT_SECRET;
+if (!jwtSecretValue || jwtSecretValue.length < 32) {
+  throw new Error('JWT_SECRET environment variable must be set and at least 32 characters long');
+}
+const JWT_SECRET = new TextEncoder().encode(jwtSecretValue);
 const JWT_ISSUER = 'pickpic';
 const JWT_AUDIENCE = 'pickpic-users';
 const ACCESS_TOKEN_EXPIRY = '24h';

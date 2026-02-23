@@ -4,6 +4,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ImageOff } from "lucide-react";
 
 interface ProductGalleryProps {
     images: { id: string; url: string; alt: string }[];
@@ -12,7 +13,12 @@ interface ProductGalleryProps {
 export function ProductGallery({ images }: ProductGalleryProps) {
     const [selectedImage, setSelectedImage] = useState(images[0]);
 
-    if (!images.length) return <div className="aspect-square bg-muted rounded-lg" />;
+    if (!images.length) return (
+        <div className="aspect-square bg-muted rounded-lg flex flex-col items-center justify-center gap-3 text-muted-foreground border">
+            <ImageOff className="h-16 w-16 opacity-30" />
+            <span className="text-sm">No photos yet</span>
+        </div>
+    );
 
     return (
         <div className="space-y-4">

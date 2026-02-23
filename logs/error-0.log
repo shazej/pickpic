@@ -1,0 +1,16 @@
+2026-02-21 05:20:18:  ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+2026-02-21 05:20:46:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2026-02-21 05:20:48: (node:2028) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-02-21 05:20:48: (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-02-21 13:26:35:  ⨯ [TypeError: Cannot read properties of undefined (reading 'v')] {
+2026-02-21 13:26:35:   digest: '2556925774'
+2026-02-21 13:26:35: }
+2026-02-21 13:32:30:  ⨯ [TypeError: Cannot read properties of undefined (reading 'd')] {
+2026-02-21 13:32:30:   digest: '3194234830'
+2026-02-21 13:32:30: }
+2026-02-22 13:28:49:  ⨯ [TypeError: Cannot read properties of undefined (reading 'c')] {
+2026-02-22 13:28:49:   digest: '1295788366'
+2026-02-22 13:28:49: }
+2026-02-22 13:36:13:  ⨯ [TypeError: Cannot read properties of undefined (reading 'm')] {
+2026-02-22 13:36:13:   digest: '2997951950'
+2026-02-22 13:36:13: }

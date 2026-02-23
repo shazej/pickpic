@@ -22,9 +22,17 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    // Check access: either session owner or anonymous session with matching token
-    if (session.userId && session.userId !== user?.userId) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    // Check access: authenticated session must match user; anonymous session requires sessionToken header
+    if (session.userId) {
+      if (session.userId !== user?.userId) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
+    } else {
+      // Anonymous session — require the sessionToken that was issued at creation
+      const sessionToken = request.headers.get('x-session-token');
+      if (!sessionToken || sessionToken !== session.sessionToken) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
     }
 
     const messages = await prisma.chatMessage.findMany({

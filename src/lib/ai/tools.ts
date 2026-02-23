@@ -24,11 +24,13 @@ export interface AskClarificationParams {
 
 export interface CreateListingParams {
   title: string;
+  title_ar?: string;
   price: number;
   category: string;
   description?: string;
+  description_ar?: string;
   condition?: "new" | "like_new" | "good" | "fair" | "poor";
-  image_urls: string[];
+  image_urls?: string[];
 }
 
 export interface AnalyzeImageParams {
@@ -116,13 +118,17 @@ const CREATE_LISTING_TOOL: OpenAI.ChatCompletionTool = {
   function: {
     name: "create_listing",
     description:
-      "Create a product listing for the user to sell. Use when the user wants to sell something and has provided all required information (image(s), title, price, category). Confirm with user before calling this.",
+      "Create a product listing for the user to sell. Use when the user wants to sell something and has provided all required information (title, price, category). Images are required for physical products (electronics, vehicles, fashion, furniture) but optional for property, services, spare parts.",
     parameters: {
       type: "object",
       properties: {
         title: {
           type: "string",
           description: "Product title in English",
+        },
+        title_ar: {
+          type: "string",
+          description: "Product title in Arabic",
         },
         price: {
           type: "number",
@@ -146,6 +152,10 @@ const CREATE_LISTING_TOOL: OpenAI.ChatCompletionTool = {
           type: "string",
           description: "Detailed product description in English",
         },
+        description_ar: {
+          type: "string",
+          description: "Detailed product description in Arabic",
+        },
         condition: {
           type: "string",
           enum: ["new", "like_new", "good", "fair", "poor"],
@@ -155,10 +165,10 @@ const CREATE_LISTING_TOOL: OpenAI.ChatCompletionTool = {
           type: "array",
           items: { type: "string" },
           description:
-            "Array of S3 image URLs for the product. Must have at least one image.",
+            "Array of S3 image URLs. Required for physical products (electronics, vehicles, fashion, furniture). Optional for property, services, spare parts.",
         },
       },
-      required: ["title", "price", "category", "image_urls"],
+      required: ["title", "price", "category"],
     },
   },
 };

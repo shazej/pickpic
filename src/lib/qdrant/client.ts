@@ -1,5 +1,5 @@
 // Qdrant Vector Database Client
-// Single collection for all product searches (text, voice, image)
+// Hybrid search: dense vectors (semantic) + sparse BM25 vectors (keyword matching)
 
 import { QdrantClient } from '@qdrant/js-client-rest';
 
@@ -16,10 +16,61 @@ const PRODUCTS_COLLECTION = 'products';
 const VECTOR_SIZE = 1536;
 
 // ============================================
+// BM25 SPARSE TOKENIZER
+// ============================================
+
+export interface SparseVectorData {
+  indices: number[];
+  values: number[];
+}
+
+/**
+ * FNV-1a 32-bit hash for deterministic token-to-index mapping.
+ */
+function fnv1aHash(str: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = (hash * 0x01000193) >>> 0;
+  }
+  return hash;
+}
+
+/**
+ * Convert text to a sparse BM25 vector.
+ * Works for both English and Arabic via Unicode-aware tokenization.
+ * Qdrant's `modifier: "idf"` handles IDF weighting at query time.
+ */
+export function textToSparseVector(text: string): SparseVectorData {
+  const tokens = text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((t) => t.length >= 2);
+
+  if (tokens.length === 0) {
+    return { indices: [], values: [] };
+  }
+
+  const termFreq = new Map<string, number>();
+  for (const token of tokens) {
+    termFreq.set(token, (termFreq.get(token) || 0) + 1);
+  }
+
+  const indices: number[] = [];
+  const values: number[] = [];
+
+  for (const [token, count] of termFreq) {
+    indices.push(fnv1aHash(token));
+    values.push(count);
+  }
+
+  return { indices, values };
+}
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-// Check if collection exists
 async function collectionExists(name: string): Promise<boolean> {
   try {
     await qdrant.getCollection(name);
@@ -35,17 +86,23 @@ async function collectionExists(name: string): Promise<boolean> {
 // INITIALIZATION
 // ============================================
 
-// Initialize collections on startup
 export async function initializeQdrant(): Promise<void> {
   const exists = await collectionExists(PRODUCTS_COLLECTION);
 
   if (!exists) {
-    console.log('📦 Creating Qdrant "products" collection...');
+    console.log('Creating Qdrant "products" collection with hybrid vectors...');
 
     await qdrant.createCollection(PRODUCTS_COLLECTION, {
       vectors: {
-        size: VECTOR_SIZE,
-        distance: 'Cosine',
+        dense: {
+          size: VECTOR_SIZE,
+          distance: 'Cosine',
+        },
+      },
+      sparse_vectors: {
+        bm25: {
+          modifier: 'idf',
+        },
       },
       optimizers_config: {
         indexing_threshold: 10000,
@@ -53,7 +110,6 @@ export async function initializeQdrant(): Promise<void> {
       on_disk_payload: true,
     });
 
-    // Create payload indexes for filtered search
     const indexes = [
       { field_name: 'country_code', field_schema: 'keyword' as const },
       { field_name: 'category_slug', field_schema: 'keyword' as const },
@@ -66,9 +122,9 @@ export async function initializeQdrant(): Promise<void> {
       await qdrant.createPayloadIndex(PRODUCTS_COLLECTION, index);
     }
 
-    console.log('✅ Qdrant "products" collection initialized');
+    console.log('Qdrant "products" collection initialized with hybrid vectors');
   } else {
-    console.log('✅ Qdrant "products" collection already exists');
+    console.log('Qdrant "products" collection already exists');
   }
 }
 
@@ -92,10 +148,10 @@ interface ProductPayload {
   [key: string]: unknown;
 }
 
-// Add or update product in vector index
 export async function indexProduct(
   productId: string,
   embedding: number[],
+  sparseVector: SparseVectorData,
   payload: ProductPayload
 ): Promise<void> {
   await qdrant.upsert(PRODUCTS_COLLECTION, {
@@ -103,14 +159,16 @@ export async function indexProduct(
     points: [
       {
         id: productId,
-        vector: embedding,
+        vector: {
+          dense: embedding,
+          bm25: sparseVector,
+        },
         payload,
       },
     ],
   });
 }
 
-// Delete product from index
 export async function deleteProductFromIndex(productId: string): Promise<void> {
   await qdrant.delete(PRODUCTS_COLLECTION, {
     wait: true,
@@ -136,7 +194,6 @@ interface SearchResult {
   payload: ProductPayload;
 }
 
-// Ensure collection exists before search (lazy init)
 let _initialized = false;
 async function ensureCollection(): Promise<void> {
   if (_initialized) return;
@@ -147,13 +204,15 @@ async function ensureCollection(): Promise<void> {
   _initialized = true;
 }
 
-// Search products with vector similarity and filters
+/**
+ * Hybrid search: dense (semantic) + sparse (BM25 keyword) fused via RRF.
+ */
 export async function searchProducts(
   queryEmbedding: number[],
+  querySparseVector: SparseVectorData,
   filters: SearchFilters,
   limit: number = 10
 ): Promise<SearchResult[]> {
-  // Ensure collection exists (creates if missing)
   await ensureCollection();
 
   // Build filter conditions
@@ -170,7 +229,6 @@ export async function searchProducts(
     must.push({ key: 'region_id', match: { value: filters.region_id } });
   }
 
-  // Price range filter
   if (filters.min_price !== undefined || filters.max_price !== undefined) {
     const range: Record<string, number> = {};
     if (filters.min_price !== undefined) range.gte = filters.min_price;
@@ -178,18 +236,36 @@ export async function searchProducts(
     must.push({ key: 'price', range });
   }
 
-  // Execute search
-  const results = await qdrant.search(PRODUCTS_COLLECTION, {
-    vector: queryEmbedding,
-    filter: { must },
+  const filter = { must };
+
+  // Hybrid search: prefetch from both dense and sparse, fuse with RRF
+  const response = await qdrant.query(PRODUCTS_COLLECTION, {
+    prefetch: [
+      {
+        query: queryEmbedding,
+        using: 'dense',
+        filter,
+        limit: 20,
+      },
+      {
+        query: {
+          indices: querySparseVector.indices,
+          values: querySparseVector.values,
+        },
+        using: 'bm25',
+        filter,
+        limit: 20,
+      },
+    ],
+    query: { fusion: 'rrf' },
     limit,
     with_payload: true,
   });
 
-  return results.map((r) => ({
+  return response.points.map((r) => ({
     id: r.id as string,
     score: r.score,
-    payload: r.payload as ProductPayload,
+    payload: r.payload as unknown as ProductPayload,
   }));
 }
 

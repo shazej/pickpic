@@ -1,14 +1,14 @@
-// Find Similar Products API - Qdrant vector search
+// Find Similar Products API - Qdrant hybrid vector search
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getTextEmbedding } from '@/lib/ai/openai';
-import { searchProducts } from '@/lib/qdrant/client';
+import { searchProducts, textToSparseVector } from '@/lib/qdrant/client';
 
 export async function POST(request: Request) {
   try {
     const { productId, query: textQuery } = await request.json();
 
-    let embedding: number[];
+    let searchText = '';
 
     if (productId) {
       const product = await prisma.product.findUnique({
@@ -18,14 +18,16 @@ export async function POST(request: Request) {
       if (!product) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
       }
-      embedding = await getTextEmbedding(`${product.title} ${product.description || ''}`.trim());
+      searchText = `${product.title} ${product.description || ''}`.trim();
     } else if (textQuery) {
-      embedding = await getTextEmbedding(textQuery);
+      searchText = textQuery;
     } else {
       return NextResponse.json({ error: 'productId or query required' }, { status: 400 });
     }
 
-    const results = await searchProducts(embedding, { country_code: 'KW' }, 4);
+    const embedding = await getTextEmbedding(searchText);
+    const sparseVector = textToSparseVector(searchText);
+    const results = await searchProducts(embedding, sparseVector, { country_code: 'KW' }, 4);
 
     const productIds = results.map((r) => r.payload.product_id);
     const products = await prisma.product.findMany({
