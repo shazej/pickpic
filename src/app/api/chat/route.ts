@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
                         title_ar: draftTitleAr,
                         description: draftDesc,
                         description_ar: draftDescAr,
-                        price: listingArgs.price,
+                        price: listingArgs.price || 0,
                         category: listingArgs.category,
                         condition: listingArgs.condition || 'good',
                         image_urls: listingArgs.image_urls || [],

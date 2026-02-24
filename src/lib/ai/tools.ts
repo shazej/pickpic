@@ -118,7 +118,7 @@ const CREATE_LISTING_TOOL: OpenAI.ChatCompletionTool = {
   function: {
     name: "create_listing",
     description:
-      "Create a product listing for the user to sell. Use when the user wants to sell something and has provided all required information (title, price, category). Images are required for physical products (electronics, vehicles, fashion, furniture) but optional for property, services, spare parts.",
+      "Create a product listing for the user to sell. Use when the user wants to sell something and has provided enough information (title, category). Do NOT suggest or guess a price - leave price empty and let the user set it themselves. Images are required for physical products (electronics, vehicles, fashion, furniture) but optional for property, services, spare parts.",
     parameters: {
       type: "object",
       properties: {
@@ -132,7 +132,7 @@ const CREATE_LISTING_TOOL: OpenAI.ChatCompletionTool = {
         },
         price: {
           type: "number",
-          description: "Price in local currency (KWD/SAR)",
+          description: "Price in local currency (KWD/SAR). Do NOT suggest a price - only include if the user explicitly stated a price.",
         },
         category: {
           type: "string",
@@ -168,7 +168,7 @@ const CREATE_LISTING_TOOL: OpenAI.ChatCompletionTool = {
             "Array of S3 image URLs. Required for physical products (electronics, vehicles, fashion, furniture). Optional for property, services, spare parts.",
         },
       },
-      required: ["title", "price", "category"],
+      required: ["title", "category"],
     },
   },
 };
@@ -197,7 +197,7 @@ const ANALYZE_IMAGE_FOR_LISTING_TOOL: OpenAI.ChatCompletionTool = {
   function: {
     name: "analyze_image_for_listing",
     description:
-      "Analyze an uploaded image to create a listing draft with suggested title, description, category, and price. Use when the user wants to sell something and uploads a product photo.",
+      "Analyze an uploaded image to create a listing draft with suggested title, description, and category. Do NOT suggest a price. Use when the user wants to sell something and uploads a product photo.",
     parameters: {
       type: "object",
       properties: {

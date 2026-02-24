@@ -970,7 +970,7 @@ export function ChatInterface({
                     descriptionAr: (parsed.description_ar as string) || undefined,
                     category: (parsed.category as string) || "other",
                     condition: (parsed.condition as string) || "good",
-                    price: String(parsed.price || 0),
+                    price: "",
                   };
                   setMessages((prev) =>
                     prev.map((m) =>
@@ -1009,17 +1009,7 @@ export function ChatInterface({
                       // Skip if listing_draft already set a proper draft
                       if (aiMsg?.draft) return prev;
 
-                      const suggestedPrice = imgAnalysis.suggested_price
-                        ? typeof imgAnalysis.suggested_price === "object"
-                          ? String(
-                              Math.round(
-                                ((imgAnalysis.suggested_price as { min: number; max: number }).min +
-                                  (imgAnalysis.suggested_price as { min: number; max: number }).max) /
-                                  2
-                              )
-                            )
-                          : String(imgAnalysis.suggested_price)
-                        : "0";
+                      const suggestedPrice = "";
 
                       const previewUrl =
                         prev.find((m) => m.id === userMsgId)?.image || imageUrl;

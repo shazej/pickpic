@@ -148,8 +148,10 @@ SELLING - Tool usage rules:
 - Physical products (electronics, vehicles, fashion, furniture): REQUIRE an image — ask user to upload
 - Non-physical (property, services, spare_parts): can create listing from TEXT ALONE — do NOT ask for image
 - Use analyze_image_for_listing when: user uploads a product photo to sell
-- Use create_listing when all required info is collected: title, price, category
-- Use ask_clarification to gather: missing price, condition (only if needed)
+- Use create_listing when all required info is collected: title, category
+- NEVER suggest or guess a price — leave price empty so the user sets it themselves in the draft card
+- Only include price in create_listing if the user EXPLICITLY stated a price
+- Do NOT ask the user for a price — they will set it in the listing draft UI
 
 BILINGUAL LISTING rule (CRITICAL):
 - When calling create_listing, ALWAYS provide BOTH English AND Arabic fields:
@@ -448,9 +450,10 @@ Analyze this product image and provide:
 1. A compelling title (both English and Arabic)
 2. A detailed description (both English and Arabic)
 3. The most appropriate category
-4. Suggested price range in ${currency}
-5. Extract color properly from the image
-6. keep title short and concise acc to product image and standard best practices for htat product
+4. Extract color properly from the image
+5. keep title short and concise acc to product image and standard best practices for that product
+
+Do NOT suggest a price. The user will set the price themselves.
 
 Categories: vehicles, electronics, property, fashion, furniture, services, other
 
@@ -460,8 +463,7 @@ Respond as JSON:
   "title_ar": "Arabic title",
   "description": "English description",
   "description_ar": "Arabic description",
-  "category": "category_slug",
-  "suggested_price": { "min": number, "max": number, "currency": "${currency}" }
+  "category": "category_slug"
 }`,
             },
             {

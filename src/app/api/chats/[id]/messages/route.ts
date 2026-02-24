@@ -175,10 +175,18 @@ export async function POST(
 
     // In a transaction: clear draft metadata + create published confirmation message
     const publishedMsg = await prisma.$transaction(async (tx) => {
-      // Clear metadata on the draft message
-      if (draftMessageId) {
+      // Find the draft message by metadata type within this session
+      // (client-side IDs are timestamps, not DB UUIDs, so we match by content)
+      const draftMsg = await tx.chatMessage.findFirst({
+        where: {
+          sessionId: id,
+          metadata: { path: ['type'], equals: 'listing_draft' },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (draftMsg) {
         await tx.chatMessage.update({
-          where: { id: draftMessageId },
+          where: { id: draftMsg.id },
           data: { metadata: Prisma.DbNull },
         });
       }
