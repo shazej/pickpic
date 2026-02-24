@@ -273,6 +273,9 @@ model ChatMessage {
   // For assistant messages - stored as JSON array of UUIDs
   productIds      String[] @map("product_ids")
 
+  // Structured metadata for drafts & published confirmations
+  metadata        Json?    @map("metadata")
+
   createdAt       DateTime @default(now()) @map("created_at")
 
   // Relations

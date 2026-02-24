@@ -1,7 +1,8 @@
 // GET /api/chats/[id]/messages - Load messages for a chat session
-// Returns messages with product data for rendering product cards
+// POST /api/chats/[id]/messages - Persist publish action (clear draft + save published)
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
@@ -89,15 +90,47 @@ export async function GET(
     }
 
     // Transform messages for the frontend
-    const messages = dbMessages.map((m) => ({
-      id: m.id,
-      role: m.role,
-      text: m.content,
-      image: m.imageUrl || undefined,
-      products: m.productIds
-        .map((pid) => productsMap[pid])
-        .filter(Boolean),
-    }));
+    const messages = dbMessages.map((m) => {
+      const meta = m.metadata as Record<string, unknown> | null;
+      let draft: Record<string, unknown> | undefined;
+      let published: { id: string; title: string } | undefined;
+      let contentLanguage: string | undefined;
+
+      if (meta?.type === 'listing_draft') {
+        draft = {
+          images: ((meta.image_urls as string[]) || []).map((url: string) => ({
+            previewUrl: url,
+            s3Url: url,
+          })),
+          title: meta.title || 'Untitled',
+          titleAr: meta.title_ar || undefined,
+          description: meta.description || '',
+          descriptionAr: meta.description_ar || undefined,
+          category: meta.category || 'other',
+          condition: meta.condition || 'good',
+          price: String(meta.price || 0),
+        };
+        contentLanguage = (meta.language as string) || undefined;
+      } else if (meta?.type === 'published') {
+        published = {
+          id: meta.productId as string,
+          title: meta.title as string,
+        };
+      }
+
+      return {
+        id: m.id,
+        role: m.role,
+        text: m.content,
+        image: m.imageUrl || undefined,
+        products: m.productIds
+          .map((pid) => productsMap[pid])
+          .filter(Boolean),
+        ...(draft ? { draft } : {}),
+        ...(published ? { published } : {}),
+        ...(contentLanguage ? { contentLanguage } : {}),
+      };
+    });
 
     return NextResponse.json({
       session_id: id,
@@ -107,6 +140,69 @@ export async function GET(
     console.error('Load messages error:', error);
     return NextResponse.json(
       { error: 'Failed to load messages' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Persist publish action — clear draft metadata + create published message
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser().catch(() => null);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Verify ownership
+    const session = await prisma.chatSession.findFirst({
+      where: { id, userId: user.userId },
+    });
+    if (!session) {
+      return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { action, draftMessageId, productId, productTitle, text } = body;
+
+    if (action !== 'publish_listing') {
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+    }
+
+    // In a transaction: clear draft metadata + create published confirmation message
+    const publishedMsg = await prisma.$transaction(async (tx) => {
+      // Clear metadata on the draft message
+      if (draftMessageId) {
+        await tx.chatMessage.update({
+          where: { id: draftMessageId },
+          data: { metadata: Prisma.DbNull },
+        });
+      }
+
+      // Create published confirmation message
+      return tx.chatMessage.create({
+        data: {
+          sessionId: id,
+          role: 'assistant',
+          content: text || 'Your listing has been published successfully!',
+          metadata: {
+            type: 'published',
+            productId,
+            title: productTitle,
+          },
+        },
+      });
+    });
+
+    return NextResponse.json({ success: true, messageId: publishedMsg.id });
+  } catch (error) {
+    console.error('Publish persistence error:', error);
+    return NextResponse.json(
+      { error: 'Failed to persist publish' },
       { status: 500 }
     );
   }

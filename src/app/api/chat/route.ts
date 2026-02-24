@@ -158,12 +158,13 @@ export async function POST(request: NextRequest) {
       async start(controller) {
         try {
           let products: Array<Record<string, unknown>> = [];
-          let imageAnalysis = null;
+          let imageAnalysis: { title?: string; title_ar?: string; description?: string; description_ar?: string; category?: string; suggested_price?: { min: number; max: number; currency: string } } | null = null;
           let searchQuery = userQuery;
           const maxIterations = 5;
           let iterations = 0;
           let clarificationCount = 0;
           let assistantResponse = '';
+          let draftMetadata: Record<string, unknown> | null = null;
 
           // Send initial thinking status
           controller.enqueue(encoder.encode(sseEvent('status', {
@@ -369,11 +370,21 @@ export async function POST(request: NextRequest) {
                       // Emit a draft for the user to review, edit, and publish
                       const listingArgs = toolArgs as CreateListingParams;
 
-                      // Ensure both EN and AR fields exist — translate if missing
+                      // Ensure both EN and AR fields exist
                       let draftTitle = listingArgs.title;
                       let draftTitleAr = listingArgs.title_ar;
                       let draftDesc = listingArgs.description;
                       let draftDescAr = listingArgs.description_ar;
+
+                      // Use image analysis data as fallback (already has bilingual fields)
+                      if (imageAnalysis) {
+                        if (!draftTitleAr && imageAnalysis.title_ar) draftTitleAr = imageAnalysis.title_ar;
+                        if (!draftTitle && imageAnalysis.title) draftTitle = imageAnalysis.title;
+                        if (!draftDescAr && imageAnalysis.description_ar) draftDescAr = imageAnalysis.description_ar;
+                        if (!draftDesc && imageAnalysis.description) draftDesc = imageAnalysis.description;
+                      }
+
+                      // Translate if still missing one language
                       try {
                         if (draftTitle && !draftTitleAr) {
                           const [t] = await translateProductFields([{ title: draftTitle, description: draftDesc }], 'ar');
@@ -386,7 +397,7 @@ export async function POST(request: NextRequest) {
                         console.error('Draft translation failed:', e);
                       }
 
-                      controller.enqueue(encoder.encode(sseEvent('listing_draft', {
+                      const draftData = {
                         title: draftTitle,
                         title_ar: draftTitleAr,
                         description: draftDesc,
@@ -396,7 +407,9 @@ export async function POST(request: NextRequest) {
                         condition: listingArgs.condition || 'good',
                         image_urls: listingArgs.image_urls || [],
                         language,
-                      })));
+                      };
+                      controller.enqueue(encoder.encode(sseEvent('listing_draft', draftData)));
+                      draftMetadata = { type: 'listing_draft', ...draftData };
                       toolResult = { success: true, message: 'A listing draft has been created and shown to the user for review. They can edit details, add photos, and publish when ready.' };
                       break;
                     }
@@ -517,6 +530,7 @@ export async function POST(request: NextRequest) {
               role: 'assistant',
               content: contentToSave,
               productIds: productIds,
+              ...(draftMetadata ? { metadata: draftMetadata } : {}),
             },
           });
 

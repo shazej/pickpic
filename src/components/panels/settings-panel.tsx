@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { useAppMode } from "@/context/app-mode-context";
@@ -12,18 +11,13 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   ArrowLeft,
   User,
-  Mail,
   Phone,
   Globe,
   LogOut,
   Loader2,
   Save,
-  Store,
-  Hash,
-  Building2,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -36,26 +30,12 @@ interface UserProfile {
   preferredLanguage: string;
   avatarUrl?: string;
   role: string;
-  seller?: {
-    phonePublic: string;
-    businessName?: string;
-    isVerified: boolean;
-    rating: number;
-    totalSales: number;
-  };
   createdAt: string;
 }
 
 interface SellerProfile {
-  businessName?: string;
   phonePublic?: string;
-  rating?: number;
-  totalSales?: number;
-  isVerified?: boolean;
   isProfileComplete?: boolean;
-  user?: {
-    nationalId?: string;
-  };
 }
 
 export function SettingsPanel() {
@@ -67,17 +47,13 @@ export function SettingsPanel() {
   const [loading, setLoading] = useState(true);
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
 
-  // Unified form state
+  // Form state
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState(""); // single phone — saves to user + seller
-  const [nationalId, setNationalId] = useState("");
-  const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
 
-  // Save states
+  // Save state
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [sellerSaving, setSellerSaving] = useState(false);
-  const [sellerSaved, setSellerSaved] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -101,9 +77,6 @@ export function SettingsPanel() {
         const data = await sellerRes.json();
         if (data.profile) {
           setSellerProfile(data.profile);
-          setBusinessName(data.profile.businessName || "");
-          setNationalId(data.profile.user?.nationalId || "");
-          // Prefer user.phone, fall back to seller.phonePublic
           setPhone(userPhone || data.profile.phonePublic || "");
         } else {
           setPhone(userPhone);
@@ -122,7 +95,7 @@ export function SettingsPanel() {
     if (user) fetchAll();
   }, [user, fetchAll]);
 
-  // Save name + phone — also syncs phone to seller.phonePublic & whatsappNumber
+  // Save name + phone — syncs phone to seller.phonePublic & whatsappNumber
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
@@ -139,8 +112,6 @@ export function SettingsPanel() {
           body: JSON.stringify({
             phonePublic: phone,
             whatsappNumber: phone,
-            businessName,
-            nationalId,
           }),
         }),
       ]);
@@ -151,33 +122,6 @@ export function SettingsPanel() {
       console.error("Failed to save:", err);
     } finally {
       setSaving(false);
-    }
-  };
-
-  // Save only seller-specific fields (nationalId, businessName) — phone already in sync
-  const handleSellerSave = async () => {
-    setSellerSaving(true);
-    setSellerSaved(false);
-    try {
-      const res = await fetch("/api/seller/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phonePublic: phone,
-          whatsappNumber: phone,
-          businessName,
-          nationalId,
-        }),
-      });
-      if (res.ok) {
-        await fetchAll();
-        setSellerSaved(true);
-        setTimeout(() => setSellerSaved(false), 2000);
-      }
-    } catch (err) {
-      console.error("Failed to save seller profile:", err);
-    } finally {
-      setSellerSaving(false);
     }
   };
 
@@ -222,7 +166,7 @@ export function SettingsPanel() {
             </div>
           ) : (
             <>
-              {/* ── User Profile Section ── */}
+              {/* ── Profile Section ── */}
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
@@ -232,16 +176,26 @@ export function SettingsPanel() {
                         .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="text-xl font-semibold">
-                      {profile?.name || profile?.email}
-                    </h2>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl font-semibold">
+                        {profile?.name || profile?.email}
+                      </h2>
+                      {sellerProfile !== null && (
+                        sellerProfile.isProfileComplete ? (
+                          <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full shrink-0">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {t("settings.profileComplete" as TranslationKey)}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
+                            <AlertCircle className="h-3 w-3" />
+                            {t("settings.profileIncomplete" as TranslationKey)}
+                          </span>
+                        )
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">{profile?.email}</p>
-                    {profile?.seller?.isVerified && (
-                      <span className="inline-flex items-center gap-1 mt-1 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">
-                        {t("settings.verified" as TranslationKey)}
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -256,17 +210,6 @@ export function SettingsPanel() {
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t("settings.namePlaceholder" as TranslationKey)}
                     />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium flex items-center gap-2 mb-1.5">
-                      <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                      {t("settings.email" as TranslationKey)}
-                    </label>
-                    <Input value={profile?.email || ""} disabled className="bg-muted" />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t("settings.emailHint" as TranslationKey)}
-                    </p>
                   </div>
 
                   <div>
@@ -305,117 +248,6 @@ export function SettingsPanel() {
                     )}
                   </Button>
                 </div>
-              </div>
-
-              {/* ── Seller Profile Section ── */}
-              <div className="border-t pt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <Store className="h-4 w-4 text-muted-foreground" />
-                      {t("settings.sellerProfile" as TranslationKey)}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {t("settings.sellerProfileDesc" as TranslationKey)}
-                    </p>
-                  </div>
-                  {sellerProfile !== null && (
-                    sellerProfile.isProfileComplete ? (
-                      <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full shrink-0">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {t("settings.profileComplete" as TranslationKey)}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
-                        <AlertCircle className="h-3 w-3" />
-                        {t("settings.profileIncomplete" as TranslationKey)}
-                      </span>
-                    )
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium flex items-center gap-2 mb-1.5">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-                      {t("settings.nationalId" as TranslationKey)}
-                    </label>
-                    <Input
-                      value={nationalId}
-                      onChange={(e) => setNationalId(e.target.value)}
-                      placeholder="XXXXXXXXXXXX"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium flex items-center gap-2 mb-1.5">
-                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      {t("settings.businessName" as TranslationKey)}
-                    </label>
-                    <Input
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder={locale === "ar" ? "اسم المتجر (اختياري)" : "Store name (optional)"}
-                    />
-                  </div>
-
-                  <Button onClick={handleSellerSave} disabled={sellerSaving} className="w-full">
-                    {sellerSaving ? (
-                      <><Loader2 className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" />{t("dashboard.saving" as TranslationKey)}</>
-                    ) : sellerSaved ? (
-                      <><Save className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t("settings.sellerSaved" as TranslationKey)}</>
-                    ) : (
-                      <><Save className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t("dashboard.save" as TranslationKey)}</>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* ── Seller Stats ── */}
-              {sellerProfile && (
-                <div className="border-t pt-6 space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    {t("settings.sellerInfo" as TranslationKey)}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-lg border p-3">
-                      <p className="text-2xl font-bold">{sellerProfile.totalSales ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("settings.totalSales" as TranslationKey)}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border p-3">
-                      <p className="text-2xl font-bold">
-                        {Number(sellerProfile.rating ?? 0).toFixed(1)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("settings.rating" as TranslationKey)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Seller Dashboard Link ── */}
-              <div className="border-t pt-6">
-                <Link href="/seller/dashboard" target="_blank">
-                  <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                        <Store className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {t("settings.sellerDashboard" as TranslationKey)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("settings.sellerDashboardDesc" as TranslationKey)}
-                        </p>
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                </Link>
               </div>
 
               {/* ── Sign out ── */}

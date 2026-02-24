@@ -747,12 +747,15 @@ export function ChatInterface({
         .then((data) => {
           if (data?.messages?.length > 0) {
             setMessages(
-              data.messages.map((m: { id: string; role: string; text: string; image?: string; products?: ChatProduct[] }) => ({
+              data.messages.map((m: { id: string; role: string; text: string; image?: string; products?: ChatProduct[]; draft?: ListingDraft; published?: { id: string; title: string }; contentLanguage?: string }) => ({
                 id: m.id,
                 role: m.role as "user" | "assistant",
                 text: m.text,
                 image: m.image,
                 products: m.products,
+                ...(m.draft ? { draft: m.draft } : {}),
+                ...(m.published ? { published: m.published } : {}),
+                ...(m.contentLanguage ? { contentLanguage: m.contentLanguage } : {}),
               }))
             );
           } else {
@@ -996,38 +999,50 @@ export function ChatInterface({
                     }
                   }
 
-                  // If we received an analysis (sell flow), create the draft
+                  // If we received an analysis (sell flow) but no listing_draft was emitted,
+                  // create a fallback draft from the image analysis (includes bilingual fields)
                   if (receivedAnalysis && imageUrl) {
                     const imgAnalysis = receivedAnalysis as Record<string, unknown>;
-                    const suggestedPrice = imgAnalysis.suggested_price
-                      ? typeof imgAnalysis.suggested_price === "object"
-                        ? String(
-                            Math.round(
-                              ((imgAnalysis.suggested_price as { min: number; max: number }).min +
-                                (imgAnalysis.suggested_price as { min: number; max: number }).max) /
-                                2
+
+                    setMessages((prev) => {
+                      const aiMsg = prev.find((m) => m.id === aiMsgId);
+                      // Skip if listing_draft already set a proper draft
+                      if (aiMsg?.draft) return prev;
+
+                      const suggestedPrice = imgAnalysis.suggested_price
+                        ? typeof imgAnalysis.suggested_price === "object"
+                          ? String(
+                              Math.round(
+                                ((imgAnalysis.suggested_price as { min: number; max: number }).min +
+                                  (imgAnalysis.suggested_price as { min: number; max: number }).max) /
+                                  2
+                              )
                             )
-                          )
-                        : String(imgAnalysis.suggested_price)
-                      : "0";
+                          : String(imgAnalysis.suggested_price)
+                        : "0";
 
-                    const previewUrl =
-                      messages.find((m) => m.id === userMsgId)?.image || imageUrl;
+                      const previewUrl =
+                        prev.find((m) => m.id === userMsgId)?.image || imageUrl;
 
-                    const draft: ListingDraft = {
-                      images: [{ previewUrl, s3Url: imageUrl }],
-                      title: (imgAnalysis.title as string) || "Untitled",
-                      description: (imgAnalysis.description as string) || "",
-                      category: (imgAnalysis.category as string) || "other",
-                      condition: "good",
-                      price: "0",
-                    };
+                      const draft: ListingDraft = {
+                        images: [{ previewUrl, s3Url: imageUrl }],
+                        title: (imgAnalysis.title as string) || "Untitled",
+                        titleAr: (imgAnalysis.title_ar as string) || undefined,
+                        description: (imgAnalysis.description as string) || "",
+                        descriptionAr: (imgAnalysis.description_ar as string) || undefined,
+                        category: (imgAnalysis.category as string) || "other",
+                        condition: "good",
+                        price: suggestedPrice,
+                      };
 
-                    setMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === aiMsgId ? { ...m, draft } : m
-                      )
-                    );
+                      // Detect language from user's original message text
+                      const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(text);
+                      const detectedLang = hasArabic ? "ar" : "en";
+
+                      return prev.map((m) =>
+                        m.id === aiMsgId ? { ...m, draft, contentLanguage: detectedLang } : m
+                      );
+                    });
                   }
                   break;
                 }
@@ -1273,6 +1288,11 @@ export function ChatInterface({
           throw new Error(data.error || "Failed to create listing");
         }
 
+        const publishedText =
+          locale === "ar"
+            ? "تم نشر إعلانك بنجاح!"
+            : "Your listing has been published successfully!";
+
         // Clear the draft card and append published confirmation
         setMessages((prev) =>
           prev
@@ -1280,13 +1300,25 @@ export function ChatInterface({
             .concat({
               id: Date.now().toString(),
               role: "assistant",
-              text:
-                locale === "ar"
-                  ? "تم نشر إعلانك بنجاح!"
-                  : "Your listing has been published successfully!",
+              text: publishedText,
               published: { id: data.product.id, title: data.product.title },
             })
         );
+
+        // Persist to DB: clear draft metadata + save published message
+        if (sessionId) {
+          fetch(`/api/chats/${sessionId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "publish_listing",
+              draftMessageId: msgId,
+              productId: data.product.id,
+              productTitle: data.product.title,
+              text: publishedText,
+            }),
+          }).catch((err) => console.error("Failed to persist publish:", err));
+        }
 
         // Update sidebar title
         if (appModeCtx) {
@@ -1307,7 +1339,7 @@ export function ChatInterface({
         setIsPublishing(false);
       }
     },
-    [authUser, locale, appModeCtx]
+    [authUser, locale, appModeCtx, sessionId]
   );
 
   // Add additional image to a listing draft
