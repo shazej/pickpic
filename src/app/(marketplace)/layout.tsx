@@ -1,12 +1,8 @@
 import "@/lib/polyfill";
+export const dynamic = "force-dynamic";
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import '../globals.css';
-import { LocationProvider } from '@/hooks/use-location';
-import { ReactNode } from 'react';
-import { AppShell } from './app-shell';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
+import { LocationProvider } from "@/hooks/use-location";
+import { AppShell } from "./app-shell";
 
 export const metadata: Metadata = {
   title: 'Monetchat - AI Marketplace',
@@ -15,9 +11,9 @@ export const metadata: Metadata = {
 
 export default function MarketplaceLayout({
   children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <LocationProvider>
       <AppShell>{children}</AppShell>

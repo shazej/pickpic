@@ -3,9 +3,8 @@ import { ReactNode } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/auth-context';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
+// import { Inter } from 'next/font/google';
+const inter = { variable: '' };
 
 export const metadata: Metadata = {
   title: 'Ecomm Now - Seller',

@@ -1,15 +1,7 @@
 import "@/lib/polyfill";
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import '../globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { LocationProvider } from '@/hooks/use-location';
-import { AuthProvider } from '@/context/auth-context';
-import { ReactNode } from 'react';
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
+// import { Inter } from 'next/font/google';
+const inter = { variable: '' };
 
 export const metadata: Metadata = {
   title: 'Ecomm Now',

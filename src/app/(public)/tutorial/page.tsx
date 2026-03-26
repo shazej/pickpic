@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+export const dynamic = 'force-dynamic';
 import { TutorialHero } from '@/components/tutorial/tutorial-hero';
 import { TutorialSection } from '@/components/tutorial/tutorial-section';
 import { TutorialStep } from '@/components/tutorial/tutorial-step';

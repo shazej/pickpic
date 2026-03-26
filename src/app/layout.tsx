@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
 import { LanguageProvider } from "@/context/language-context";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({ subsets: ["latin"], variable: '--font-body' });
+// const inter = Inter({ subsets: ["latin"], variable: '--font-body' });
+const inter = { variable: "" };
 
 export const metadata: Metadata = {
     title: "Monetchat",
