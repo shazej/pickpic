@@ -24,3 +24,12 @@ id_rsa
 id_ed25519
 qdrant_extracted/
 *.exe
+
+shazgit2025
+*.pem
+*.key
+*.ppk
+id_rsa
+id_ed25519
+qdrant_extracted/
+*.exe
