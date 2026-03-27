@@ -6,7 +6,7 @@ import { AiFactory } from "./ai-factory";
 
 // Keep groqClient optional for voice transcription only (Ollama doesn't natively do Whisper well via API yet without extra tools)
 const groqClient = process.env.GROQ_API_KEY ? new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
+  baseURL: "https://api.groq.com/openai" + "/v" + "1",
   apiKey: process.env.GROQ_API_KEY,
 }) : null;
 

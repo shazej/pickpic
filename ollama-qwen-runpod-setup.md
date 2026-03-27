@@ -59,7 +59,7 @@ ls /usr/local/lib/ollama/
 
 ## Section 3 — Configure Ollama for External Access
 
-By default Ollama only listens on `127.0.0.1`. For your Node.js backend to reach it, you need to bind to `0.0.0.0`.
+By default Ollama only listens on localhost. For your Node.js backend to reach it, you need to bind to `0.0.0.0`.
 
 ```bash
 # Create environment config directory
@@ -206,12 +206,12 @@ curl -s http://localhost:11434/api/generate \
   }' | python3 -m json.tool
 ```
 
-### Chat Completions (OpenAI-compatible)
+### Chat
 
-Ollama exposes an OpenAI-compatible endpoint at `/v1/chat/completions`:
+Ollama exposes a native chat endpoint at `/api/chat`:
 
 ```bash
-curl -s http://localhost:11434/v1/chat/completions \
+curl -s http://localhost:11434/api/chat \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2.5:14b-instruct-q8_0",
@@ -219,8 +219,6 @@ curl -s http://localhost:11434/v1/chat/completions \
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Explain quantum computing in 2 sentences."}
     ],
-    "temperature": 0.7,
-    "max_tokens": 512,
     "stream": false
   }'
 ```
@@ -234,14 +232,12 @@ curl -s http://localhost:11434/v1/chat/completions \
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://<YOUR_RUNPOD_IP>:11434';
 
 async function chat(messages, options = {}) {
-  const response = await fetch(`${OLLAMA_URL}/v1/chat/completions`, {
+  const response = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'qwen2.5:14b-instruct-q8_0',
       messages,
-      temperature: options.temperature ?? 0.7,
-      max_tokens: options.maxTokens ?? 1024,
       stream: false,
     }),
   });
@@ -251,7 +247,7 @@ async function chat(messages, options = {}) {
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.message?.content || '';
 }
 
 // Usage
@@ -283,27 +279,7 @@ const response = await ollama.chat({
 console.log(response.message.content);
 ```
 
-**Option C — Use OpenAI SDK (drop-in compatible):**
-
-```bash
-npm install openai
-```
-
-```javascript
-import OpenAI from 'openai';
-
-const client = new OpenAI({
-  baseURL: 'http://<YOUR_RUNPOD_IP>:11434/v1',
-  apiKey: 'ollama', // required but ignored by Ollama
-});
-
-const completion = await client.chat.completions.create({
-  model: 'qwen2.5:14b-instruct-q8_0',
-  messages: [{ role: 'user', content: 'Summarize this contract.' }],
-});
-
-console.log(completion.choices[0].message.content);
-```
+**Option C — Use fetch only (recommended):**
 
 ---
 
@@ -313,7 +289,7 @@ console.log(completion.choices[0].message.content);
 
 Use `localhost` — no exposure needed:
 ```bash
-OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_URL=http://localhost:11434
 ```
 
 ### Scenario B: Node.js App on a Separate Server
@@ -342,7 +318,7 @@ server {
         auth_basic "Restricted";
         auth_basic_user_file /etc/nginx/.htpasswd;
 
-        proxy_pass http://127.0.0.1:11434;
+        proxy_pass http://localhost:11434;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_read_timeout 300s;
@@ -358,7 +334,7 @@ nginx -t && nginx -s reload
 **Step 3 — Update Ollama to bind only to localhost:**
 
 ```bash
-export OLLAMA_HOST=127.0.0.1:11434
+export OLLAMA_HOST=localhost:11434
 ```
 
 **Step 4 — From your Node.js app:**

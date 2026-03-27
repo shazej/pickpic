@@ -20,7 +20,8 @@ The `.env` file must cleanly include the local configurations to avoid relying o
 ```env
 EMBEDDING_PROVIDER=ollama
 CHAT_PROVIDER=ollama
-OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_BASE_URL=https://<your-pod-id>-8000.proxy.runpod.net
+OLLAMA_API_KEY=
 OLLAMA_CHAT_MODEL=llama3.1:8b
 OLLAMA_EMBED_MODEL=nomic-embed-text
 OLLAMA_VISION_MODEL=llava
@@ -41,6 +42,6 @@ npx tsx scripts/reindex-qdrant.ts
 ```
 
 ## Troubleshooting
-- **404 Endpoint Not Found** (Chat / Re-indexing): Make sure the `OLLAMA_BASE_URL` ends with `/v1` internally within the `OpenAI` client initialization in `openai.ts` if running into OpenAI compat layer bugs, or simply configure the base URL directly in the script appropriately. *(Already solved in current stack).*
+- **404 Endpoint Not Found** (Chat / Re-indexing): Ensure `OLLAMA_BASE_URL` is the root URL (no OpenAI-compat suffix) and the app uses native Ollama endpoints (`/api/chat`, `/api/embeddings`) with `x-api-key`.
 - **Missing Embeddings/Empty Search Results**: Ensure `VECTOR_SIZE = 768` is firmly set across `qdrant/client.ts` and `reindex-qdrant.ts` if vectors mismatch.
 - **Ollama Offline**: Keep an eye on system RAM. Running all 3 models contextually can utilize ~8-12GB of VRAM/RAM.
